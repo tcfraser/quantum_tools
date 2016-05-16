@@ -35,16 +35,6 @@ def get_mixed_measurement(param):
 def get_density_matrix(param):
     return get_psd_herm(param, 4, unitary_trace=True)
 
-def get_perumation():
-    perm = np.zeros((64,64), dtype=complex)
-    buffer = np.empty((64,64), dtype=complex)
-    for a in list(itertools.product(*[[0,1]]*6)):
-        ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
-        bra = tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
-        np.outer(ket, bra, buffer)
-        perm += buffer
-    return perm
-
 # === Memory Locations ===
 mem_loc = [1,16,1,16,1,16,16,16,16]
 p_wA, p_mA, p_wB, p_mB, p_wC, p_mC, p_sX, p_sY, p_sZ = gen_memory_slots(mem_loc)
@@ -127,6 +117,7 @@ def objective(param):
 
     XxYxZ = tensor(sX, sY, sZ)
     state = reduce(np.dot, (perm.T, XxYxZ, perm))
+    # state = XxYxZ
     diffM = (dA, dB, dC)
     # assert(is_hermitian(state))
     # for dM in diffM:
@@ -161,12 +152,6 @@ def log_results(param):
     print("Objective Value:", objective_res)
     A, B, C, X, Y, Z = get_context(param)
     wA, mA, wB, mB, wC, mC, sX, sY, sZ = unpack_param(param)
-    A = get_mixed_measurement(mA)
-    B = get_mixed_measurement(mB)
-    C = get_mixed_measurement(mC)
-    X = get_density_matrix(sX)
-    Y = get_density_matrix(sY)
-    Z = get_density_matrix(sZ)
     print("Measure State A (w={0}):".format(norm_real_parameter(wA)))
     print(A)
     print("Measure State B (w={0}):".format(norm_real_parameter(wB)))
@@ -241,7 +226,7 @@ def main():
     # objective(param)
 
     global ineq_coeff
-    ineq_coeff = get_ineqs()[8-1]
+    ineq_coeff = get_ineqs()[12-1]
 
     find_max_violation()
     # get_ineqs()

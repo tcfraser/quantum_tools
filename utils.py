@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 from scipy import linalg
 from functools import reduce
@@ -61,6 +62,30 @@ def get_two_qubit_state(s):
     normalize(state)
     return state
 
+def get_perumation():
+    perm = np.zeros((64,64), dtype=complex)
+    buffer = np.empty((64,64), dtype=complex)
+    for a in list(itertools.product(*[[0,1]]*6)):
+        ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
+        bra = tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
+        np.outer(ket, bra, buffer)
+        perm += buffer
+    return perm
+
+def get_maximally_entangled_bell_state(n=0):
+    n = n % 4
+    norm = 1/np.sqrt(2)
+    if n == 0:
+        psi = norm * (qb00 + qb11)
+    elif n == 1:
+        psi = norm * (qb00 - qb11)
+    elif n == 2:
+        psi = norm * (qb01 + qb10)
+    elif n == 3:
+        psi = norm * (qb01 - qb10)
+    rho = ket_to_dm(psi)
+    return rho
+
 def get_psd_herm(t, size, unitary_trace=True):
     # James, Kwiat, Munro, and White Physical Review A 64 052312
     # T = np.array([
@@ -87,10 +112,20 @@ def get_psd_herm(t, size, unitary_trace=True):
     g = np.dot(Td, T)
     if unitary_trace:
         g /= np.trace(g)
-        # assert(is_trace_one(g)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
+        # assert(is_trace_one(groundn)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
     # assert(is_hermitian(g)), "g not hermitian!"
     # assert(is_psd(g)), "g not positive semi-definite!"
     return g
+
+def get_projective_meas(weight, param):
+    # weight = min(max(weight, 0), 1)
+    assert (len(param) == 7), "Projective state needs 7 parameters."
+    # assert (0 <= weight <= 1), "Weight {w} is not normalized.".format(w=weight)
+    state = get_two_qubit_state(param)
+    M_y = norm_real_parameter(weight) * ket_to_dm(state)
+    M_n = I4 - M_y
+    dM = M_y - M_n
+    return dM
 
 def get_meas_on_bloch_sphere(theta,phi):
     u_1 = np.cos(phi) * np.sin(theta)

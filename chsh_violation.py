@@ -11,7 +11,7 @@ np.set_printoptions(precision=3, linewidth=120, suppress=True)
 ineq_coeff = None
 
 # === Memory Locations ===
-mem_loc = [2, 2, 2, 2, 16]
+mem_loc = [2, 2, 2, 2, 7]
 ps_A1, ps_A2, ps_B1, ps_B2, ps_rho = gen_memory_slots(mem_loc)
 
 def unpack_param(param):
@@ -28,11 +28,15 @@ def get_context(param):
     A2 = get_meas_on_bloch_sphere(*p_A2)
     B1 = get_meas_on_bloch_sphere(*p_B1)
     B2 = get_meas_on_bloch_sphere(*p_B2)
-    # === Pure State (switch mem_loc to 7) ===
-    # psi = get_two_qubit_state(p_rho)
-    # rho = ket_to_dm(psi)
-    # === Mixed State (switch mem loc to 16) ===
-    rho = get_psd_herm(p_rho, 4)
+    if (len(p_rho) == 7):
+        # === Pure State (switch mem_loc to 7) ===
+        psi = get_two_qubit_state(p_rho)
+        rho = ket_to_dm(psi)
+    elif (len(p_rho) == 16):
+        # === Mixed State (switch mem loc to 16) ===
+        rho = get_psd_herm(p_rho, 4)
+    else:
+        raise Exception("Parameterization of state rho needs either 7 or 16 real numbers.")
     return A1, A2, B1, B2, rho
 
 def E(A_x, B_y, rho):
@@ -62,6 +66,8 @@ def log_results(param):
     print("A2:")
     print(A2)
     print("A1 * A2:")
+    # x = 1/2*(A1 + I2)
+    # y = 1/2*(A2 + I2)
     print(np.dot(A1, A2))
     print("B1:")
     print(B1)
@@ -88,6 +94,19 @@ def find_max_violation():
     log_results(res.x)
 
 def main():
+
+    # x = get_meas_on_bloch_sphere(np.pi / 4, np.pi / 2)
+    # y = get_meas_on_bloch_sphere(np.pi / 4, 0)
+    # print(x)
+    # print(y)
+    # print(np.dot(x,y))
+
+    # return
+    a = get_psd_herm(np.arange(16), size=4)
+    print(a)
+    print(np.dot(a,a))
+    print(np.dot(a,a) - a)
+    return
     find_max_violation()
 
 if __name__ == '__main__':
