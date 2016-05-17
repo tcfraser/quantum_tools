@@ -133,3 +133,13 @@ def get_meas_on_bloch_sphere(theta,phi):
     u_3 = np.cos(theta)
     sig_u = u_1 * sigx + u_2 * sigy + u_3 * sigz
     return sig_u
+
+def __tests__():
+    print(get_maximally_entangled_bell_state(0))
+    print(get_maximally_entangled_bell_state(1))
+    print(get_maximally_entangled_bell_state(2))
+    print(get_maximally_entangled_bell_state(3))
+    print(get_maximally_entangled_bell_state(4))
+
+if __name__ == '__main__':
+    __tests__()

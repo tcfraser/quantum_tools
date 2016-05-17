@@ -43,7 +43,7 @@ class JobContext():
         for i in range(self.num_evals):
             serialized_eval_result = out_queue.get()
             if self.log_worker:
-                print("Worker {i} Finished.".format(i=i))
+                print("Sub-Job {i} Finished.".format(i=i))
                 # pprint(serialized_eval_result)
             self.target_results.append(serialized_eval_result)
 

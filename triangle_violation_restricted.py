@@ -14,12 +14,58 @@ from timing_profiler import timing
 # === Configure ===
 np.set_printoptions(precision=3, linewidth=120, suppress=True)
 TOLERANCE = 1e-4
-# maximally_entangled = (1,2,3)
+# maximally_entangled = (0,0,1)
 maximally_entangled = False
 if maximally_entangled:
     MEM_LOC = [1,16,1,16,1,16]
 else:
     MEM_LOC = [1,16,1,16,1,16,16,16,16]
+
+class TriangleUtils():
+
+    @staticmethod
+    def explode_correlator(c):
+        c_list = [
+            c['_'],
+            c['A'],
+            c['B'],
+            c['C'],
+            c['AB'],
+            c['AC'],
+            c['BC'],
+            c['ABC'],
+            c['A']*c['B'],
+            c['A']*c['C'],
+            c['B']*c['C'],
+            c['C']*c['AB'],
+            c['B']*c['AC'],
+            c['A']*c['BC'],
+            c['A']*c['B']*c['C'],
+        ]
+        return c_list
+
+    @staticmethod
+    def gen_correlator(diffM, state):
+        c = {}
+        m = len(diffM)
+        for i in itertools.product(*[[0,1]]*m):
+            label = ''
+            measures = []
+            for index, present in enumerate(i):
+                if present:
+                    label += chr(index + ord('A'))
+                    measures.append(diffM[index])
+                else:
+                    measures.append(I4)
+            if label == '':
+                label = '_'
+            joint_measure = tensor(*measures)
+            correl = np.trace(np.dot(state, joint_measure))
+            # if not is_close(correl.imag, 0):
+            #     print(correl.imag)
+            # assert(is_close(correl.imag, 0)), "Correlation ({0}) are not real; check hermitianicity.".format(correl)
+            c[label] = correl.real
+        return c
 
 
 class Correlation_Minimizer():
@@ -64,28 +110,30 @@ class Correlation_Minimizer():
     def minimize(self):
         if self.__solved__:
             return
-        initial_guess = np.random.normal(scale=2.0, size=(sum(self.mem_loc)))
+        # initial_guess = np.random.random((sum(self.mem_loc)))
+        initial_guess = np.random.normal(scale=1.0, size=(sum(self.mem_loc)))
         self.log("Minimizing")
         res = optimize.minimize(
             fun = self.objective,
             x0 = initial_guess,
             callback = self.after_iterate,
-            tol = TOLERANCE,
+            # tol = TOLERANCE,
         )
         self.__solved__ = True
+        self.log("Solved")
         self.solution = res.x
         self.objective_result = self.objective(self.solution)
         self.context = self.get_context(self.solution)
 
     def get_exploded_correlator(self, param):
-        dA, dB, dC, sX, sY, sZ = self.get_context(param)
+        wA, wB, wC, dA, dB, dC, sX, sY, sZ = self.get_context(param)
 
         XxYxZ = tensor(sX, sY, sZ)
         state = reduce(np.dot, (self.perm.T, XxYxZ, self.perm))
         diffM = (dA, dB, dC)
-        c = self.gen_correlator(diffM, state)
+        c = TriangleUtils.gen_correlator(diffM, state)
 
-        c_exploded = self.explode_correlator(c)
+        c_exploded = TriangleUtils.explode_correlator(c)
         return c_exploded
 
     def objective(self, param):
@@ -101,11 +149,11 @@ class Correlation_Minimizer():
         else:
             p_wA, p_mA, p_wB, p_mB, p_wC, p_mC, p_sX, p_sY, p_sZ = gen_memory_slots(self.mem_loc)
 
-        wA = param[p_wA][0]
+        wA = norm_real_parameter(param[p_wA][0])
         mA = param[p_mA]
-        wB = param[p_wB][0]
+        wB = norm_real_parameter(param[p_wB][0])
         mB = param[p_mB]
-        wC = param[p_wC][0]
+        wC = norm_real_parameter(param[p_wC][0])
         mC = param[p_mC]
 
         dA = self.get_meas(wA, mA)
@@ -117,58 +165,17 @@ class Correlation_Minimizer():
             sY = get_maximally_entangled_bell_state(maximally_entangled[1])
             sZ = get_maximally_entangled_bell_state(maximally_entangled[2])
         else:
-            sX = get_psd_herm(p_sX, 4)
-            sY = get_psd_herm(p_sY, 4)
-            sZ = get_psd_herm(p_sZ, 4)
+            sX = get_psd_herm(param[p_sX], 4, unitary_trace=True)
+            sY = get_psd_herm(param[p_sY], 4, unitary_trace=True)
+            sZ = get_psd_herm(param[p_sZ], 4, unitary_trace=True)
 
-        return dA, dB, dC, sX, sY, sZ
+        return wA, wB, wC, dA, dB, dC, sX, sY, sZ
 
     def get_meas(self, weight, param):
-        M_y = norm_real_parameter(weight) * get_psd_herm(param, 4, unitary_trace=True)
+        M_y = weight * get_psd_herm(param, 4, unitary_trace=True)
         M_n = I4 - M_y
         dM = M_y - M_n
         return dM
-
-    def gen_correlator(self, diffM, state):
-        c = {}
-        m = len(diffM)
-        for i in itertools.product(*[[0,1]]*m):
-            label = ''
-            measures = []
-            for index, present in enumerate(i):
-                if present:
-                    label += chr(index + ord('A'))
-                    measures.append(diffM[index])
-                else:
-                    measures.append(I4)
-            if label == '':
-                label = '_'
-            joint_measure = tensor(*measures)
-            correl = np.trace(np.dot(state, joint_measure))
-            # if not is_close(correl.imag, 0):
-            #     print(correl.imag)
-            # assert(is_close(correl.imag, 0)), "Correlation ({0}) are not real; check hermitianicity.".format(correl)
-            c[label] = correl.real
-        return c
-
-    def explode_correlator(self, c):
-        c_list = []
-        c_list.append(c['_'])
-        c_list.append(c['A'])
-        c_list.append(c['B'])
-        c_list.append(c['C'])
-        c_list.append(c['AB'])
-        c_list.append(c['AC'])
-        c_list.append(c['BC'])
-        c_list.append(c['ABC'])
-        c_list.append(c['A']*c['B'])
-        c_list.append(c['A']*c['C'])
-        c_list.append(c['B']*c['C'])
-        c_list.append(c['C']*c['AB'])
-        c_list.append(c['B']*c['AC'])
-        c_list.append(c['A']*c['BC'])
-        c_list.append(c['A']*c['B']*c['C'])
-        return c_list
 
 def find_max_violation(ineq_index):
     # Create instance, eval, organize output into serial
@@ -187,8 +194,13 @@ def find_max_violation(ineq_index):
 
 @timing
 def main():
-    # pprint(find_max_violation(0))
+    # perm = get_perumation()
+    # ident = reduce(np.dot, (perm,perm,perm,perm,perm,perm))
+    # print(ident)
     # return
+
+    pprint(find_max_violation(8 - 1))
+    return
 
     jc = JobContext(find_max_violation, [[i] for i in range(38)], log_worker=True)
     print("Evaluating...")
