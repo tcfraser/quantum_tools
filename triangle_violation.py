@@ -3,6 +3,7 @@ import numpy as np
 from scipy import optimize, linalg
 from ineqs_loader import get_ineq
 from utils import *
+from quantum_entity_generator import *
 from pprint import pprint
 from time import sleep
 import itertools
@@ -267,7 +268,7 @@ def find_max_violation(ineq_index):
     # for i in range(num_trys_per_job):
     cm = Correlation_Minimizer(
         ineq_index=ineq_index,
-        strat_index=0,
+        strat_index=1,
         local_log=True,
         target_value=5e-2
     )
