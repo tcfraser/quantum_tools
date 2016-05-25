@@ -4,16 +4,17 @@ import math
 from pprint import pprint
 # from timing_profiler import timing
 
-N_CORES = multiprocessing.cpu_count() - 1
-# N_CORES = 1
-PROCESSES_PER_CORE = 1
-
 class JobContext():
 
-    def __init__(self, target_func, target_args, log_worker=False):
+    def __init__(self, target_func, target_args, num_cores=-1, processes_per_core=1, log_worker=False):
         self.num_evals = len(target_args)
         self.target_args = target_args
         self.target_func = target_func
+        if num_cores <= 0:
+            self.num_cores = multiprocessing.cpu_count() - 1
+        else:
+            self.num_cores = min(num_cores, multiprocessing.cpu_count())
+        self.processes_per_core = processes_per_core
         self.log_worker = log_worker
         self.target_results = []
 
@@ -25,7 +26,7 @@ class JobContext():
 
     def evaluate(self):
         out_queue = Queue()
-        num_processes = N_CORES * PROCESSES_PER_CORE
+        num_processes = self.num_cores * self.processes_per_core
         evals_per_process = math.ceil(self.num_evals / num_processes)
         processes = []
 

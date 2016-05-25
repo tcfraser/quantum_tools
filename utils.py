@@ -6,6 +6,7 @@ from functools import reduce
 # === Constants ===
 i = 1j
 mach_tol = 1e-12
+mach_eps = 1e-20
 I2 = np.eye(2)
 I4 = np.eye(4)
 qb0 = np.array([[1], [0]], dtype=complex) # Spin down (ground state)
@@ -86,7 +87,26 @@ def get_maximally_entangled_bell_state(n=0):
     rho = ket_to_dm(psi)
     return rho
 
-def get_psd_herm(t, size, unitary_trace=True):
+def get_psd_herm_ntr(t, size):
+    g = get_psd_herm(t, size)
+    g /= (np.trace(g) + mach_eps)
+    # assert(is_trace_one(groundn)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
+    return g
+
+def get_psd_herm_neig(t, size):
+    g = get_psd_herm(t, size)
+    largest_eig_val = linalg.eigh(g, eigvals_only=True, eigvals=(size-1,size-1))[0]
+    if (largest_eig_val > 1.0):
+            g /= (largest_eig_val + mach_eps)
+    return g
+
+def get_correl_meas(M_y):
+    In = np.eye(M_y.shape[0])
+    M_n = In - M_y
+    dM = M_y - M_n
+    return dM
+
+def get_psd_herm(t, size):
     # James, Kwiat, Munro, and White Physical Review A 64 052312
     # T = np.array([
     #     [      t[0]       ,       0         ,      0        ,   0  ],
@@ -110,9 +130,6 @@ def get_psd_herm(t, size, unitary_trace=True):
                 pass
     Td = T.conj().T
     g = np.dot(Td, T)
-    if unitary_trace:
-        g /= np.trace(g)
-        # assert(is_trace_one(groundn)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
     # assert(is_hermitian(g)), "g not hermitian!"
     # assert(is_psd(g)), "g not positive semi-definite!"
     return g
@@ -134,12 +151,36 @@ def get_meas_on_bloch_sphere(theta,phi):
     sig_u = u_1 * sigx + u_2 * sigy + u_3 * sigz
     return sig_u
 
+def get_two_qubit_diagonal_state(q):
+    return np.cos(np.pi * q) * qb00 + np.sin(np.pi * q) * qb11
+
+def get_tqds_dm(q):
+    return ket_to_dm(get_two_qubit_diagonal_state(q))
+
 def __tests__():
-    print(get_maximally_entangled_bell_state(0))
-    print(get_maximally_entangled_bell_state(1))
-    print(get_maximally_entangled_bell_state(2))
-    print(get_maximally_entangled_bell_state(3))
-    print(get_maximally_entangled_bell_state(4))
+    pass
+    # print(get_maximally_entangled_bell_state(0))
+    # print(get_maximally_entangled_bell_state(1))
+    # print(get_maximally_entangled_bell_state(2))
+    # print(get_maximally_entangled_bell_state(3))
+    # print(get_maximally_entangled_bell_state(4))
+
+    # param = np.random.normal(scale=1.0, size=16)
+    # T_1 = get_psd_herm(param, 4, unitary_trace=True)
+    # # print(T_1)
+    # print(is_hermitian(T_1))
+    # print(is_psd(T_1))
+
+    # T_2 = I4 - T_1
+    # print(is_hermitian(T_2))
+    # print(is_psd(T_2))
+    # # print(T_2)
+    # dT = T_1 - T_2
+    # print(is_hermitian(dT))
+    # print(is_psd(dT))
+    # print(dT)
+
+    # print(get_psd_herm_neig(np.random.normal(scale=10, size=16), 4))
 
 if __name__ == '__main__':
     __tests__()
