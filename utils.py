@@ -101,12 +101,10 @@ class Utils():
     @staticmethod
     def get_permutation():
         perm = np.zeros((64,64), dtype=complex)
-        buffer = np.empty((64,64), dtype=complex)
         for a in list(itertools.product(*[[0,1]]*6)):
             ket = Utils.tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
             bra = Utils.tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
-            np.outer(ket, bra, buffer)
-            perm += buffer
+            perm += np.outer(ket, bra)
         return perm
 
     @staticmethod
@@ -142,6 +140,8 @@ class Utils():
 Utils.v_entropy = np.vectorize(Utils.entropy)
 
 def perform_tests():
+    print(np.__version__)
+    return
     print(Utils.v_entropy(np.array([[0.0, 0.5], [0.5, 0.0]])))
 
 if __name__ == '__main__':
