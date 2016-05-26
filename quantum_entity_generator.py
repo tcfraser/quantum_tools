@@ -32,30 +32,6 @@ def ket_to_dm(ket):
     """ Converts ket vector into density matrix rho """
     return np.outer(ket, ket.conj())
 
-def ei(x):
-    """ Exponential notation for complex numbers """
-    return np.exp(i*x)
-
-def tensor(*args):
-    """ Implementation of tensor or kronecker product for tuple of matrices """
-    return reduce(np.kron, args)
-
-def is_hermitian(A):
-    """ Checks if matrix A is hermitian """
-    return np.array_equal(A, A.conj().T)
-
-def is_psd(A):
-    """ Checks if matrix A is positive semi-definite """
-    return np.all(linalg.eigvals(A) >= -mach_tol)
-
-def is_trace_one(A):
-    """ Checks if matrix A has unitary trace or not """
-    return is_close(np.trace(A), 1)
-
-def is_close(a,b):
-    """ Checks if two numbers are close with respect to a machine tolerance defined above """
-    return abs(a - b) < mach_tol
-
 def get_two_qubit_state(s):
     assert (len(s) == 7), "7 Parameters are needed to form an arbitrary two qubit state."
     state = qb00*s[0] + qb01*s[1]*ei(s[2]) + qb10*s[3]*ei(s[4]) + qb11*s[5]*ei(s[6])
