@@ -269,7 +269,7 @@ def find_max_violation(ineq_index):
     cm = Correlation_Minimizer(
         ineq_index=ineq_index,
         strat_index=1,
-        local_log=True,
+        local_log=False,
         target_value=5e-2
     )
     # cm.minimize()
@@ -307,13 +307,13 @@ def main():
     # print(get_correl_meas(get_tqds_dm(np.pi / 2)))
     # return
 
-    pprint(find_max_violation(8 - 1))
+    # pprint(find_max_violation(8 - 1))
     # find_max_violation(8 - 1)
-    return
+    # return
 
     jc = JobContext(
         target_func=find_max_violation,
-        target_args=[[i] for i in range(38)],
+        target_args=[[i] for i in range(10)],
         log_worker=True,
         num_cores=2,
     )

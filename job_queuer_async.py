@@ -36,10 +36,9 @@ def f(a,b,c):
     return a - b * c
 
 def main():
-    jc = JobContext(f, [[1,2,3], [2,3,4], [3,4,5], [3, 4, 5], [3, 4, 11]])
+    jc = JobContext(f, [[1,2,3], [2,3,4], [3,4,9], [3, 4, 5], [3, 4, 11]])
     jc.evaluate()
-    for result in jc.target_results:
-        print(result)
+    print(jc.target_results)
 
 if __name__ == '__main__':
     main()

@@ -3,6 +3,10 @@ import numpy as np
 from scipy import linalg
 from functools import reduce
 from utils import *
+from timing_profiler import timing
+
+# === Configure ===
+np.set_printoptions(precision=3, linewidth=120, suppress=True)
 
 # === Constants ===
 i = 1j
@@ -101,6 +105,14 @@ def get_correl_meas(M_y):
     dM = M_y - M_n
     return dM
 
+# @timing
+def pvms(t, size):
+    g = cholesky(t, size)
+    eigen_values, eigen_vectors = linalg.eigh(g)
+    density_matrices = [ket_to_dm(eigen_vectors[:,i]) for i in range(size)]
+    return density_matrices
+    # return sum(density_matrices)
+
 def cholesky(t, size):
     # James, Kwiat, Munro, and White Physical Review A 64 052312
     # T = np.array([
@@ -153,7 +165,7 @@ def get_tqds_dm(q):
     return ket_to_dm(get_two_qubit_diagonal_state(q))
 
 def __tests__():
-    pass
+    print(pvms(np.random.random(16), 4))
     # print(get_maximally_entangled_bell_state(0))
     # print(get_maximally_entangled_bell_state(1))
     # print(get_maximally_entangled_bell_state(2))
@@ -176,6 +188,7 @@ def __tests__():
     # print(dT)
 
     # print(get_psd_herm_neig(np.random.normal(scale=10, size=16), 4))
+    pass
 
 if __name__ == '__main__':
     __tests__()
