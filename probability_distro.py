@@ -95,6 +95,12 @@ class ProbDistro():
         cpd = ProbDistro.from_cached_support(norm_sub_cached_support)
         return cpd
 
+    def entropy(self, *args):
+        return entropy(self, *args)
+
+    def mutual_information(self, *args):
+        return mutual_information(self, *args)
+
     def marginal(self, on):
         on_set = Utils.en_set(on)
         assert(on_set.issubset(self._variable_set))
@@ -191,12 +197,14 @@ def perform_tests():
     print(pd2)
     print(pd2.marginal(on=0))
     print(pd2.marginal(on=(0,1)))
+    print(pd2.marginal(on=(0,1)).entropy())
     print(entropy(pd2.marginal(on=(0,1))))
-    print(entropy(pd2, on=(0,1)))
-    print(entropy(pd2.marginal(on=None)))
-    print(entropy(pd2))
-    print(entropy(pd2.marginal(on=1)))
-    print(entropy(pd2, on=1))
+    print(pd1.marginal(on=(0)).mutual_information(0,1))
+    # print(pd2, on=(0,1))
+    # print(pd2.marginal(on=None))
+    # print(pd2)
+    # print(pd2.marginal(on=1))
+    # print(pd2, on=1)
     # print(mutual_information(pd2, 0,(0,1)))
     # print(entropy(pd2))
     # print(entropy(pd2.marginal(on=0)))

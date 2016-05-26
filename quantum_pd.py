@@ -9,25 +9,30 @@ from state import State
 from timing_profiler import timing
 import global_config
 
-def QuantumProbDistro(measurements, states, permutation=None):
-    num_measurements = len(measurements)
-    num_states = len(states)
-    num_outcomes_per_measurement = max(m.num_outcomes for m in measurements)
-    if permutation is not None:
-        permutationT = permutation.T
+class QuantumContext():
 
+    def __init__(self, measurements, states, permutation=None):
+        self.measurements = measurements
+        self.states = states
+        self.permutation = permutation
+        self.permutationT = permutation.T if permutation is not None else None
+        self.num_measurements = len(measurements)
+        self.num_states = len(states)
+        self.num_outcomes_per_measurement = max(m.num_outcomes for m in measurements)
+
+def QuantumProbDistro(qc):
     def pdf(*args):
-        measurement_operators = [measurements[posn][val] for posn, val in enumerate(args)]
+        measurement_operators = [qc.measurements[posn][val] for posn, val in enumerate(args)]
         joint_measurement = Utils.tensor(*measurement_operators)
-        joint_state = Utils.tensor(*tuple(s.data for s in states))
-        if permutation is not None:
-            joint_state = Utils.multiply(permutationT, joint_state, permutation)
+        joint_state = Utils.tensor(*tuple(s.data for s in qc.states))
+        if qc.permutation is not None:
+            joint_state = Utils.multiply(qc.permutationT, joint_state, qc.permutation)
 
         p = np.trace(Utils.multiply(joint_state, joint_measurement))
         assert(Utils.is_small(p.imag))
         return p.real
 
-    pd = ProbDistro.from_callable_support(pdf, num_outcomes=num_outcomes_per_measurement, num_variables=num_measurements)
+    pd = ProbDistro.from_callable_support(pdf, num_outcomes=qc.num_outcomes_per_measurement, num_variables=qc.num_measurements)
     return pd
 
 @timing
@@ -43,7 +48,8 @@ def perform_tests():
     rhoAC = State.dm(np.random.random(16))
     perm = Utils.get_permutation()
 
-    qpd = QuantumProbDistro(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
+    qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
+    qpd = QuantumProbDistro(qc)
     print(qpd)
     print(mutual_information(qpd, 2, 1))
     print(mutual_information(qpd, 2, 0))
