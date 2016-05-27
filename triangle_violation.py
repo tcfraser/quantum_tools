@@ -266,7 +266,7 @@ def find_max_violation(ineq_index):
     # Create instance, eval, organize output into serial
     # cm_dict_list = []
     # for i in range(num_trys_per_job):
-    get_ineq(ineq_index)
+    # get_ineq(ineq_index)
     cm = Correlation_Minimizer(
         ineq_index=ineq_index,
         strat_index=1,
