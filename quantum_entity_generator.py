@@ -60,12 +60,11 @@ def get_two_qubit_state(s):
 
 def get_perumation():
     perm = np.zeros((64,64), dtype=complex)
-    buffer = np.empty((64,64), dtype=complex)
+    # buffer = np.empty((64,64), dtype=complex)
     for a in list(itertools.product(*[[0,1]]*6)):
         ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
         bra = tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
-        np.outer(ket, bra, buffer)
-        perm += buffer
+        perm += np.outer(ket, bra)
     return perm
 
 def get_maximally_entangled_bell_state(n=0):
