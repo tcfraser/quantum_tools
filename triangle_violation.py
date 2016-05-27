@@ -309,9 +309,9 @@ def main():
     # print(get_correl_meas(get_tqds_dm(np.pi / 2)))
     # return
 
-    # pprint(find_max_violation(8 - 1))
+    pprint(find_max_violation(8 - 1))
     # find_max_violation(8 - 1)
-    # return
+    return
 
     jc = JobContext(
         target_func=find_max_violation,
