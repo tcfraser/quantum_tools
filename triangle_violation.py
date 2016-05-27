@@ -240,6 +240,7 @@ class Correlation_Minimizer():
         self.__solved__ = True
         self.log("Solved")
         self.context = self.strat.get_context(self.best_objective_result_param)
+        print(self.best_objective_result)
 
     def get_exploded_correlator(self, param):
         A, B, C, X, Y, Z = self.strat.get_context(param)
