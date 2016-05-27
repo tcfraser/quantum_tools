@@ -1,7 +1,9 @@
+from __future__ import print_function, division
 import numpy as np
 from scipy import linalg
 from constants import *
 from functools import reduce
+from operator import mul
 import itertools
 
 class Utils():
@@ -18,7 +20,7 @@ class Utils():
     @staticmethod
     def multiply(*args):
         """ Implementation of multi dot product between matrices """
-        return reduce(np.dot, args)
+        return reduce(mul, args)
 
     @staticmethod
     def is_hermitian(A):
@@ -136,6 +138,25 @@ class Utils():
         # assert(is_hermitian(g)), "g not hermitian!"
         # assert(is_psd(g)), "g not positive semi-definite!"
         return g
+
+    @staticmethod
+    def get_meas_on_bloch_sphere(theta,phi):
+        psi = np.cos(theta) * qb0 + np.sin(theta) * Utils.ei(phi) * qb1
+        dm = Utils.ket_to_dm(psi)
+        return dm
+
+    @staticmethod
+    def get_orthogonal_pair(t):
+        theta = t[0]
+        phi = t[1]
+        psi_1 = np.cos(theta) * qb0 - np.sin(theta) * Utils.ei(phi) * qb1
+        psi_2 = np.sin(theta) * qb0 + np.cos(theta) * Utils.ei(phi) * qb1
+        dm_1 = Utils.ket_to_dm(psi_1)
+        dm_2 = Utils.ket_to_dm(psi_2)
+        # print(dm_1)
+        # print(dm_2)
+        # print(dm_1 + dm_2)
+        return dm_1, dm_2
 
 Utils.v_entropy = np.vectorize(Utils.entropy)
 

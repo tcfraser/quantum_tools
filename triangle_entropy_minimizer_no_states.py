@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 import numpy as np
 from minimizer import Minimizer
 from utils import Utils
@@ -10,7 +9,7 @@ from quantum_pd import QuantumContext, QuantumProbDistro
 class TEM(Minimizer):
 
     def __init__(self):
-        Minimizer.__init__(self, [6,6,6,16,16,16])
+        super().__init__([6,6,6])
         self.local_log=True
         self.permutation = Utils.get_permutation()
 
@@ -18,13 +17,13 @@ class TEM(Minimizer):
         return np.random.normal(scale=10.0, size=self.mem_size)
 
     def get_context(self, param):
-        pA, pB, pC, prhoAB, prhoBC, prhoAC = self.mem_slots
+        pA, pB, pC = self.mem_slots
         A = Measurement.sbs(param[pA])
         B = Measurement.sbs(param[pB])
         C = Measurement.sbs(param[pC])
-        rhoAB = State.dm(param[prhoAB])
-        rhoBC = State.dm(param[prhoBC])
-        rhoAC = State.dm(param[prhoAC])
+        rhoAB = State.mebs(2)
+        rhoBC = State.mebs(0)
+        rhoAC = State.mebs(0)
 
         qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=self.permutation)
         return qc
@@ -38,10 +37,10 @@ class TEM(Minimizer):
 
         IAB = pd.mutual_information(0,1)
         IAC = pd.mutual_information(0,2)
-        HA = pd.entropy((1,2))
+        HA = pd.entropy(0)
 
         target = HA - IAB - IAC
-        print(IAB, IAC, HA, target)
+        # print(IAB, IAC, HA, target)
         return target
 
 def run_minimizer():

@@ -1,6 +1,7 @@
 """
 Contains the abstract class of a probability distrobution and associated marginals.
 """
+from __future__ import print_function, division
 import inspect
 import numpy as np
 import itertools
@@ -126,11 +127,12 @@ class ProbDistro():
         #     mpd = mpd.cache_support()
 
     def __str__(self):
-        fs = "{outcome} → {probability}"
+        fs = "{outcome} -> {probability}"
         print_list = []
         print_list.append(self.__repr__())
         print_list.append("Outcomes Per Variable: {0}".format(self._num_outcomes))
         print_list.append("Number of Variables: {0}".format(self._num_variables))
+        print_list.append("Total Outcomes: {0}".format(self._num_variables**self._num_outcomes))
         if self._has_cached_support:
             print_list.append("Cached Support")
         else:
@@ -142,11 +144,12 @@ class ProbDistro():
 
 def pd_c(pd, u):
     u_set = Utils.en_set(u)
+    assert(u.issubset(pd._variable_set))
     return pd._variable_set.difference(u_set)
 
-def entropy(pd, u=None):
-    u = Utils.en_set(u)
-    mpd = pd.marginal(pd_c(pd, u))
+def entropy(pd, on=None):
+    on = Utils.en_set(on)
+    mpd = pd.marginal(on)
     mpd.cache_support(in_place=True)
     entropy_array = Utils.v_entropy(mpd._cached_support)
     entropy_val = np.sum(entropy_array)
@@ -156,12 +159,15 @@ def mutual_information(pd, u, v):
     u = Utils.en_set(u)
     v = Utils.en_set(v)
     uv = u.union(v)
-    assert(not u.intersection(v))
+    # assert(not u.intersection(v))
     # assert(not cu.intersection(cv))
-    uv_entropy = entropy(pd, uv)
-    u_entropy = entropy(pd, u)
-    v_entropy = entropy(pd, v)
-    return u_entropy + v_entropy - uv_entropy
+    H_uv = pd.marginal(pd_c(pd, uv)).entropy()
+    H_u  = pd.marginal(pd_c(pd, u)).entropy()
+    H_v  = pd.marginal(pd_c(pd, v)).entropy()
+    # print(u, v, uv)
+    # print(pd_c(pd, u), pd_c(pd, v), pd_c(pd, uv))
+    # print(H_uv, H_u, H_v)
+    return H_u + H_v - H_uv
 
 def perform_tests():
     # if a,b,c are bits, there are 2**3 = 8 outcomes
@@ -173,10 +179,10 @@ def perform_tests():
     #   1  |  1  |  0  ||  1/2
     #   0  |  0  |  1  ||  0
     #   0  |  1  |  1  ||  1/12
-    #   1  |  0  |  1  ||  0
-    #   1  |  1  |  1  ||  1/12
+    #   1  |  0  |  1  ||  1/12
+    #   1  |  1  |  1  ||  0
     def demo_distro(a,b,c):
-        if (b == c == 1):
+        if (a == c == 1):
             return 1/12
         elif (a == b == c == 0):
             return 1/3
@@ -194,12 +200,20 @@ def perform_tests():
     # print(pd1)
     # print(pd6)
     # print(pd6.entropy())
-    print(pd2)
-    print(pd2.marginal(on=0))
-    print(pd2.marginal(on=(0,1)))
-    print(pd2.marginal(on=(0,1)).entropy())
-    print(entropy(pd2.marginal(on=(0,1))))
-    print(pd1.marginal(on=(0)).mutual_information(0,1))
+    # print(pd2)
+    # print(pd2.marginal(on=0))
+    # print(pd2.marginal(on=(0,1)))
+    # print(pd2.marginal(on=(0,1)).entropy())
+    # print(entropy(pd2.marginal(on=(0,1))))
+    # print(pd1.marginal(on=(0)).mutual_information(0,1))
+    print(pd1.mutual_information(1,2))
+    print(pd1.mutual_information(1,1))
+    print(pd1.marginal((0,2)).entropy())
+    # # print(pd1.marginal((0,2)).entropy())
+    # print(pd1.marginal((0,1)).entropy())
+    # print(pd1.mutual_information(0,1))
+    # print(pd1.mutual_information(0,2))
+    # print(pd1.mutual_information(0,3))
     # print(pd2, on=(0,1))
     # print(pd2.marginal(on=None))
     # print(pd2)

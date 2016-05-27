@@ -1,6 +1,7 @@
 """
 Methods used to take a set of states and measurements and determine a probabilty distribution from it.
 """
+from __future__ import print_function, division
 from probability_distro import ProbDistro, mutual_information, entropy
 from utils import Utils
 import numpy as np
@@ -40,21 +41,49 @@ def perform_tests():
     # print(Measurement.pvms(np.random.random(16), 4))
     # print(Measurement.pvms(np.random.random(4), 2))
     # print(State.dm(np.random.random(16), 4))
-    A = Measurement.pvms(np.random.random(16))
-    B = Measurement.pvms(np.random.random(16))
-    C = Measurement.pvms(np.random.random(16))
-    rhoAB = State.dm(np.random.random(16))
-    rhoBC = State.dm(np.random.random(16))
-    rhoAC = State.dm(np.random.random(16))
-    perm = Utils.get_permutation()
+    # A = Measurement.pvms(np.random.random(16))
+    # B = Measurement.pvms(np.random.random(16))
+    # C = Measurement.pvms(np.random.random(16))
+    # rhoAB = State.dm(np.random.random(16))
+    # rhoBC = State.dm(np.random.random(16))
+    # rhoAC = State.dm(np.random.random(16))
+    # perm = Utils.get_permutation()
 
-    qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
-    qpd = QuantumProbDistro(qc)
-    print(qpd)
-    print(mutual_information(qpd, 2, 1))
-    print(mutual_information(qpd, 2, 0))
-    print(entropy(qpd, (1,0)))
+    # qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
+    # qpd = QuantumProbDistro(qc)
+    # print(qpd)
+    # print(mutual_information(qpd, 2, 1))
+    # print(mutual_information(qpd, 2, 0))
+    # print(entropy(qpd, (1,0)))
     # print(entropy(qpd, (1,2)))
+
+    # === Fritz ===
+    perm = Utils.get_permutation()
+    rhoAB = State.mebs(2)
+    rhoAC = State.mebs(0)
+    rhoBC = State.mebs(0)
+
+    A = B = Measurement.sbs([
+        0, 0,
+        np.pi/4, 0,
+        3*np.pi/4, 0,
+        ])
+
+    C = Measurement.sbs([
+        0, 0,
+        0, 0,
+        0, 0,
+        ])
+    qcfritz = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
+    qpdfritz = QuantumProbDistro(qcfritz)
+    IAB = qpdfritz.mutual_information(0,1)
+    IAC = qpdfritz.mutual_information(0,2)
+    HA = qpdfritz.entropy((1,2))
+
+    print(IAB, IAC, HA, HA - IAC - IAB)
+    print(entropy(qpdfritz, (1,0)))
+
+
 
 if __name__ == '__main__':
     perform_tests()

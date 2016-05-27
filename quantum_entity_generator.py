@@ -1,3 +1,4 @@
+from __future__ import print_function, division
 import itertools
 import numpy as np
 from scipy import linalg
@@ -12,41 +13,15 @@ np.set_printoptions(precision=3, linewidth=120, suppress=True)
 i = 1j
 mach_tol = 1e-12
 mach_eps = 1e-20
-I2 = np.eye(2)
-I4 = np.eye(4)
-qb0 = np.array([[1], [0]], dtype=complex) # Spin down (ground state)
-qb1 = np.array([[0], [1]], dtype=complex) # Spin up (excited state)
-qbs = np.array([qb0, qb1])
-qb00 = np.kron(qb0, qb0)
-qb01 = np.kron(qb0, qb1)
-qb10 = np.kron(qb1, qb0)
-qb11 = np.kron(qb1, qb1)
-sigx = np.array([[0,1],[1,0]])
-sigy = np.array([[0,-i],[i,0]])
-sigz = np.array([[1,0],[0,-1]])
-tqbs = np.array([qb00, qb01, qb10, qb11])
 
 # === Entity Generators ===
 
-def ket_to_dm(ket):
-    """ Converts ket vector into density matrix rho """
-    return np.outer(ket, ket.conj())
 
 def get_two_qubit_state(s):
     assert (len(s) == 7), "7 Parameters are needed to form an arbitrary two qubit state."
     state = qb00*s[0] + qb01*s[1]*ei(s[2]) + qb10*s[3]*ei(s[4]) + qb11*s[5]*ei(s[6])
     normalize(state)
     return state
-
-def get_perumation():
-    perm = np.zeros((64,64), dtype=complex)
-    buffer = np.empty((64,64), dtype=complex)
-    for a in list(itertools.product(*[[0,1]]*6)):
-        ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
-        bra = tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
-        np.outer(ket, bra, buffer)
-        perm += buffer
-    return perm
 
 def get_maximally_entangled_bell_state(n=0):
     n = n % 4
@@ -83,10 +58,6 @@ def get_correl_meas(M_y):
 
 # @timing
 def pvms(t, size):
-    g = cholesky(t, size)
-    eigen_values, eigen_vectors = linalg.eigh(g)
-    density_matrices = [ket_to_dm(eigen_vectors[:,i]) for i in range(size)]
-    return density_matrices
     # return sum(density_matrices)
 
 def cholesky(t, size):
