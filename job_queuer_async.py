@@ -15,7 +15,8 @@ class JobContext():
             self.num_cores_requested = multiprocessing.cpu_count() - 1
         else:
             self.num_cores_requested = min(num_cores, multiprocessing.cpu_count())
-        self.num_cores_needed = min(self.num_evals / self.processes_per_core, self.num_cores_requested)
+        self.num_cores_needed = int(min(self.num_evals / self.processes_per_core,
+                                        self.num_cores_requested))
         print("JobContext requested {0} cores.".format(self.num_cores_requested))
         print("JobContext using {0} cores.".format(self.num_cores_needed))
         self.log_worker = log_worker
