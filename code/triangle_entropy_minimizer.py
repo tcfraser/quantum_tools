@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 import numpy as np
-from ..code.minimizer import Minimizer
+from minimizer import Minimizer
 from utils import Utils
 import global_config
 from measurement import Measurement
@@ -19,9 +19,9 @@ class TEM(Minimizer):
 
     def get_context(self, param):
         pA, pB, pC, prhoAB, prhoBC, prhoAC = self.mem_slots
-        A = Measurement.sbs(param[pA])
-        B = Measurement.sbs(param[pB])
-        C = Measurement.sbs(param[pC])
+        A = Measurement.pvms(param[pA])
+        B = Measurement.pvms(param[pB])
+        C = Measurement.pvms(param[pC])
         rhoAB = State.dm(param[prhoAB])
         rhoBC = State.dm(param[prhoBC])
         rhoAC = State.dm(param[prhoAC])

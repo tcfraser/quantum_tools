@@ -12,10 +12,10 @@ import global_config
 class Measurement(RandomVariable):
 
     def __init__(self, name, operators):
-        super(RandomVariable, self).__init__(name, len(self._operators))
         self._operators = [np.matrix(o) for o in operators]
-        # The size of the matrix associated with this measurement.
         self._size = self._operators[0].shape[0]
+        super(Measurement, self).__init__(name, len(self._operators))
+        # The size of the matrix associated with this measurement.
 
     def __getitem__(self, key):
         return self._operators[key]
@@ -35,11 +35,30 @@ class Measurement(RandomVariable):
         return '\n'.join(print_list)
 
     @staticmethod
-    def pvms(t, name):
+    def pvms(name, t):
         g = Utils.cholesky(t)
         eigen_values, eigen_vectors = linalg.eigh(g)
         density_matrices = [Utils.ket_to_dm(eigen_vectors[:,i]) for i in range(eigen_values.shape[0])]
         m = Measurement(name, density_matrices)
+        return m
+
+    @staticmethod
+    def proj_comp(name, size):
+        matrices = []
+        for i in range(size):
+            q = np.zeros((size, size))
+            q[i, i] = 1
+            matrices.append(q)
+        m = Measurement(name, matrices)
+        return m
+
+    @staticmethod
+    def deterministic(name, size):
+        I = np.identity(4)
+        matrices = [I]
+        for i in range(size - 1):
+            matrices.append(np.zeros((size, size)))
+        m = Measurement(name, matrices)
         return m
 
     # @staticmethod

@@ -1,11 +1,12 @@
 """
-Methods used to take a set of states and measurements and determine a probabilty distribution from it.
+Methods used to take a set of states and measurements and determine a probability distribution from it.
 """
 from __future__ import print_function, division
-from probability_distro import ProbDistro, mutual_information, entropy
+from probability import ProbDist
 from utils import Utils
 import numpy as np
 from measurement import Measurement
+from variable import RandomVariableCollection
 from state import State
 from timing_profiler import timing
 import global_config
@@ -13,7 +14,7 @@ import global_config
 class QuantumContext():
 
     def __init__(self, measurements, states, permutation=None):
-        self.measurements = measurements
+        self.measurements = RandomVariableCollection(measurements)
         self.states = states
         self.permutation = permutation
         self.permutationT = permutation.T if permutation is not None else None
@@ -33,7 +34,7 @@ def QuantumProbDistro(qc):
         assert(Utils.is_small(p.imag))
         return p.real
 
-    pd = ProbDistro.from_callable_support(pdf, num_outcomes=qc.num_outcomes_per_measurement, num_variables=qc.num_measurements)
+    pd = ProbDist.from_callable_support(qc.measurements, pdf)
     return pd
 
 @timing
@@ -41,9 +42,6 @@ def perform_tests():
     # print(Measurement.pvms(np.random.random(16), 4))
     # print(Measurement.pvms(np.random.random(4), 2))
     # print(State.dm(np.random.random(16), 4))
-    # A = Measurement.pvms(np.random.random(16))
-    # B = Measurement.pvms(np.random.random(16))
-    # C = Measurement.pvms(np.random.random(16))
     # rhoAB = State.dm(np.random.random(16))
     # rhoBC = State.dm(np.random.random(16))
     # rhoAC = State.dm(np.random.random(16))
@@ -59,31 +57,58 @@ def perform_tests():
 
     # === Fritz ===
     perm = Utils.get_permutation()
-    rhoAB = State.mebs(2)
-    rhoAC = State.mebs(0)
-    rhoBC = State.mebs(0)
+    # A = Measurement.pvms('A', np.random.random(16))
+    # B = Measurement.pvms('B', np.random.random(16))
+    # C = Measurement.pvms('C', np.random.random(16))
+    # A = Measurement.proj_comp('A',4)
+    # B = Measurement.proj_comp('B',4)
+    # C = Measurement.proj_comp('C',4)
+    A = Measurement.deterministic('A',4)
+    B = Measurement.deterministic('B',4)
+    C = Measurement.deterministic('C',4)
+    rhoAB = State.dm(np.random.random(16))
+    rhoAC = State.dm(np.random.random(16))
+    rhoBC = State.dm(np.random.random(16))
 
-    A = B = Measurement.sbs([
-        0, 0,
-        np.pi/4, 0,
-        3*np.pi/4, 0,
-        ])
+    # A = B = Measurement.sbs([
+    #     0, 0,
+    #     np.pi/4, 0,
+    #     3*np.pi/4, 0,
+    #     ])
 
-    C = Measurement.sbs([
-        0, 0,
-        0, 0,
-        0, 0,
-        ])
+    # C = Measurement.sbs([
+    #     0, 0,
+    #     0, 0,
+    #     0, 0,
+    #     ])
     qcfritz = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
     qpdfritz = QuantumProbDistro(qcfritz)
-    IAB = qpdfritz.mutual_information(0,1)
-    IAC = qpdfritz.mutual_information(0,2)
-    HA = qpdfritz.entropy((1,2))
+    # IAB = qpdfritz.mutual_information(['A', 'B'])
+    # IAC = qpdfritz.mutual_information(['A', 'C'])
+    # HA = qpdfritz.entropy('A')
 
-    print(IAB, IAC, HA, HA - IAC - IAB)
-    print(entropy(qpdfritz, (1,0)))
+    # print(IAB, IAC, HA, HA - IAC - IAB)
+    print(HLP1(qpdfritz))
+    print(HLP2(qpdfritz))
+    print(HLP1(qpdfritz))
 
+def HLP3(PD):
+    H = PD.H
+    I = PD.I
+    result = H(['A', 'B']) - I(['A', 'B', 'C']) + I(['A', 'B']) + I(['B', 'C']) + I(['C', 'A'])
+    return result
 
+def HLP2(PD):
+    H = PD.H
+    I = PD.I
+    result = H('A') + H('B') + H('C') - 2 * (I(['A', 'B', 'C']) + I(['A', 'B']) + I(['B', 'C']) + I(['C', 'A']))
+    return result
+
+def HLP1(PD):
+    H = PD.H
+    I = PD.I
+    result = H('A') - I(['A', 'B']) - I(['A', 'C'])
+    return result
 
 if __name__ == '__main__':
     perform_tests()

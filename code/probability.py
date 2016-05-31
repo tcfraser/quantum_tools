@@ -71,6 +71,9 @@ class ProbDist():
             marginal_pd = ProbDist(rvc, marginal_support)
             return marginal_pd
 
+    def H(self, *args):
+        return self.entropy(*args)
+
     def entropy(self, X_names, Y_names=()):
         X = self._rvc.sub(*X_names)
         Y = self._rvc.sub(*Y_names)
@@ -84,6 +87,9 @@ class ProbDist():
         H_Y = Utils.entropy(p_Y._support)
         # Chain rule H(X|Y) = H(Y, X) - H(Y)
         return H_XY - H_Y
+
+    def I(self, *args):
+        return self.mutual_information(*args)
 
     def mutual_information(self, Xs_names, Y_names=[]):
         Xs = tuple(self._rvc.sub(*X_names) for X_names in Xs_names)
