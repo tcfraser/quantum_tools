@@ -240,7 +240,6 @@ class Correlation_Minimizer():
         self.__solved__ = True
         self.log("Solved")
         self.context = self.strat.get_context(self.best_objective_result_param)
-        print(self.best_objective_result)
 
     def get_exploded_correlator(self, param):
         A, B, C, X, Y, Z = self.strat.get_context(param)
@@ -267,7 +266,6 @@ def find_max_violation(ineq_index):
     # Create instance, eval, organize output into serial
     # cm_dict_list = []
     # for i in range(num_trys_per_job):
-    print(get_ineq(ineq_index))
     cm = Correlation_Minimizer(
         ineq_index=ineq_index,
         strat_index=1,
@@ -310,14 +308,14 @@ def main():
     # return
 
     # pprint(find_max_violation(8 - 1))
-    # # find_max_violation(8 - 1)
+    # find_max_violation(8 - 1)
     # return
 
     jc = JobContext(
         target_func=find_max_violation,
-        target_args=[[i] for i in range(38)],
+        target_args=[[i] for i in range(10)],
         log_worker=True,
-        num_cores=-1,
+        num_cores=2,
     )
     print("Evaluating...")
     jc.evaluate()

@@ -1,71 +1,27 @@
+from __future__ import print_function, division
 import itertools
 import numpy as np
 from scipy import linalg
 from functools import reduce
 from utils import *
+from timing_profiler import timing
+
+# === Configure ===
+np.set_printoptions(precision=3, linewidth=120, suppress=True)
 
 # === Constants ===
 i = 1j
 mach_tol = 1e-12
 mach_eps = 1e-20
-I2 = np.eye(2)
-I4 = np.eye(4)
-qb0 = np.array([[1], [0]], dtype=complex) # Spin down (ground state)
-qb1 = np.array([[0], [1]], dtype=complex) # Spin up (excited state)
-qbs = np.array([qb0, qb1])
-qb00 = np.kron(qb0, qb0)
-qb01 = np.kron(qb0, qb1)
-qb10 = np.kron(qb1, qb0)
-qb11 = np.kron(qb1, qb1)
-sigx = np.array([[0,1],[1,0]])
-sigy = np.array([[0,-i],[i,0]])
-sigz = np.array([[1,0],[0,-1]])
-tqbs = np.array([qb00, qb01, qb10, qb11])
 
 # === Entity Generators ===
 
-def ket_to_dm(ket):
-    """ Converts ket vector into density matrix rho """
-    return np.outer(ket, ket.conj())
-
-def ei(x):
-    """ Exponential notation for complex numbers """
-    return np.exp(i*x)
-
-def tensor(*args):
-    """ Implementation of tensor or kronecker product for tuple of matrices """
-    return reduce(np.kron, args)
-
-def is_hermitian(A):
-    """ Checks if matrix A is hermitian """
-    return np.array_equal(A, A.conj().T)
-
-def is_psd(A):
-    """ Checks if matrix A is positive semi-definite """
-    return np.all(linalg.eigvals(A) >= -mach_tol)
-
-def is_trace_one(A):
-    """ Checks if matrix A has unitary trace or not """
-    return is_close(np.trace(A), 1)
-
-def is_close(a,b):
-    """ Checks if two numbers are close with respect to a machine tolerance defined above """
-    return abs(a - b) < mach_tol
 
 def get_two_qubit_state(s):
     assert (len(s) == 7), "7 Parameters are needed to form an arbitrary two qubit state."
     state = qb00*s[0] + qb01*s[1]*ei(s[2]) + qb10*s[3]*ei(s[4]) + qb11*s[5]*ei(s[6])
     normalize(state)
     return state
-
-def get_perumation():
-    perm = np.zeros((64,64), dtype=complex)
-    # buffer = np.empty((64,64), dtype=complex)
-    for a in list(itertools.product(*[[0,1]]*6)):
-        ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
-        bra = tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
-        perm += np.outer(ket, bra)
-    return perm
 
 def get_maximally_entangled_bell_state(n=0):
     n = n % 4
@@ -99,6 +55,10 @@ def get_correl_meas(M_y):
     M_n = In - M_y
     dM = M_y - M_n
     return dM
+
+# @timing
+def pvms(t, size):
+    # return sum(density_matrices)
 
 def cholesky(t, size):
     # James, Kwiat, Munro, and White Physical Review A 64 052312
@@ -152,7 +112,7 @@ def get_tqds_dm(q):
     return ket_to_dm(get_two_qubit_diagonal_state(q))
 
 def __tests__():
-    pass
+    print(pvms(np.random.random(16), 4))
     # print(get_maximally_entangled_bell_state(0))
     # print(get_maximally_entangled_bell_state(1))
     # print(get_maximally_entangled_bell_state(2))
@@ -175,6 +135,7 @@ def __tests__():
     # print(dT)
 
     # print(get_psd_herm_neig(np.random.normal(scale=10, size=16), 4))
+    pass
 
 if __name__ == '__main__':
     __tests__()
