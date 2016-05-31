@@ -90,7 +90,7 @@ def perform_tests():
     # print(IAB, IAC, HA, HA - IAC - IAB)
     print(HLP1(qpdfritz))
     print(HLP2(qpdfritz))
-    print(HLP1(qpdfritz))
+    print(HLP3(qpdfritz))
 
 def HLP3(PD):
     H = PD.H

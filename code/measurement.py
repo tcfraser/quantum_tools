@@ -61,6 +61,10 @@ class Measurement(RandomVariable):
         m = Measurement(name, matrices)
         return m
 
+    @staticmethod
+    def seesaw(name, size):
+
+
     # @staticmethod
     # def povms(t, number):
     #     pass
