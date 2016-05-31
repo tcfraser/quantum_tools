@@ -65,11 +65,15 @@ class Utils():
         return np.outer(ket, ket.conj())
 
     @staticmethod
-    def entropy(x):
+    def v_entropy(x):
         if x != 0.0:
             return -x*np.log2(x)
         else:
             return 0.0
+
+    @staticmethod
+    def entropy(x):
+        return np.sum(Utils.v_entropy(x))
 
     @staticmethod
     def en_tuple(tup):
@@ -158,7 +162,7 @@ class Utils():
         # print(dm_1 + dm_2)
         return dm_1, dm_2
 
-Utils.v_entropy = np.vectorize(Utils.entropy)
+Utils.v_entropy = np.vectorize(Utils.v_entropy)
 
 def perform_tests():
     print(np.__version__)

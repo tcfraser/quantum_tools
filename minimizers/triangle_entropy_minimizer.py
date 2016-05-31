@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 import numpy as np
-from minimizer import Minimizer
+from ..code.minimizer import Minimizer
 from utils import Utils
 import global_config
 from measurement import Measurement
@@ -10,7 +10,7 @@ from quantum_pd import QuantumContext, QuantumProbDistro
 class TEM(Minimizer):
 
     def __init__(self):
-        Minimizer.__init__(self, [6,6,6,16,16,16])
+        Minimizer.__init__(self, [16,16,16,16,16,16])
         self.local_log=True
         self.permutation = Utils.get_permutation()
 
