@@ -19,7 +19,7 @@ class ProbDist():
     @staticmethod
     def from_callable_support(rvc, callable_support):
         array_dims = tuple(rv.num_outcomes for rv in rvc)
-        print(array_dims)
+        # print(array_dims)
         support = np.zeros(array_dims)
         for index, _ in np.ndenumerate(support):
             support[index] = callable_support(*index)
@@ -143,6 +143,7 @@ def perform_tests():
     print(pd)
     print(pd.condition({'A': 1}))
     print(pd.prob({'A': 1, 'B': 0}))
+    print(pd.prob({}))
     # print(pd.marginal(['A']))
     # print(pd.entropy(['A']))
     # print(pd.entropy('A'))

@@ -16,12 +16,12 @@ class Minimizer():
         self.best_objective_result = np.inf
         self.best_objective_result_param = None
         self.string_logs = []
-        self.target_value = 0
+        self.target_value = 0.01
         self.local_log = False
-        self.stepsize = 1e4
-        self.tolerance = 1e-2
+        self.stepsize = 10
+        self.tolerance = 1e-3
         self._num_evals = 0
-        self.max_evals = 1
+        self.max_evals = 5
         self.mem_loc = mem_loc
         self.mem_slots = Utils.gen_memory_slots(self.mem_loc)
         self.mem_size = sum(self.mem_loc)
@@ -32,7 +32,7 @@ class Minimizer():
             log_item = log_item.format(*args)
         if self.local_log:
             pprint(log_item)
-        self.string_logs.append([log_item])
+        self.string_logs.append(log_item)
 
     def _basin_hopping_callback(self, param, objective_res, accept):
         self.log("BH Step result: {0}", objective_res)
@@ -41,15 +41,23 @@ class Minimizer():
         if (objective_res < self.best_objective_result):
             self.best_objective_result = objective_res
             self.best_objective_result_param = param
-            self.log("New Best Objective Result: {0}", objective_res)
+            self.log("New Best Objective Result: {0}", self.best_objective_result)
         reached_target = (objective_res <= self.target_value)
         hit_max_iters = (self._num_evals >= self.max_evals)
         should_terminate = reached_target or hit_max_iters
+        if reached_target:
+            self.log("Reached target.")
+        if hit_max_iters:
+            self.log("Hit max iterations.")
         return should_terminate
 
     def _minimize_callback(self, param):
         objective_res = self.objective(param)
         self.log("Minimize Step result: {0}", objective_res)
+        if (objective_res < self.best_objective_result):
+            self.best_objective_result = objective_res
+            self.best_objective_result_param = param
+            self.log("New Best Objective Result: {0}", self.best_objective_result)
 
     def initial_guess(self,):
         """
@@ -98,3 +106,24 @@ class Minimizer():
         self.log("Solved")
         self.best_context = self.get_context(self.best_objective_result_param)
         self.best_pd = self.get_prob_distrobution(self.best_context)
+
+    def save_results_to_file(self, file_name):
+        if not self.__solved__:
+            raise Exception("Not Solved Yet")
+
+        with open('../solutions/{0}.txt'.format(file_name), 'w') as file_:
+            file_.write("Best Objective Result:")
+            file_.write("\n")
+            file_.write(str(self.best_objective_result_param))
+            file_.write("\n")
+            file_.write("Best Probability Distribution:")
+            file_.write("\n")
+            file_.write("Best Context:")
+            file_.write("\n")
+            file_.write(str(self.best_context))
+            file_.write("\n")
+            file_.write("Logs:")
+            file_.write("\n")
+            for log in self.string_logs:
+                file_.write(str(log))
+                file_.write("\n")

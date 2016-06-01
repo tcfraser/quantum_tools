@@ -28,6 +28,15 @@ def P_I(n):
         S[S_i][i,i] = 1
     return S
 
+# def P_I(n):
+#     N = range(n)
+#     S = [np.zeros((n,n)) for _ in N]
+#     for i in N:
+#         for j in N:
+#             if (real() > 0):
+#                 S[j][i,i] = 1
+#     return S
+
 def partial_diag(n):
     empty = np.zeros(n)
 

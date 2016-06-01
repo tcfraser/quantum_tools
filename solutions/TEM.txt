@@ -1,0 +1,37 @@
+Best Objective Result:
+[ 27.87   -6.781 -31.262  -6.756  -0.572 -36.491   1.684   0.983   7.069 -13.899  -4.049   4.339  -6.671  17.733   7.815
+  -2.061   9.708  23.22   17.469  -1.538  32.04   -5.78   16.944 -13.595  -2.953  -0.038 -23.036 -16.546  -4.036  -0.614
+  -8.882  -1.387   4.947   4.326  18.295   3.336  -0.879  -3.157 -23.71  -12.609  -0.51   -9.068  -7.227  14.977   0.253
+  -4.984   0.595   7.763  12.298 -24.035 -36.026   4.909  26.648  19.544  -4.336  -0.465 -12.58   -3.376  -4.865   0.519
+   0.477   1.411 -10.507   0.644   6.85  -52.207   9.415  -2.357 -22.549  13.803  -1.319   0.4     0.351  20.961   3.201
+   0.813   0.156  -0.002   0.003   0.029  -1.235  -6.026   1.779   0.983  23.394  19.673   4.749  -2.748  13.343 -15.86
+  27.24   21.099  23.885   3.274  13.836  14.909]
+Best Probability Distribution:
+Best Context:
+<quantum_pd.QuantumContext object at 0x0000000002A3D940>
+Logs:
+Initialized
+Minimize Step result: 2.6116984310095512
+New Best Objective Result: 2.6116984310095512
+Minimize Step result: 1.0354654418462783
+New Best Objective Result: 1.0354654418462783
+Minimize Step result: 0.6016488347656221
+New Best Objective Result: 0.6016488347656221
+Minimize Step result: 0.24427001959241196
+New Best Objective Result: 0.24427001959241196
+Minimize Step result: 0.13258846878503738
+New Best Objective Result: 0.13258846878503738
+Minimize Step result: 0.07369838115783814
+New Best Objective Result: 0.07369838115783814
+BH Step result: 3.676711704372829
+Local Minimum Accepted?: False
+BH Step result: 3.910171262655849
+Local Minimum Accepted?: False
+BH Step result: 3.977342168307203
+Local Minimum Accepted?: False
+BH Step result: 3.9057842360045516
+Local Minimum Accepted?: False
+BH Step result: 3.637732975167866
+Local Minimum Accepted?: False
+Hit max iterations.
+Solved

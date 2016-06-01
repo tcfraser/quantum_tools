@@ -44,6 +44,13 @@ class Measurement(RandomVariable):
         return m
 
     @staticmethod
+    def unitary_pvms(name, size):
+        u = U(size)
+        S = [Utils.ket_to_dm(u[:,i]) for i in range(size)]
+        m = Measurement(name, S)
+        return m
+
+    @staticmethod
     def proj_comp(name, size):
         matrices = []
         for i in range(size):
@@ -65,10 +72,11 @@ class Measurement(RandomVariable):
     @staticmethod
     def seesaw(name, size):
         S = P_I(size)
+        unitary = U(size)
         for i in range(size):
-            unitary = U(size)
-            S[i] = Utils.multiply(unitary.conj().T, S[i], unitary)
+            S[i] = Utils.multiply(unitary, S[i], unitary.conj().T)
         m = Measurement(name, S)
+        print(sum(S))
         return m
 
     # @staticmethod

@@ -10,6 +10,7 @@ from variable import RandomVariableCollection
 from state import State
 from timing_profiler import timing
 import global_config
+from ineqs import *
 
 class QuantumContext():
 
@@ -66,9 +67,12 @@ def perform_tests():
     # A = Measurement.deterministic('A',4)
     # B = Measurement.deterministic('B',4)
     # C = Measurement.deterministic('C',4)
-    A = Measurement.seesaw('A',4)
-    B = Measurement.seesaw('B',4)
-    C = Measurement.seesaw('C',4)
+    # A = Measurement.seesaw('A',4)
+    # B = Measurement.seesaw('B',4)
+    # C = Measurement.seesaw('C',4)
+    A = Measurement.unitary_pvms('A',4)
+    B = Measurement.unitary_pvms('B',4)
+    C = Measurement.unitary_pvms('C',4)
     rhoAB = State.dm(np.random.random(16))
     rhoAC = State.dm(np.random.random(16))
     rhoBC = State.dm(np.random.random(16))
@@ -86,6 +90,7 @@ def perform_tests():
     #     ])
     qcfritz = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
     qpdfritz = QuantumProbDistro(qcfritz)
+    print(qpdfritz.prob({}))
     # IAB = qpdfritz.mutual_information(['A', 'B'])
     # IAC = qpdfritz.mutual_information(['A', 'C'])
     # HA = qpdfritz.entropy('A')
@@ -95,23 +100,6 @@ def perform_tests():
     print(HLP2(qpdfritz))
     print(HLP3(qpdfritz))
 
-def HLP3(PD):
-    H = PD.H
-    I = PD.I
-    result = H(['A', 'B']) - I(['A', 'B', 'C']) + I(['A', 'B']) + I(['B', 'C']) + I(['C', 'A'])
-    return result
-
-def HLP2(PD):
-    H = PD.H
-    I = PD.I
-    result = H('A') + H('B') + H('C') - 2 * (I(['A', 'B', 'C']) + I(['A', 'B']) + I(['B', 'C']) + I(['C', 'A']))
-    return result
-
-def HLP1(PD):
-    H = PD.H
-    I = PD.I
-    result = H('A') - I(['A', 'B']) - I(['A', 'C'])
-    return result
 
 if __name__ == '__main__':
     perform_tests()
