@@ -8,6 +8,7 @@ import numpy as np
 from pprint import pprint
 from variable import RandomVariable
 import global_config
+from rmt import U, GL_C, GL_R, P_I
 
 class Measurement(RandomVariable):
 
@@ -63,7 +64,12 @@ class Measurement(RandomVariable):
 
     @staticmethod
     def seesaw(name, size):
-
+        S = P_I(size)
+        for i in range(size):
+            unitary = U(size)
+            S[i] = Utils.multiply(unitary.conj().T, S[i], unitary)
+        m = Measurement(name, S)
+        return m
 
     # @staticmethod
     # def povms(t, number):

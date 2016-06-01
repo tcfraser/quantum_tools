@@ -20,6 +20,14 @@ def U(n):
     L = np.diag(r/np.abs(r))
     return np.dot(Q, L)
 
+def P_I(n):
+    N = range(n)
+    S = [np.zeros((n,n)) for _ in N]
+    for i in N:
+        S_i = np.random.randint(0, n)
+        S[S_i][i,i] = 1
+    return S
+
 def partial_diag(n):
     empty = np.zeros(n)
 
@@ -27,7 +35,8 @@ def perform_tests():
     # print(random_real())
     # print(complex())
     # print(GL_C(4))
-    print(U(4))
+    # print(U(4))
+    print(P_I(4))
 
 
 if __name__ == '__main__':
