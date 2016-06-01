@@ -5,13 +5,13 @@ from utils import Utils
 import global_config
 from measurement import Measurement
 from state import State
-from quantum_pd import QuantumContext, QuantumProbDistro
+from quantum_pd import QuantumContext, QuantumProbDist
 from ineqs import *
 
 class TEM(Minimizer):
 
     def __init__(self):
-        Minimizer.__init__(self, [16,16,16,16,16,16])
+        Minimizer.__init__(self, [16*3,16*3,16*3,16,16,16])
         self.local_log=True
         self.permutation = Utils.get_permutation()
 
@@ -24,9 +24,9 @@ class TEM(Minimizer):
 
     def get_context(self, param):
         pA, pB, pC, prhoAB, prhoBC, prhoAC = self.mem_slots
-        A = Measurement.pvms('A', param[pA])
-        B = Measurement.pvms('B', param[pB])
-        C = Measurement.pvms('C', param[pC])
+        A = Measurement.povms('A', param[pA], 4)
+        B = Measurement.povms('B', param[pB], 4)
+        C = Measurement.povms('C', param[pC], 4)
         rhoAB = State.dm(param[prhoAB])
         rhoBC = State.dm(param[prhoBC])
         rhoAC = State.dm(param[prhoAC])
@@ -34,12 +34,12 @@ class TEM(Minimizer):
         qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=self.permutation)
         return qc
 
-    def get_prob_distrobution(self, context):
-        return QuantumProbDistro(context)
+    def get_prob_distribution(self, context):
+        return QuantumProbDist(context)
 
     def objective(self, param):
         qc = self.get_context(param)
-        pd = self.get_prob_distrobution(qc)
+        pd = self.get_prob_distribution(qc)
 
         # IAB = pd.mutual_information(0,1)
         # IAC = pd.mutual_information(0,2)

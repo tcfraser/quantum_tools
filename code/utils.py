@@ -114,6 +114,12 @@ class Utils():
         return perm
 
     @staticmethod
+    def largest_eig(M):
+        size = M.shape[0]
+        largest_eig = linalg.eigh(M, eigvals_only=True, eigvals=(size-1,size-1))[0]
+        return largest_eig
+
+    @staticmethod
     def cholesky(t):
         # James, Kwiat, Munro, and White Physical Review A 64 052312
         # T = np.array([

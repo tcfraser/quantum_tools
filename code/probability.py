@@ -108,6 +108,9 @@ class ProbDist():
         else:
             return 0
 
+    def ravel_support(self):
+        return np.ravel(self._support)
+
     def __str__(self):
         fs = "{outcome} -> {probability}"
         print_list = []

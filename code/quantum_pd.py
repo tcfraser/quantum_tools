@@ -23,7 +23,7 @@ class QuantumContext():
         self.num_states = len(states)
         self.num_outcomes_per_measurement = max(m.num_outcomes for m in measurements)
 
-def QuantumProbDistro(qc):
+def QuantumProbDist(qc):
     def pdf(*args):
         measurement_operators = [qc.measurements[posn][val] for posn, val in enumerate(args)]
         joint_measurement = Utils.tensor(*measurement_operators)
@@ -38,6 +38,58 @@ def QuantumProbDistro(qc):
     pd = ProbDist.from_callable_support(qc.measurements, pdf)
     return pd
 
+def gen_test_distribution():
+    perm = Utils.get_permutation()
+    A = Measurement.pvms('A', np.random.random(16))
+    B = Measurement.pvms('B', np.random.random(16))
+    C = Measurement.pvms('C', np.random.random(16))
+    # A = Measurement.proj_comp('A',4)
+    # B = Measurement.proj_comp('B',4)
+    # C = Measurement.proj_comp('C',4)
+    # A = Measurement.deterministic('A',4)
+    # B = Measurement.deterministic('B',4)
+    # C = Measurement.deterministic('C',4)
+    # A = Measurement.seesaw('A',4)
+    # B = Measurement.seesaw('B',4)
+    # C = Measurement.seesaw('C',4)
+    # A = Measurement.unitary_pvms('A',4)
+    # B = Measurement.unitary_pvms('B',4)
+    # C = Measurement.unitary_pvms('C',4)
+    rhoAB = State.dm(np.random.random(16))
+    rhoAC = State.dm(np.random.random(16))
+    rhoBC = State.dm(np.random.random(16))
+
+    qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
+    qpd = QuantumProbDist(qc)
+    return qpd
+
+def two_outcome_triangle():
+    perm = Utils.get_permutation()
+    A = Measurement.povms('A', np.random.normal(0,1,16), 2)
+    B = Measurement.povms('B', np.random.normal(0,1,16), 2)
+    C = Measurement.povms('C', np.random.normal(0,1,16), 2)
+    # print(A)
+    # A = Measurement.proj_comp('A',4)
+    # B = Measurement.proj_comp('B',4)
+    # C = Measurement.proj_comp('C',4)
+    # A = Measurement.deterministic('A',4)
+    # B = Measurement.deterministic('B',4)
+    # C = Measurement.deterministic('C',4)
+    # A = Measurement.seesaw('A',4)
+    # B = Measurement.seesaw('B',4)
+    # C = Measurement.seesaw('C',4)
+    # A = Measurement.unitary_pvms('A',4)
+    # B = Measurement.unitary_pvms('B',4)
+    # C = Measurement.unitary_pvms('C',4)
+    rhoAB = State.dm(np.random.normal(0,1,16))
+    rhoAC = State.dm(np.random.normal(0,1,16))
+    rhoBC = State.dm(np.random.normal(0,1,16))
+
+
+    qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
+    qpd = QuantumProbDist(qc)
+    return qpd
+
 @timing
 def perform_tests():
     # print(Measurement.pvms(np.random.random(16), 4))
@@ -49,47 +101,14 @@ def perform_tests():
     # perm = Utils.get_permutation()
 
     # qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
-    # qpd = QuantumProbDistro(qc)
+    # qpd = QuantumProbDist(qc)
     # print(qpd)
     # print(mutual_information(qpd, 2, 1))
     # print(mutual_information(qpd, 2, 0))
     # print(entropy(qpd, (1,0)))
     # print(entropy(qpd, (1,2)))
-
-    # === Fritz ===
-    perm = Utils.get_permutation()
-    # A = Measurement.pvms('A', np.random.random(16))
-    # B = Measurement.pvms('B', np.random.random(16))
-    # C = Measurement.pvms('C', np.random.random(16))
-    # A = Measurement.proj_comp('A',4)
-    # B = Measurement.proj_comp('B',4)
-    # C = Measurement.proj_comp('C',4)
-    # A = Measurement.deterministic('A',4)
-    # B = Measurement.deterministic('B',4)
-    # C = Measurement.deterministic('C',4)
-    # A = Measurement.seesaw('A',4)
-    # B = Measurement.seesaw('B',4)
-    # C = Measurement.seesaw('C',4)
-    A = Measurement.unitary_pvms('A',4)
-    B = Measurement.unitary_pvms('B',4)
-    C = Measurement.unitary_pvms('C',4)
-    rhoAB = State.dm(np.random.random(16))
-    rhoAC = State.dm(np.random.random(16))
-    rhoBC = State.dm(np.random.random(16))
-
-    # A = B = Measurement.sbs([
-    #     0, 0,
-    #     np.pi/4, 0,
-    #     3*np.pi/4, 0,
-    #     ])
-
-    # C = Measurement.sbs([
-    #     0, 0,
-    #     0, 0,
-    #     0, 0,
-    #     ])
-    qcfritz = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
-    qpdfritz = QuantumProbDistro(qcfritz)
+    # qpdfritz = gen_test_distribution()
+    qpdfritz = two_outcome_triangle()
     print(qpdfritz.prob({}))
     # IAB = qpdfritz.mutual_information(['A', 'B'])
     # IAC = qpdfritz.mutual_information(['A', 'C'])

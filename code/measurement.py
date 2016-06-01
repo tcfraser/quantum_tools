@@ -9,14 +9,20 @@ from pprint import pprint
 from variable import RandomVariable
 import global_config
 from rmt import U, GL_C, GL_R, P_I
+from timing_profiler import timing
 
 class Measurement(RandomVariable):
 
     def __init__(self, name, operators):
         self._operators = [np.matrix(o) for o in operators]
+        # The size of the matrix associated with this measurement.
         self._size = self._operators[0].shape[0]
         super(Measurement, self).__init__(name, len(self._operators))
-        # The size of the matrix associated with this measurement.
+        # assertions
+        # print(sum(self._operators), np.eye(self._size))
+        assert(np.allclose(sum(self._operators), np.eye(self._size)))
+        for o in self._operators:
+            assert(Utils.is_psd(o))
 
     def __getitem__(self, key):
         return self._operators[key]
@@ -41,6 +47,27 @@ class Measurement(RandomVariable):
         eigen_values, eigen_vectors = linalg.eigh(g)
         density_matrices = [Utils.ket_to_dm(eigen_vectors[:,i]) for i in range(eigen_values.shape[0])]
         m = Measurement(name, density_matrices)
+        return m
+
+    @staticmethod
+    def povms(name, param, outcomes):
+        lp = len(param)
+        block_size = int(lp / (outcomes - 1))
+        size = int(block_size**(1/2))
+        povms = []
+        largest_eig = []
+        for i in range(outcomes - 1):
+            povm_i = Utils.cholesky(param[i*block_size:(i+1)*block_size])
+            povm_i_large_eig = Utils.largest_eig(povm_i)
+            povms.append(povm_i)
+            largest_eig.append(povm_i_large_eig)
+        sum_largest_eig = sum(largest_eig)
+        # print(largest_eig)
+        if sum_largest_eig > 1.0:
+            povms = [povm_i / sum_largest_eig for povm_i in povms]
+        I = np.eye(size)
+        povms.append(I - sum(povms))
+        m = Measurement(name, povms)
         return m
 
     @staticmethod
@@ -127,12 +154,15 @@ class Measurement(RandomVariable):
     #         measures.append(joint_measurement)
     #     m = Measurement(measures)
     #     return m
-
+@timing
 def perform_tests():
-    m = Measurement.sbs(np.random.random(6))
-    for mi in m:
-        print(Utils.is_psd(mi))
-    print(sum(m._operators))
+    # m = Measurement.sbs(np.random.random(6))
+    # for mi in m:
+    #     print(Utils.is_psd(mi))
+    # print(sum(m._operators))
+    # print(m)
+    m = Measurement.pvms('A', np.random.normal(0,1,16))
+    m = Measurement.povms('A', np.random.normal(0,1,16*2), 3)
     print(m)
 
 if __name__ == '__main__':

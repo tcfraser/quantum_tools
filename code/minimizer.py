@@ -21,7 +21,7 @@ class Minimizer():
         self.stepsize = 10
         self.tolerance = 1e-3
         self._num_evals = 0
-        self.max_evals = 5
+        self.max_evals = 1
         self.mem_loc = mem_loc
         self.mem_slots = Utils.gen_memory_slots(self.mem_loc)
         self.mem_size = sum(self.mem_loc)
@@ -71,7 +71,7 @@ class Minimizer():
         """
         raise NotImplemented()
 
-    def get_prob_distrobution(self, context):
+    def get_prob_distribution(self, context):
         """
         @Overwrite
         """
@@ -105,7 +105,7 @@ class Minimizer():
         self.__solved__ = True
         self.log("Solved")
         self.best_context = self.get_context(self.best_objective_result_param)
-        self.best_pd = self.get_prob_distrobution(self.best_context)
+        self.best_pd = self.get_prob_distribution(self.best_context)
 
     def save_results_to_file(self, file_name):
         if not self.__solved__:
