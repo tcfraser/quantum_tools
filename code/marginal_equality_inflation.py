@@ -16,7 +16,7 @@ def get_LHS():
 def check_feasibility():
     A = get_LHS().toarray()
     # LHS_inv = scipy.sparse.linalg.inv(LHS)
-    for _ in range(1000):
+    for _ in range(1):
         qpd = two_outcome_triangle()
         num_contexts = 5
         ravel_pd = qpd.ravel_support()
@@ -39,6 +39,7 @@ def check_feasibility():
         )
         print(not np.any(np.dot(A, res.x) - b))
         print(res.success)
+        print(res.x)
 
 if __name__ == '__main__':
     check_feasibility()

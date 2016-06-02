@@ -1,13 +1,10 @@
 from __future__ import print_function, division
 import numpy as np
-from scipy import optimize, linalg
-from utils import Utils
-from pprint import pprint
 import itertools
-from job_queuer_async import JobContext
-from timing_profiler import timing
-import global_config
-from global_config import *
+from pprint import pprint
+from scipy import optimize, linalg
+from ..utilities import utils
+from ..config import *
 
 class Minimizer():
 
@@ -23,7 +20,7 @@ class Minimizer():
         self._num_evals = 0
         self.max_evals = 1
         self.mem_loc = mem_loc
-        self.mem_slots = Utils.gen_memory_slots(self.mem_loc)
+        self.mem_slots = utils.gen_memory_slots(self.mem_loc)
         self.mem_size = sum(self.mem_loc)
         self.log('Initialized')
 
@@ -111,7 +108,7 @@ class Minimizer():
         if not self.__solved__:
             raise Exception("Not Solved Yet")
 
-        with open('../solutions/{0}.txt'.format(file_name), 'w') as file_:
+        with open(file_name, 'w+') as file_:
             file_.write("Best Objective Result:")
             file_.write("\n")
             file_.write(str(self.best_objective_result_param))

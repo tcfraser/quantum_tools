@@ -1,18 +1,17 @@
 """
 Contains the abstract class of a probability distrobution and associated marginals.
 """
-import inspect
 import numpy as np
-import itertools
-import copy
-from utils import Utils
-from timing_profiler import timing
-from variable import rvc, RandomVariableCollection
+from ..utilities import utils
+from ..utilities.timing_profiler import timing
+from .variable import rvc, RandomVariableCollection
 
 class ProbDist():
 
     def __init__(self, rvc, support):
         self._support = np.asarray(support)
+        assert(np.all(self._support > 0))
+        assert(utils.is_close(np.sum(self._support),1.0))
         self._rvc = rvc
         self._num_variables = len(self._rvc)
 
@@ -21,37 +20,57 @@ class ProbDist():
         array_dims = tuple(rv.num_outcomes for rv in rvc)
         # print(array_dims)
         support = np.zeros(array_dims)
-        for index, _ in np.ndenumerate(support):
-            support[index] = callable_support(*index)
+        for outcome_index, outcome in rvc.outcome_zip:
+            support[outcome_index] = callable_support(*outcome)
         return ProbDist(rvc, support)
 
     def __getitem__(self, slice):
         return self._support[slice]
 
-    def _sub_support(self, value_dict):
-        value_array = []
-        for key, value in value_dict.items():
-            rv = self._rvc.get(key)
-            value_array.append((rv, value))
+    def _sub_support(self, outcome_dict):
+        outcome_association = []
         slice_obj = [slice(None)] * self._num_variables
-        for rv, value in value_array:
-            if value not in rv.outcome_space:
-                raise Exception("Random Variable {rv.name} does not have outcome {outcome} in outcome space {rv.outcome_space}.".format(rv=rv, outcome=value))
-            slice_obj[self._rvc.index(rv)] = value
-
+        for rv_name, outcome_label in outcome_dict.items():
+            rv = self._rvc.get(rv_name)
+            outcome = rv.label_index(outcome_label)
+            slice_obj[self._rvc.index(rv)] = outcome
+            outcome_association.append((rv, outcome))
         sub_support = self._support[slice_obj]
-        return sub_support, value_array
+        return sub_support, outcome_association
 
-    def prob(self, value_dict):
-        sub_support, _ = self._sub_support(value_dict)
+    def prob(self, outcome_dict):
+        sub_support, _ = self._sub_support(outcome_dict)
         prob = np.sum(sub_support)
         return prob
 
-    def condition(self, cond_dict):
-        sub_support, value_array = self._sub_support(cond_dict)
+    def _total_prob(self, selectors):
+        total = 0.0
+        for i in selectors:
+            total += self._support[i]
+        return total
+
+    def coincidence(self, rvc_names):
+        rvc = self._rvc.sub(*rvc_names)
+        return self._coincidence(rvc)
+
+    def _coincidence(self, rvc):
+        mpd = self._marginal(rvc)
+        same = []
+        diff = []
+        for outcome_index, outcome in rvc.outcome_zip:
+            if utils.all_equal(outcome):
+                same.append(outcome_index)
+            else:
+                diff.append(outcome_index)
+        same_prob = mpd._total_prob(same)
+        diff_prob = mpd._total_prob(diff)
+        return same_prob - diff_prob
+
+    def condition(self, cond_outcome_dict):
+        sub_support, outcome_association = self._sub_support(cond_outcome_dict)
         prob = np.sum(sub_support)
         norm_sub_support = sub_support / prob
-        rvs = [tup[0] for tup in value_array]
+        rvs = [rv_assoc[0] for rv_assoc in outcome_association]
         d_rvc = self._rvc - RandomVariableCollection(rvs)
         conditioned_pd = ProbDist(d_rvc, norm_sub_support)
         return conditioned_pd
@@ -116,37 +135,39 @@ class ProbDist():
         print_list = []
         print_list.append(self.__repr__())
         print_list.append(str(self._rvc))
-        for outcome in self._rvc.outcome_space:
-            print_list.append(fs.format(probability=self[outcome], outcome=outcome))
+        for outcome_index, outcome in self._rvc.outcome_zip:
+            print_list.append(fs.format(probability=self[outcome_index], outcome=outcome))
         return '\n'.join(print_list)
 
 @timing
 def perform_tests():
     # if a,b,c are bits, there are 2**3 = 8 outcomes
-    #   a  |  b  |  c  ||  P
-    #   --------------------
-    #   0  |  0  |  0  ||  1/3
-    #   0  |  1  |  0  ||  0
-    #   1  |  0  |  0  ||  0
-    #   1  |  1  |  0  ||  1/2
-    #   0  |  0  |  1  ||  0
-    #   0  |  1  |  1  ||  1/12
-    #   1  |  0  |  1  ||  1/12
-    #   1  |  1  |  1  ||  0
+    #     a   |    b   |    c   ||  P
+    #   --------------------------------
+    #   'a'   |   'a'  |  'c1'  ||  1/3
+    #   'a'   |   'a'  |  'c2'  ||  1/12
+    #   'a'   |  'b1'  |  'c1'  ||  0
+    #   'a'   |  'b1'  |  'c2'  ||  1/12
+    #   'a2'  |   'a'  |  'c1'  ||  0
+    #   'a2'  |   'a'  |  'c2'  ||  0
+    #   'a2'  |  'b1'  |  'c1'  ||  1/2
+    #   'a2'  |  'b1'  |  'c2'  ||  0
     def demo_distro(a,b,c):
-        if (a == c == 1):
+        if (a == 'a' and c == 'c2'):
             return 1/12
-        elif (a == b == c == 0):
+        elif (a == 'a' and b == 'a' and c == 'c1'):
             return 1/3
-        elif (a == 1 and b == 0 and c == 0):
+        elif (a == 'a2' and b == 'b1' and c == 'c1'):
             return 1/2
         else:
             return 0
-    pd = ProbDist.from_callable_support(rvc(['A', 'B', 'C'], [2, 2, 2]), demo_distro)
+    pd = ProbDist.from_callable_support(rvc(['A', 'B', 'C'], [['a', 'a2'], ['a', 'b1'], ['c1', 'c2']]), demo_distro)
     print(pd)
-    print(pd.condition({'A': 1}))
-    print(pd.prob({'A': 1, 'B': 0}))
-    print(pd.prob({}))
+    print(pd.condition({'A': 'a'}))
+    print(pd.prob({'A': 'a', 'B': 'b1'}))
+    print(pd.prob({'A': 'a', 'C': 'c2'}))
+    print(pd.coincidence(['A', 'B']))
+    # print(pd.prob({}))
     # print(pd.marginal(['A']))
     # print(pd.entropy(['A']))
     # print(pd.entropy('A'))

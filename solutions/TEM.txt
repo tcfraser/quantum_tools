@@ -1,50 +1,59 @@
 Best Objective Result:
-[  0.244   3.302 -19.85  -40.387   2.37   13.841  27.223 -10.033   0.021 -11.415   6.955  19.845  25.551   0.121   0.041
-   0.297   4.877  -1.611   9.143 -26.31   -3.104   3.792  -4.561   5.766  -0.243   6.9   -16.037  18.659   1.166   0.463
-   0.765   3.083  -0.797   1.179  12.487  19.752   9.837 -15.738 -28.031  -9.902   0.157 -14.484  25.262  32.067  24.934
-  -0.862   7.982  16.768  -0.003   0.043  -0.389  -3.746 -17.166  -9.817 -17.343 -46.287   5.51   10.925 -12.8    25.449
-  -8.33   -1.578   4.578   3.717   0.104  -0.183   0.636   5.518   0.578  -0.112  -5.925   5.815  -0.199 -21.069 -39.761
-   8.533 -34.551   8.842   7.338 -15.9     2.798  -0.839   3.185   4.161  32.698  10.798  -5.458  -3.056  -8.921  23.776
-   5.652   0.598  -1.816  -6.255   0.229  -7.065  12.679   0.222  -8.856   2.69  -11.616   0.527  12.181  12.62    4.949
-   9.931  14.09    6.924 -25.426  -3.717   7.726  -7.301  -9.698  22.719   1.988   1.743 -12.93    8.133  21.958  -8.804
-   1.078 -10.325  10.319  -7.156  -1.188  -2.395   1.724   8.168  -6.168   8.28   -5.918 -10.197  11.565  -0.195   6.443
-  -0.038   1.821  15.731 -10.329   4.264   2.15    1.741  -3.736   0.429  -0.7     0.78   -0.708 -53.773   1.992  -1.06
- -22.692  -0.942  -0.178   2.159   2.629 -20.305 -42.798   1.537  -0.462 -66.036   0.048   1.004   0.328   4.123   2.2
-   2.803  11.447   7.555   0.06   -5.846  14.119  -4.417  59.629  -7.038  -2.352 -29.002  -6.893   8.539  -6.686 -13.242
- -14.732  21.937  10.873 -12.886  -1.359   8.557 -35.483   3.5    -5.733   2.227   0.762   0.325]
+[ 12.459   8.994  -6.329  -3.398 -12.244 -13.595  16.963   3.332  14.942 -30.927  -7.353  -4.632  23.972   2.57  -27.932
+  -8.045  -6.703 -11.884   3.546 -42.278 -13.287  -7.967  23.813  25.062  -0.224  -0.337  -0.039  -8.361   1.388  46.68
+ -32.048  30.188  -3.797  -6.583 -12.078  26.752  -0.023  10.744 -14.798 -11.429  21.003 -11.082  -9.534  -0.983  13.421
+  -0.227   8.619  -2.763   0.003  -0.832   3.326  23.361   5.579   4.194  18.456 -43.744  -0.001   0.232   0.167   0.679
+  -1.846  -0.681   2.725  19.086   0.048  -0.027  -0.021  -0.006   1.474  -8.619  -0.043  -0.034  51.824   7.627  -5.197
+   0.011  -0.098  38.46   39.254   0.565  -8.552 -24.49   10.304 -16.478 -25.302  -9.003  -2.045  -7.882  -0.209 -25.171
+  -7.972 -42.964 -23.789  -0.214   0.058  -0.429]
 Best Probability Distribution:
 Best Context:
-<quantum_pd.QuantumContext object at 0x0000000004106630>
+<quantum_tools.contexts.quantum_context.QuantumContext object at 0x000000000411FA90>
 Logs:
 Initialized
-Minimize Step result: 2.1356240432766103
-New Best Objective Result: 2.1356240432766103
-Minimize Step result: 1.606003429930035
-New Best Objective Result: 1.606003429930035
-Minimize Step result: 0.7759967771068124
-New Best Objective Result: 0.7759967771068124
-Minimize Step result: 0.36015616782714743
-New Best Objective Result: 0.36015616782714743
-Minimize Step result: 0.22432551575611318
-New Best Objective Result: 0.22432551575611318
-Minimize Step result: 0.12472352076138118
-New Best Objective Result: 0.12472352076138118
-Minimize Step result: 0.04383482635220017
-New Best Objective Result: 0.04383482635220017
-Minimize Step result: 0.017485314251396048
-New Best Objective Result: 0.017485314251396048
-Minimize Step result: 0.010916866274186823
-New Best Objective Result: 0.010916866274186823
-Minimize Step result: 0.009096611752111305
-New Best Objective Result: 0.009096611752111305
-Minimize Step result: 0.21556974361040704
-Minimize Step result: 0.1467932572189754
-Minimize Step result: 0.07152462608341419
-Minimize Step result: 0.050176370416173274
-Minimize Step result: 0.026839309971788693
-Minimize Step result: 0.016451538338336923
-Minimize Step result: 0.011056112687401884
-BH Step result: 0.011056112687401884
+Minimize Step result: 2.611232998820416
+New Best Objective Result: 2.611232998820416
+Minimize Step result: 1.9270256178213965
+New Best Objective Result: 1.9270256178213965
+Minimize Step result: 1.3062676731939051
+New Best Objective Result: 1.3062676731939051
+Minimize Step result: 0.7622459162618809
+New Best Objective Result: 0.7622459162618809
+Minimize Step result: 0.3892365552380877
+New Best Objective Result: 0.3892365552380877
+Minimize Step result: 0.33227545715387186
+New Best Objective Result: 0.33227545715387186
+Minimize Step result: 0.12902054223583567
+New Best Objective Result: 0.12902054223583567
+Minimize Step result: 0.09314429869364567
+New Best Objective Result: 0.09314429869364567
+Minimize Step result: 0.028040140146205247
+New Best Objective Result: 0.028040140146205247
+Minimize Step result: 0.021052720266871893
+New Best Objective Result: 0.021052720266871893
+Minimize Step result: 0.018266639856175312
+New Best Objective Result: 0.018266639856175312
+Minimize Step result: 0.013560601305122216
+New Best Objective Result: 0.013560601305122216
+Minimize Step result: 0.006765223312919727
+New Best Objective Result: 0.006765223312919727
+Minimize Step result: 0.006286569715589505
+New Best Objective Result: 0.006286569715589505
+Minimize Step result: 0.5574117602314351
+Minimize Step result: 0.21439861009737815
+Minimize Step result: 0.05617238368761552
+Minimize Step result: 0.028298008908587698
+Minimize Step result: 0.016363563349739832
+Minimize Step result: 0.0131331298442099
+Minimize Step result: 0.011011999671154007
+Minimize Step result: 0.008878422672000898
+Minimize Step result: 0.007216833882003108
+Minimize Step result: 0.005709574206837523
+New Best Objective Result: 0.005709574206837523
+Minimize Step result: 0.004714710741863322
+New Best Objective Result: 0.004714710741863322
+BH Step result: 0.004714710741863322
 Local Minimum Accepted?: True
+Reached target.
 Hit max iterations.
 Solved

@@ -3,9 +3,9 @@ Generators of quantum states
 """
 from __future__ import print_function, division
 import numpy as np
-from constants import *
-from utils import Utils
-import global_config
+from ..utilities.constants import *
+from ..utilities import utils
+from ..config import *
 
 class State():
 
@@ -20,7 +20,7 @@ class State():
 
     @staticmethod
     def dm(t):
-        g = Utils.cholesky(t)
+        g = utils.cholesky(t)
         g /= (np.trace(g) + mach_eps)
         # assert(is_trace_one(groundn)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
         rho = State(g)
@@ -41,5 +41,5 @@ class State():
             psi = norm * (qb01 + qb10)
         elif n == 3:
             psi = norm * (qb01 - qb10)
-        rho = State(Utils.ket_to_dm(psi))
+        rho = State(utils.ket_to_dm(psi))
         return rho

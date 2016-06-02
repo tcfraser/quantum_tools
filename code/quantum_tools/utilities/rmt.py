@@ -1,5 +1,4 @@
 import numpy as np
-import global_config
 
 def real():
     return np.random.normal()
@@ -14,11 +13,14 @@ def GL_C(n):
     return np.random.normal(size=((n,n))) \
     + 1j * np.random.normal(size=((n,n)))
 
-def U(n):
-    Q, R = np.linalg.qr(GL_C(n))
+def GL_knit_QR(GL_n):
+    Q, R = np.linalg.qr(GL_n)
     r = np.diagonal(R)
     L = np.diag(r/np.abs(r))
     return np.dot(Q, L)
+
+def U(n):
+    return GL_knit_QR(GL_C(n))
 
 def P_I(n):
     N = range(n)

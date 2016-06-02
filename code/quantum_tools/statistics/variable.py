@@ -3,27 +3,36 @@ Contains classes and utilities associated with random variables.
 """
 import itertools
 import numpy as np
-from timing_profiler import timing
-from sorted_nicely import sorted_nicely
+from ..utilities.timing_profiler import timing
+from ..utilities.sorted_nicely import sorted_nicely
 
 class RandomVariable():
 
-    def __init__(self, name, num_outcomes):
+    def __init__(self, name, outcome_desc):
         self.name = name
-        self.num_outcomes = num_outcomes
-        self.outcome_space = np.arange(self.num_outcomes)
+        if isinstance(outcome_desc, int):
+            self.outcomes = list(range(outcome_desc))
+        else:
+            self.outcomes = outcome_desc
+        self.num_outcomes = len(self.outcomes)
+
+    def outcome_label(self, index):
+        return self.outcomes[index]
+
+    def label_index(self, label):
+        return self.outcomes.index(label)
 
     def __str__(self):
-        _repr = "{name}: {0} outcomes".format(self.num_outcomes, name=self.name)
+        _repr = "{name}: {0} outcomes -> {1}".format(self.num_outcomes, self.outcomes, name=self.name)
         print_list = []
         print_list.append(self.__repr__())
         print_list.append(_repr)
         return '\n'.join(print_list)
 
-def rvc(names, num_outcomes):
+def rvc(names, outcome_descs):
     rvs = []
     for i, name in enumerate(names):
-        rvs.append(RandomVariable(name, num_outcomes[i]))
+        rvs.append(RandomVariable(name, outcome_descs[i]))
     return RandomVariableCollection(rvs)
 
 class RandomVariableCollection(set):
@@ -37,7 +46,9 @@ class RandomVariableCollection(set):
         super(RandomVariableCollection, self).__init__(rvs)
         self._index_map = sorted_nicely([rv.name for rv in rvs])
         # print(self._index_map)
-        self.outcome_space = itertools.product(*(rv.outcome_space for rv in self))
+        self.outcome_indices = list(itertools.product(*(np.arange(rv.num_outcomes) for rv in self)))
+        self.outcomes = list(itertools.product(*(rv.outcomes for rv in self)))
+        self.outcome_zip = list(zip(self.outcome_indices, self.outcomes))
 
     def indices(self, rvc):
         lst = []
@@ -100,24 +111,26 @@ RandomVariableCollection._wrap_methods(['__ror__', 'difference_update', '__isub_
 @timing
 def perform_tests():
     A = RandomVariable('A', 2)
-    A1 = RandomVariable('A1', 2)
+    A1 = RandomVariable('A1', ['x', 'y', 'z'])
     A2 = RandomVariable('A2', 2)
     B = RandomVariable('B', 2)
     B1 = RandomVariable('B1', 2)
     B2 = RandomVariable('B2', 2)
-    # print(A)
-    # print(B)
+    print(A)
+    print(A1)
 
     AB = RandomVariableCollection([A, B, A2, A1])
-    As = RandomVariableCollection([A, A1, A2])
-    Bs = RandomVariableCollection([B, B1, B2])
-    # print(AB.outcome_space)
-    for i in AB:
-        print(i)
     print(AB)
-    print((AB - As))
-    if not AB - AB:
-        print("AB - AB is nothing")
+    # As = RandomVariableCollection([A, A1, A2])
+    # Bs = RandomVariableCollection([B, B1, B2])
+    # print(list(AB.outcome_indices))
+    # print(list(AB.outcomes))
+    # for i in AB:
+    #     print(i)
+    # print(AB)
+    # print((AB - As))
+    # if not AB - AB:
+    #     print("AB - AB is nothing")
     # print(AB('A'))
     # print(AB('A_1'))
     # print(AB(('A', 1)))

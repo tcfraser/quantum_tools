@@ -2,15 +2,14 @@
 Methods used to take a set of states and measurements and determine a probability distribution from it.
 """
 from __future__ import print_function, division
-from probability import ProbDist
-from utils import Utils
 import numpy as np
-from measurement import Measurement
-from variable import RandomVariableCollection
-from state import State
-from timing_profiler import timing
-import global_config
-from ineqs import *
+from ..statistics.probability import ProbDist
+from ..utilities import utils
+from .measurement import Measurement
+from ..statistics.variable import RandomVariableCollection
+from .state import State
+from ..utilities.timing_profiler import timing
+from .. import config
 
 class QuantumContext():
 
@@ -26,20 +25,20 @@ class QuantumContext():
 def QuantumProbDist(qc):
     def pdf(*args):
         measurement_operators = [qc.measurements[posn][val] for posn, val in enumerate(args)]
-        joint_measurement = Utils.tensor(*measurement_operators)
-        joint_state = Utils.tensor(*tuple(s.data for s in qc.states))
+        joint_measurement = utils.tensor(*measurement_operators)
+        joint_state = utils.tensor(*tuple(s.data for s in qc.states))
         if qc.permutation is not None:
-            joint_state = Utils.multiply(qc.permutationT, joint_state, qc.permutation)
+            joint_state = utils.multiply(qc.permutationT, joint_state, qc.permutation)
 
-        p = np.trace(Utils.multiply(joint_state, joint_measurement))
-        assert(Utils.is_small(p.imag))
+        p = np.trace(utils.multiply(joint_state, joint_measurement))
+        assert(utils.is_small(p.imag))
         return p.real
 
     pd = ProbDist.from_callable_support(qc.measurements, pdf)
     return pd
 
 def gen_test_distribution():
-    perm = Utils.get_permutation()
+    perm = utils.get_permutation()
     A = Measurement.pvms('A', np.random.random(16))
     B = Measurement.pvms('B', np.random.random(16))
     C = Measurement.pvms('C', np.random.random(16))
@@ -64,7 +63,7 @@ def gen_test_distribution():
     return qpd
 
 def two_outcome_triangle():
-    perm = Utils.get_permutation()
+    perm = utils.get_permutation()
     A = Measurement.povms('A', np.random.normal(0,1,16), 2)
     B = Measurement.povms('B', np.random.normal(0,1,16), 2)
     C = Measurement.povms('C', np.random.normal(0,1,16), 2)
@@ -98,7 +97,7 @@ def perform_tests():
     # rhoAB = State.dm(np.random.random(16))
     # rhoBC = State.dm(np.random.random(16))
     # rhoAC = State.dm(np.random.random(16))
-    # perm = Utils.get_permutation()
+    # perm = utils.get_permutation()
 
     # qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=perm)
     # qpd = QuantumProbDist(qc)

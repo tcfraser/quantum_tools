@@ -1,17 +1,17 @@
 from __future__ import print_function, division
 import numpy as np
-from minimizer import Minimizer
-from utils import Utils
-import global_config
-from measurement import Measurement
-from state import State
-from quantum_pd import QuantumContext, QuantumProbDist
-from ineqs import *
+from ..optimizers.minimizer import Minimizer
+from ..utilities import utils
+from ..config import *
+from ..contexts.measurement import Measurement
+from ..contexts.state import State
+from ..contexts.quantum_context import QuantumContext, QuantumProbDist
+from .ineqs import *
 
 class TEM(Minimizer):
 
     def __init__(self):
-        Minimizer.__init__(self, [16*3,16*3,16*3,16,16,16])
+        Minimizer.__init__(self, [16,16,16,16,16,16])
         self.local_log=True
         self.permutation = Utils.get_permutation()
 
@@ -24,9 +24,9 @@ class TEM(Minimizer):
 
     def get_context(self, param):
         pA, pB, pC, prhoAB, prhoBC, prhoAC = self.mem_slots
-        A = Measurement.povms('A', param[pA], 4)
-        B = Measurement.povms('B', param[pB], 4)
-        C = Measurement.povms('C', param[pC], 4)
+        A = Measurement.Strats.Param.pvms('A', param[pA])
+        B = Measurement.Strats.Param.pvms('B', param[pB])
+        C = Measurement.Strats.Param.pvms('C', param[pC])
         rhoAB = State.dm(param[prhoAB])
         rhoBC = State.dm(param[prhoBC])
         rhoAC = State.dm(param[prhoAC])
@@ -54,7 +54,7 @@ class TEM(Minimizer):
 def run_minimizer():
     tem = TEM()
     tem.minimize()
-    tem.save_results_to_file("TEM")
+    tem.save_results_to_file(OUTPUT_DIR + "TEM_temp.txt")
 
 if __name__ == '__main__':
     run_minimizer()
