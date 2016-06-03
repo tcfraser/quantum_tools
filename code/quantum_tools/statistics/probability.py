@@ -8,35 +8,73 @@ from .variable import rvc, RandomVariableCollection
 
 class ProbDist():
 
-    def __init__(self, rvc, support):
+    def __init__(self, rvc, support, axis_map=None):
         self._support = np.asarray(support)
-        # print(self._support)
+        if (self._support.size == 0):
+            self.__is_null = True
+        else:
+            self.__is_null = False
         # print(self._support > 0)
         assert(np.all(self._support >= 0))
-        assert(utils.is_close(np.sum(self._support),1.0))
+        if not self.__is_null:
+            assert(utils.is_close(np.sum(self._support),1.0))
         self._rvc = rvc
         self._num_variables = len(self._rvc)
+        if axis_map is not None:
+            self._axis_map = axis_map
+        else:
+            # Assume order matches canonical order
+            self._axis_map = self._rvc._names.dict
+
+    def _multi_axis_map(self, names):
+        return tuple(self._axis_map[name] for name in names)
 
     @staticmethod
     def from_callable_support(rvc, callable_support):
         array_dims = tuple(rv.num_outcomes for rv in rvc)
         # print(array_dims)
         support = np.zeros(array_dims)
-        for outcome_index, outcome in rvc.outcome_zip:
-            support[outcome_index] = callable_support(*outcome)
-        return ProbDist(rvc, support)
+        for _, outcome_index, outcome in rvc.outcome_space():
+            p = callable_support(*outcome)
+            support[outcome_index] = p
+        return ProbDist(rvc, support, axis_map=None)
 
-    def __getitem__(self, slice):
-        return self._support[slice]
+    def __mul__(A, B):
+        if A.__is_null:
+            return B
+        if B.__is_null:
+            return A
+        Av = A._rvc
+        Bv = B._rvc
+        As = A._support
+        Bs = B._support
+        if Av.intersection(Bv):
+            raise NotImplemented("Can't multiply distributions that share random variables.")
+        ABv = Av.union(Bv)
+        ABs = np.zeros(As.shape + Bs.shape)
+        ABs = np.tensordot(As, Bs, axes=0)
+        # print(As.shape + Bs.shape)
+        # print(ABs.shape)
+        assert(ABs.shape == As.shape + Bs.shape)
+        AB_axis_map = {}
+        AB_axis_map.update(A._axis_map)
+        for rv_name, axis in B._axis_map.items():
+            AB_axis_map[rv_name] = axis+len(As.shape)
+        # print(A._axis_map)
+        # print(B._axis_map)
+        # print(AB_axis_map)
+        AB = ProbDist(ABv, ABs, axis_map=AB_axis_map)
+        return AB
 
     def _sub_support(self, outcome_dict):
         outcome_association = []
         slice_obj = [slice(None)] * self._num_variables
         for rv_name, outcome_label in outcome_dict.items():
-            rv = self._rvc.get(rv_name)
-            outcome = rv.label_index(outcome_label)
-            slice_obj[self._rvc.index(rv)] = outcome
-            outcome_association.append((rv, outcome))
+
+            rv = self._rvc.get_rv(rv_name)
+            outcome_index = rv.outcomes.index(outcome_label)
+            slice_obj[self._axis_map[rv_name]] = outcome_index
+            outcome_association.append((rv, outcome_index))
         sub_support = self._support[slice_obj]
         return sub_support, outcome_association
 
@@ -52,26 +90,27 @@ class ProbDist():
         return total
 
     def coincidence(self, rvc_names, method='same'):
-        rvc = self._rvc.sub(*rvc_names)
+        rvc = self._rvc.sub(rvc_names)
         return self._coincidence(rvc, method)
 
     def _coincidence(self, rvc, method):
         mpd = self._marginal(rvc)
         additive = []
         subtractive = []
-        for outcome_index, outcome in rvc.outcome_zip:
+        for names, outcome_indices, outcome in rvc.outcome_space():
+            slice_indices = tuple(outcome_indices[i] for i in mpd._multi_axis_map(names))
             if method=='same':
                 if utils.all_equal(outcome):
-                    additive.append(outcome_index)
+                    additive.append(slice_indices)
                 else:
-                    subtractive.append(outcome_index)
+                    subtractive.append(slice_indices)
             if method=='two_expect':
                 # assume outcomes mean {-1, +1}
-                product_outcome = (-1)**(len(outcome_index) - sum(outcome_index))
+                product_outcome = (-1)**(len(outcome) - sum(outcome))
                 if product_outcome == 1:
-                    additive.append(outcome_index)
+                    additive.append(slice_indices)
                 else:
-                    subtractive.append(outcome_index)
+                    subtractive.append(slice_indices)
         # print(additive)
         # print(subtractive)
         add_prob = mpd._total_prob(additive)
@@ -88,7 +127,7 @@ class ProbDist():
         return conditioned_pd
 
     def marginal(self, rvc_names):
-        rvc = self._rvc.sub(*rvc_names)
+        rvc = self._rvc.sub(rvc_names)
         return self._marginal(rvc)
 
     def _marginal(self, rvc):
@@ -96,7 +135,7 @@ class ProbDist():
         if not rv_to_sum:
             return self
         else:
-            axis_to_keep = self._rvc.indices(rvc)
+            axis_to_keep = [self._axis_map[rv.name] for rv in rvc]
             axis_to_sum = tuple(set(range(self._support.ndim)) - set(axis_to_keep))
             marginal_support = np.sum(self._support, axis=axis_to_sum)
             marginal_pd = ProbDist(rvc, marginal_support)
@@ -106,16 +145,16 @@ class ProbDist():
         return self.entropy(*args)
 
     def entropy(self, X_names, Y_names=()):
-        X = self._rvc.sub(*X_names)
-        Y = self._rvc.sub(*Y_names)
+        X = self._rvc.sub(X_names)
+        Y = self._rvc.sub(Y_names)
         return self._entropy(X, Y)
 
     def _entropy(self, X, Y):
         XY = X.union(Y)
         p_XY = self._marginal(XY)
         p_Y = self._marginal(Y)
-        H_XY = Utils.entropy(p_XY._support)
-        H_Y = Utils.entropy(p_Y._support)
+        H_XY = utils.entropy(p_XY._support)
+        H_Y = utils.entropy(p_Y._support)
         # Chain rule H(X|Y) = H(Y, X) - H(Y)
         return H_XY - H_Y
 
@@ -123,8 +162,8 @@ class ProbDist():
         return self.mutual_information(*args)
 
     def mutual_information(self, Xs_names, Y_names=[]):
-        Xs = tuple(self._rvc.sub(*X_names) for X_names in Xs_names)
-        Y = self._rvc.sub(*Y_names)
+        Xs = tuple(self._rvc.sub(X_names) for X_names in Xs_names)
+        Y = self._rvc.sub(Y_names)
         return self._mutual_information(Xs, Y)
 
     def _mutual_information(self, Xs, Y):
@@ -139,101 +178,37 @@ class ProbDist():
         else:
             return 0
 
-    def ravel_support(self):
-        return np.ravel(self._support)
+    def _unpack_prob_space(self):
+        for names, indices, outcome in self._rvc.outcome_space():
+            axis_desc = self._multi_axis_map(names)
+            support_slice = [0]*len(names)
+            for i, slice_index in enumerate(axis_desc):
+                support_slice[slice_index] = indices[i]
+            p = self._support[tuple(support_slice)]
+            yield outcome, p
+
+    def canonical_ravel(self):
+        for outcome, p in self._unpack_prob_space():
+            yield p
 
     def __str__(self):
         fs = "{outcome} -> {probability}"
-        print_list = []
-        print_list.append(self.__repr__())
+        print_list = ["=== ProbDist ==="]
+        # print_list.append(self.__repr__())
         print_list.append(str(self._rvc))
-        for outcome_index, outcome in self._rvc.outcome_zip:
-            print_list.append(fs.format(probability=self[outcome_index], outcome=outcome))
+        print_list.append(fs)
+        for outcome, p in self._unpack_prob_space():
+            print_list.append(fs.format(outcome=outcome, probability=p))
+        print_list.append("================")
         return '\n'.join(print_list)
 
 @timing
 def perform_tests():
-    # if a,b,c are bits, there are 2**3 = 8 outcomes
-    #     a   |    b   |    c   ||  P
-    #   --------------------------------
-    #   'a'   |   'a'  |  'c1'  ||  1/3
-    #   'a'   |   'a'  |  'c2'  ||  1/12
-    #   'a'   |  'b1'  |  'c1'  ||  0
-    #   'a'   |  'b1'  |  'c2'  ||  1/12
-    #   'a2'  |   'a'  |  'c1'  ||  0
-    #   'a2'  |   'a'  |  'c2'  ||  0
-    #   'a2'  |  'b1'  |  'c1'  ||  1/2
-    #   'a2'  |  'b1'  |  'c2'  ||  0
-    def demo_distro(a,b,c):
-        if (a == 'a' and c == 'c2'):
-            return 1/12
-        elif (a == 'a' and b == 'a' and c == 'c1'):
-            return 1/3
-        elif (a == 'a2' and b == 'b1' and c == 'c1'):
-            return 1/2
-        else:
-            return 0
-    pd = ProbDist.from_callable_support(rvc(['A', 'B', 'C'], [['a', 'a2'], ['a', 'b1'], ['c1', 'c2']]), demo_distro)
+    rvc = RandomVariableCollection({})
+    support = []
+    pd = ProbDist(rvc, support)
     print(pd)
-    print(pd.condition({'A': 'a'}))
-    print(pd.prob({'A': 'a', 'B': 'b1'}))
-    print(pd.prob({'A': 'a', 'C': 'c2'}))
-    print(pd.coincidence(['A', 'B']))
-    # print(pd.prob({}))
-    # print(pd.marginal(['A']))
-    # print(pd.entropy(['A']))
-    # print(pd.entropy('A'))
-    # print(pd.mutual_information([['B'], ['A']], ['C']))
-    # print(pd.entropy(['A'], ['C']) + pd.entropy(['B'], ['C']) - pd.entropy(['A', 'B'], ['C']))
-    # print(pd.mutual_information([['B'], ['A']]))
-    # print(pd.entropy(['A']) + pd.entropy(['B']) - pd.entropy(['A', 'B']))
-    # print(pd.entropy(['B', 'C'], ['A']))
-    # pd2 = ProbDist.from_cached_support([[0, 1/2],[1/2, 0]])
-    # pd3 = pd.cache_support()
-    # pd4 = pd.marginal(on=(2,))
-    # pd5 = pd.marginal(on=(0,1))
-    # pd6 = pd.condition(on=(0,), vals=(0,))
-    # pd(0,0)
-    # print(pd)
-    # print(pd6)
-    # print(pd6.entropy())
-    # print(pd2)
-    # print(pd2.marginal(on=0))
-    # print(pd2.marginal(on=(0,1)))
-    # # print(pd2.marginal(on=(0,1)).entropy())
-    # # print(entropy(pd2.marginal(on=(0,1))))
-    # # print(pd.marginal(on=(0)).mutual_information(0,1))
-    # print(pd.mutual_information(1,2))
-    # print(pd.mutual_information(1,1))
-    # print(pd.marginal((0,2)).entropy())
-    # # # print(pd.marginal((0,2)).entropy())
-    # print(pd.marginal((0,1)).entropy())
-    # print(pd.mutual_information(0,1))
-    # print(pd.mutual_information(0,2))
-    # print(pd.mutual_information(0,3))
-    # print(pd2, on=(0,1))
-    # print(pd2.marginal(on=None))
-    # print(pd2)
-    # print(pd2.marginal(on=1))
-    # print(pd2, on=1)
-    # print(mutual_information(pd2, 0,(0,1)))
-    # print(entropy(pd2))
-    # print(entropy(pd2.marginal(on=0)))
-    # print(entropy(pd2.marginal(on=1)))
-    # print(mutual_information(pd2, 0, 1))
-    # print(pd2.condition(on=(0,), vals=(0,)))
-    # print(pd2.condition(on=(0,), vals=(0,)).entropy())
-    # print(pd2.entropy())
-    # print(pd2.marginal(on=(1,)).entropy())
-    # print(pd2.entropy() - pd2.marginal(on=(1,)).entropy())
-    # print()
-    # print(pd(0,0,0))
-    # print(pd3(0,0,0))
-    # print(pd2(0,1))
-    # print(pd2(1,1))
-    # print(pd2)
-    # print(pd4)
-    # print(pd5)
+    print(pd.prob({}))
 
 if __name__ == '__main__':
     perform_tests()

@@ -3,12 +3,30 @@ Contains classes and utilities associated with random variables.
 """
 import itertools
 import numpy as np
+import re
 from ..utilities.timing_profiler import timing
-from ..utilities.sorted_nicely import sorted_nicely
+from ..utilities.sort_lookup import SortLookup
+from ..utilities import utils
+from . import variable_sort
+
+_rv_sep = '_'
+_rv_no_sep_match = r"([a-z]+)([0-9]+)"
+
+def split_name(symbolic):
+    if _rv_sep in symbolic:
+        base_name, name_modifier = symbolic.split(_rv_sep, 1)
+    else:
+        match = re.match(_rv_no_sep_match, symbolic, re.I)
+        if match:
+            base_name, name_modifier = match.groups()
+        else:
+            base_name, name_modifier = symbolic, None
+    return base_name, name_modifier
 
 class RandomVariable():
 
     def __init__(self, name, outcome_desc):
+        self.base_name, self.name_modifier = split_name(name)
         self.name = name
         if isinstance(outcome_desc, int):
             self.outcomes = list(range(outcome_desc))
@@ -16,18 +34,18 @@ class RandomVariable():
             self.outcomes = outcome_desc
         self.num_outcomes = len(self.outcomes)
 
-    def outcome_label(self, index):
-        return self.outcomes[index]
+    # def outcome_label(self, index):
+    #     return self.outcomes[index]
 
-    def label_index(self, label):
-        return self.outcomes.index(label)
+    # def label_index(self, label):
+    #     return self.outcomes.index(label)
+
+    def __repr__(self):
+        _repr = "{name}: {0} -> {1}".format(self.num_outcomes, self.outcomes, name=self.name)
+        return _repr
 
     def __str__(self):
-        _repr = "{name}: {0} outcomes -> {1}".format(self.num_outcomes, self.outcomes, name=self.name)
-        print_list = []
-        print_list.append(self.__repr__())
-        print_list.append(_repr)
-        return '\n'.join(print_list)
+        return self.__repr__()
 
 def rvc(names, outcome_descs):
     rvs = []
@@ -44,48 +62,45 @@ class RandomVariableCollection(set):
             rvs = []
         rvs = list(filter(None, rvs))
         super(RandomVariableCollection, self).__init__(rvs)
-        self._index_map = sorted_nicely([rv.name for rv in rvs])
-        # print(self._index_map)
-        self.outcome_indices = list(itertools.product(*(np.arange(rv.num_outcomes) for rv in self)))
-        self.outcomes = list(itertools.product(*(rv.outcomes for rv in self)))
-        self.outcome_zip = list(zip(self.outcome_indices, self.outcomes))
+        self._name_lookup = dict((rv.name, rv) for rv in super().__iter__())
+        self._names = SortLookup(variable_sort.sort(self._name_lookup.keys()))
 
-    def indices(self, rvc):
-        lst = []
-        for rv in rvc:
-            if rv.name in self._index_map:
-                lst.append(self.index(rv))
-        return lst
+    def outcome_space(self):
+        outcome_space = itertools.product(
+            *[self._name_lookup[rv_name].outcomes for rv_name in self._names.list]
+        )
+        outcome_index_space = itertools.product(
+            *[range(self._name_lookup[rv_name].num_outcomes) for rv_name in self._names.list]
+        )
+        for outcome_index, outcome in zip(outcome_index_space, outcome_space):
+            yield self._names.list, outcome_index, outcome
 
-    def index(self, rv):
-        return self._index_map.index(rv.name)
+    def get_rvs(self, names):
+        """ Get random variables from a list of names """
+        if not isinstance(names, (list, tuple)):
+            names = [names]
+        return [self.get_rv(name) for name in names]
 
-    def get(self, *args):
-        if len(args) == 1:
-            return next((rv for rv in super().__iter__() if rv.name == args[0]), None)
-        else:
-            return [self.get(arg) for arg in args]
+    def get_rv(self, name):
+        """ Get Random Variable from single name """
+        if name in self._name_lookup:
+            return self._name_lookup[name]
+        return None
 
-    def sub(self, *args):
-        return RandomVariableCollection(self.get(*args))
+    def sub(self, names):
+        return RandomVariableCollection(self.get_rvs(names))
 
     def __iter__(self):
-        for i in self._index_map:
-            yield self.get(i)
-
-    def __getitem__(self, slice):
-        return self.get(*self._index_map[slice])
+        for i in self._names.list:
+            yield self.get_rv(i)
 
     def __str__(self):
         print_list = []
         print_list.append("RandomVariableCollection")
         print_list.append('{0} Random Variables:'.format(len(self)))
-        rv_names = [rv.name for rv in self]
-        rv_outcomes = [str(rv.num_outcomes) for rv in self]
-        if len(rv_names) > 0:
-            print_list.append(', '.join(rv_names))
-        if len(rv_outcomes) > 0:
-            print_list.append(', '.join(rv_outcomes))
+        print_list.append('Outcomes: {0}'.format(utils.factorization([rv.num_outcomes for rv in self])))
+        for rv in self:
+            print_list.append(rv.__repr__())
         return '\n'.join(print_list)
 
     @classmethod
