@@ -22,11 +22,10 @@ def GL_knit_QR(GL_n):
 def U(n):
     return GL_knit_QR(GL_C(n))
 
-def P_I(n):
-    N = range(n)
-    S = [np.zeros((n,n)) for _ in N]
-    for i in N:
-        S_i = np.random.randint(0, n)
+def P_I(n, num):
+    S = [np.zeros((n,n)) for _ in range(num)]
+    for i in range(n):
+        S_i = np.random.randint(0, num)
         S[S_i][i,i] = 1
     return S
 

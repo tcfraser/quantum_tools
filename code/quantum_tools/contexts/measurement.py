@@ -63,7 +63,7 @@ class MeasurementStratsRandom():
 
     @staticmethod
     def seesaw(name, size):
-        S = rmt.P_I(size)
+        S = rmt.P_I(size, size)
         unitary = rmt.U(size)
         for i in range(size):
             S[i] = utils.multidot(unitary, S[i], unitary.conj().T)

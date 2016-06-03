@@ -10,7 +10,9 @@ class ProbDist():
 
     def __init__(self, rvc, support):
         self._support = np.asarray(support)
-        assert(np.all(self._support > 0))
+        # print(self._support)
+        # print(self._support > 0)
+        assert(np.all(self._support >= 0))
         assert(utils.is_close(np.sum(self._support),1.0))
         self._rvc = rvc
         self._num_variables = len(self._rvc)
@@ -49,22 +51,32 @@ class ProbDist():
             total += self._support[i]
         return total
 
-    def coincidence(self, rvc_names):
+    def coincidence(self, rvc_names, method='same'):
         rvc = self._rvc.sub(*rvc_names)
-        return self._coincidence(rvc)
+        return self._coincidence(rvc, method)
 
-    def _coincidence(self, rvc):
+    def _coincidence(self, rvc, method):
         mpd = self._marginal(rvc)
-        same = []
-        diff = []
+        additive = []
+        subtractive = []
         for outcome_index, outcome in rvc.outcome_zip:
-            if utils.all_equal(outcome):
-                same.append(outcome_index)
-            else:
-                diff.append(outcome_index)
-        same_prob = mpd._total_prob(same)
-        diff_prob = mpd._total_prob(diff)
-        return same_prob - diff_prob
+            if method=='same':
+                if utils.all_equal(outcome):
+                    additive.append(outcome_index)
+                else:
+                    subtractive.append(outcome_index)
+            if method=='two_expect':
+                # assume outcomes mean {-1, +1}
+                product_outcome = (-1)**(len(outcome_index) - sum(outcome_index))
+                if product_outcome == 1:
+                    additive.append(outcome_index)
+                else:
+                    subtractive.append(outcome_index)
+        # print(additive)
+        # print(subtractive)
+        add_prob = mpd._total_prob(additive)
+        sub_prob = mpd._total_prob(subtractive)
+        return add_prob - sub_prob
 
     def condition(self, cond_outcome_dict):
         sub_support, outcome_association = self._sub_support(cond_outcome_dict)

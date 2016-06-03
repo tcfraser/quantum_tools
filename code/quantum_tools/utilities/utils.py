@@ -76,13 +76,16 @@ def powerset(seq):
             yield [seq[0]]+item
             yield item
 
-def all_equal(iterator):
+def all_equal(iterator, to=None):
     try:
-       iterator = iter(iterator)
-       first = next(iterator)
-       return all(first == rest for rest in iterator)
+        iterator = iter(iterator)
+        first = next(iterator)
+        if to is None:
+            return all(first == rest for rest in iterator)
+        else:
+            return all(first == rest == to for rest in iterator)
     except StopIteration:
-       return True
+        return True
 
 def en_tuple(tup):
     if isinstance(tup, (tuple)):

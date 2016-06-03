@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import numpy as np
 from ..optimizers.minimizer import Minimizer
 from ..utilities import utils
+from ..utilities import rmt
 from ..config import *
 from ..contexts.measurement import Measurement
 from ..contexts.state import State
@@ -14,9 +15,9 @@ class INEQ_Triangle(Minimizer):
         Minimizer.__init__(self, [32,32,32,16,16,16])
         self.local_log=True
         self.permutation = utils.get_permutation()
-        self.seed_operator_A = utils.partial_identities([2,2])
-        self.seed_operator_B = utils.partial_identities([1,3])
-        self.seed_operator_C = utils.partial_identities([3,1])
+        self.seed_operator_A = rmt.P_I(4,2)
+        self.seed_operator_B = rmt.P_I(4,2)
+        self.seed_operator_C = rmt.P_I(4,2)
         self.ineq = get_ineq(8 - 1)
 
     def initial_guess(self,):
@@ -48,7 +49,7 @@ class INEQ_Triangle(Minimizer):
         labels = ['A', 'B', 'C']
         C = {}
         for i in utils.powerset(labels):
-            C[''.join(i)] = pd.coincidence(i)
+            C[''.join(i)] = pd.coincidence(i,method='two_expect')
         C_list = [
             C[''],
             C['A'],
@@ -66,8 +67,12 @@ class INEQ_Triangle(Minimizer):
             C['A']*C['BC'],
             C['A']*C['B']*C['C'],
         ]
+        # print(C_list)
         target = np.dot(C_list, self.ineq)
+        # print(self.ineq)
+        # print(C_list)
         print(target)
+        # assert(False)
         return target
 
 def run_minimizer():
