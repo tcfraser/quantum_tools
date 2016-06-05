@@ -23,10 +23,16 @@ def context_marginals(pd, context, defl_map):
     defl_context = deflate(context, defl_map)
     marginals = map(pd.marginal, defl_context)
     product_marginals = reduce(mul, marginals)
+    # print(product_marginals)
+    # print(list(product_marginals.canonical_ravel()))
     return np.array(list(product_marginals.canonical_ravel()))
 
 def contexts_marginals(pd, contexts, defl_map):
     return np.hstack((context_marginals(pd, c, defl_map) for c in contexts))
+
+def marginal_desc_mtrx_per_context(context, defl_map):
+
+def marginal_desc_mtrx(pd, , defl_map):
 
 @timing
 def perform_tests():
@@ -40,7 +46,7 @@ def perform_tests():
         [['A2'], ['B1',   'C2']],
         [['A1',   'B1',   'C1']],
     ]
-    # print(spd)
+    print(spd)
     defl_map = index_map_from_symbolic(symbolic_contexts)
     # print(infl_map)
     # print(defl_map)
