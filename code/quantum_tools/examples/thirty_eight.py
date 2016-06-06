@@ -7,6 +7,7 @@ from ..config import *
 from ..contexts.measurement import Measurement
 from ..contexts.state import State
 from ..contexts.quantum_context import QuantumContext, QuantumProbDist
+from ..statistics.variable import RandomVariableCollection
 from .ineqs_loader import *
 
 class INEQ_Triangle(Minimizer):
@@ -14,29 +15,27 @@ class INEQ_Triangle(Minimizer):
     def __init__(self):
         Minimizer.__init__(self, [32,32,32,16,16,16])
         self.local_log=True
-        self.permutation = utils.get_permutation()
+        self.permutation = utils.get_triangle_permutation()
         self.seed_operator_A = rmt.P_I(4,2)
         self.seed_operator_B = rmt.P_I(4,2)
         self.seed_operator_C = rmt.P_I(4,2)
         self.ineq = get_ineq(8 - 1)
+        self.random_variables = RandomVariableCollection.new(['A', 'B', 'C'], [2,2,2])
 
     def initial_guess(self,):
-        # d = [1.0]*4 + [0.0]*12
-        # initial_guess = list(np.random.normal(scale=1.0, size=16*3)) + d + d + d
         initial_guess = np.random.normal(scale=1.0, size=self.mem_size)
-        # print(initial_guess)
         return initial_guess
 
     def get_context(self, param):
         pA, pB, pC, prhoAB, prhoBC, prhoAC = self.mem_slots
-        A = Measurement.Strats.Param.pvms('A', param[pA], self.seed_operator_A)
-        B = Measurement.Strats.Param.pvms('B', param[pB], self.seed_operator_B)
-        C = Measurement.Strats.Param.pvms('C', param[pC], self.seed_operator_C)
-        rhoAB = State.dm(param[prhoAB])
-        rhoBC = State.dm(param[prhoBC])
-        rhoAC = State.dm(param[prhoAC])
+        A = Measurement.Strats.Param.seeded_pvms(param=param[pA], seed_operators=self.seed_operator_A)
+        B = Measurement.Strats.Param.seeded_pvms(param=param[pB], seed_operators=self.seed_operator_B)
+        C = Measurement.Strats.Param.seeded_pvms(param=param[pC], seed_operators=self.seed_operator_C)
+        rhoAB = State.Strats.Param.dm(param[prhoAB])
+        rhoBC = State.Strats.Param.dm(param[prhoBC])
+        rhoAC = State.Strats.Param.dm(param[prhoAC])
 
-        qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=self.permutation)
+        qc = QuantumContext(random_variables=self.random_variables, measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=self.permutation)
         return qc
 
     def get_prob_distribution(self, context):

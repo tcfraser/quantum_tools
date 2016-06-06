@@ -1,9 +1,18 @@
 from itertools import *
 import numpy as np
+import collections
 from scipy import linalg
 from functools import reduce
 from operator import mul
 from .constants import *
+import random as rndm
+import math
+
+def u2pi():
+    return rndm.uniform(0.0,1.0) * 2 * np.pi
+
+def upi():
+    return rndm.uniform(0.0,1.0) * np.pi
 
 def recurse(f, n, arg):
     rf = f(arg)
@@ -106,7 +115,7 @@ def factorization(nums):
     total = 0
     for num, multi in multiplicity(nums):
         if (multi == 1):
-            s.append(num)
+            s.append(str(num))
             total += num
         else:
             s.append("{0}^{1}".format(num, multi))
@@ -221,6 +230,7 @@ def tensor(*args):
 
 def multiply(*args):
     """ Implementation of multiple matrix multiplications between matrices """
+    assert(False), "Shouldn't be using this."
     return reduce(mul, args)
 
 def multidot(*args):
@@ -238,6 +248,40 @@ def is_psd(A):
 def is_trace_one(A):
     """ Checks if matrix A has unitary trace or not """
     return is_close(np.trace(A), 1)
+
+def uniform_phase_components(n):
+    phases = np.ones(n, dtype='complex')
+    for i in range(1,n):
+        phases[i] *= ei(u2pi())
+    return phases
+
+def uniform_n_sphere_metric(n):
+    """
+        for n = 3: returns
+        (cos x, sin x cos y, sin x sin y)
+        for n = 4: returns
+        (cos x, sin x cos y, sin x sin y cos z, sin x sin y sin z)
+    """
+    angles = [u2pi() for _ in range(n-1)]
+    trig_pairs = [(math.cos(angles[i]), math.sin(angles[i])) for i in range(n-1)]
+    # trig_pairs = [(math.cos(u2pi()), math.sin(u2pi())) for i in range(n-1)]
+    metric = np.ones(n)
+    # metric = ['', '', '', '']
+    for i in range(n):
+        for j in range(i+1):
+            if j < n-1:
+                if i == j:
+                    metric[i] *= trig_pairs[j][0] # cos
+                    # metric[i] += 'cos({0})'.format(j) # cos
+                else:
+                    metric[i] *= trig_pairs[j][1] # sin
+                    # metric[i] += 'sin({0})'.format(j) # sin
+        # print(metric[i])
+    # print(metric)
+    # print(linalg.norm(metric))
+    # print(trig_pairs)
+    assert(is_close(linalg.norm(metric), 1.0)), "Not normalized."
+    return metric
 
 def is_close(a,b):
     """ Checks if two numbers are close with respect to a machine tolerance defined above """
@@ -319,7 +363,10 @@ def en_set(lst):
     else:
         return set([lst])
 
-def get_permutation():
+def iterable_not_string(a):
+    return not isinstance(i, str) and isinstance(i, collections.Iterable)
+
+def get_triangle_permutation():
     perm = np.zeros((64,64), dtype=complex)
     for a in list(product(*[[0,1]]*6)):
         ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
@@ -331,6 +378,12 @@ def largest_eig(M):
     size = M.shape[0]
     largest_eig = linalg.eigh(M, eigvals_only=True, eigvals=(size-1,size-1))[0]
     return largest_eig
+
+def projectors(n):
+    S = [np.zeros((n,n)) for _ in range(n)]
+    for i in range(n):
+        S[i][i,i] = 1
+    return S
 
 def cholesky(t):
     # James, Kwiat, Munro, and White Physical Review A 64 052312
@@ -389,11 +442,6 @@ def param_GL_C(t):
     GL_RR = np.reshape(t, (2, size, size))
     GL_C = GL_RR[0] + i * GL_RR[1]
     return GL_C
-
-def get_meas_on_bloch_sphere(theta,phi):
-    psi = np.cos(theta) * qb0 + np.sin(theta) * ei(phi) * qb1
-    dm = ket_to_dm(psi)
-    return dm
 
 def get_orthogonal_pair(t):
     theta = t[0]

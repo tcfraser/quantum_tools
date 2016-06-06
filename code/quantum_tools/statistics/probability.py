@@ -3,8 +3,8 @@ Contains the abstract class of a probability distrobution and associated margina
 """
 import numpy as np
 from ..utilities import utils
-from ..utilities.timing_profiler import timing
-from .variable import rvc, RandomVariableCollection
+from ..utilities.profiler import profile
+from .variable import RandomVariableCollection
 
 class ProbDist():
 
@@ -17,14 +17,18 @@ class ProbDist():
         # print(self._support > 0)
         assert(np.all(self._support >= 0))
         if not self.__is_null:
-            assert(utils.is_close(np.sum(self._support),1.0))
+            # print(rvc)
+            # print(support)
+            # print(np.sum(self._support))
+            sum_support = np.sum(self._support)
+            assert(utils.is_close(sum_support,1.0)), "Probability distribution does not sum to 1.0. Sums to {0}".format(sum_support)
         self._rvc = rvc
         self._num_variables = len(self._rvc)
         if axis_map is not None:
             self._axis_map = axis_map
         else:
             # Assume order matches canonical order
-            self._axis_map = self._rvc._names.dict
+            self._axis_map = self._rvc.names.dict
 
     def _multi_axis_map(self, names):
         return tuple(self._axis_map[name] for name in names)
@@ -202,7 +206,7 @@ class ProbDist():
         print_list.append("================")
         return '\n'.join(print_list)
 
-@timing
+@profile
 def perform_tests():
     rvc = RandomVariableCollection({})
     support = []

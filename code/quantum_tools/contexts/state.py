@@ -11,12 +11,20 @@ class State():
 
     def __init__(self, data):
         self.data = np.matrix(data)
+        assert(utils.is_trace_one(self.data)), "State does not have unitary trace."
+        assert(utils.is_psd(self.data)), "State is not positive semi-definite."
+        assert(utils.is_hermitian(self.data)), "State is not hermitian."
 
     def __str__(self):
         print_list = []
         print_list.append(self.__repr__())
         print_list.append(str(self.data))
         return '\n'.join(print_list)
+
+class StateStrats():
+    pass
+
+class StateStratsParam():
 
     @staticmethod
     def dm(t):
@@ -25,6 +33,8 @@ class State():
         # assert(is_trace_one(groundn)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
         rho = State(g)
         return rho
+
+class StateStratsDeterministic():
 
     @staticmethod
     def mebs(n=0):
@@ -43,3 +53,23 @@ class State():
             psi = norm * (qb01 - qb10)
         rho = State(utils.ket_to_dm(psi))
         return rho
+
+class StateStratsRandom():
+
+    @staticmethod
+    def pure_uniform(n):
+        """
+            n = 2 is qubits
+        """
+        bloch_sample = utils.uniform_n_sphere_metric(n)
+        phases = utils.uniform_phase_components(n)
+        psi = bloch_sample * phases
+        dm = utils.ket_to_dm(psi)
+        rho = State(dm)
+        return rho
+
+# === Scope Declarations ===
+State.Strats = StateStrats
+StateStrats.Random = StateStratsRandom
+StateStrats.Param = StateStratsParam
+StateStrats.Deterministic = StateStratsDeterministic

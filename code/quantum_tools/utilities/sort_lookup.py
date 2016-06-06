@@ -1,3 +1,5 @@
+import collections
+
 class SortLookup():
 
     def __init__(self, data):
@@ -8,10 +10,15 @@ class SortLookup():
         self.__size = len(data)
 
     def __getitem__(self, i):
-        if isinstance(i, str):
-            return self.dict[i]
+        if not isinstance(i, str) and isinstance(i, collections.Iterable):
+            return [self[ii] for ii in i]
         else:
-            return self.list[i]
+            if isinstance(i, str):
+                return self.dict[i]
+            elif isinstance(i, int):
+                return self.list[i]
+            else:
+                raise Exception("SortLookup object only supports ints and strings bi-lookup.")
 
     def __len__(self):
         return self.__size

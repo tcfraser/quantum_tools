@@ -22,11 +22,10 @@ def GL_knit_QR(GL_n):
 def U(n):
     return GL_knit_QR(GL_C(n))
 
-def P_I(n, num):
-    S = [np.zeros((n,n)) for _ in range(num)]
-    for i in range(n):
-        S_i = np.random.randint(0, num)
-        S[S_i][i,i] = 1
+def P_I(size, count):
+    S = [np.zeros((size,size)) for _ in range(count)]
+    for i in range(size):
+        S[np.random.randint(0, count)][i,i] = 1
     return S
 
 # def P_I(n):
@@ -37,9 +36,6 @@ def P_I(n, num):
 #             if (real() > 0):
 #                 S[j][i,i] = 1
 #     return S
-
-def partial_diag(n):
-    empty = np.zeros(n)
 
 def perform_tests():
     # print(random_real())

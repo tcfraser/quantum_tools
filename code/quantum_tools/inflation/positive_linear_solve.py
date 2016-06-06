@@ -1,0 +1,59 @@
+import numpy as np
+import scipy
+from scipy import io, sparse, optimize
+from scipy.sparse import linalg
+from scipy.optimize import linprog
+import cvxopt as cvx
+
+def get_feasibility_scipy(A, b):
+    res = scipy.optimize.linprog(
+        c=-1*np.ones(A.shape[1]),
+        A_ub=None,
+        b_ub=None,
+        A_eq=A,
+        b_eq=b,
+        bounds=(0, None),
+        method='simplex',
+        callback=None,
+        options=None
+    )
+    if res.success:
+        assert(not np.any(np.dot(A, res.x) - b))
+    return res
+
+def get_feasibility_cvx(A, b):
+    """
+        Solves a pair of primal and dual LPs
+            minimize    c'*x
+            subject to  G*x + s = h
+                        A*x = b
+                        s >= 0
+            maximize    -h'*z - b'*y
+            subject to  G'*z + A'*y + c = 0
+                        z >= 0.
+        Input arguments.
+            c is n x 1, G is m x n, h is m x 1, A is p x n, b is p x 1.  G and
+            A must be dense or sparse 'd' matrices.  c, h and b are dense 'd'
+            matrices with one column.  The default values for A and b are
+            empty matrices with zero rows.
+            solver is None, 'glpk' or 'mosek'.  The default solver (None)
+            uses the cvxopt conelp() function.  The 'glpk' solver is the
+            simplex LP solver from GLPK.  The 'mosek' solver is the LP solver
+            from MOSEK.
+    """
+    x_size = A.shape[1]
+    A_I, A_J = A.nonzero()
+    A = cvx.spmatrix(1.0, A_I, A_J, size=A.shape, tc='d')
+    c = cvx.matrix(np.ones(x_size))
+    G = cvx.spmatrix(-1.0, range(x_size), range(x_size), tc='d')
+    h = cvx.matrix(np.zeros(x_size))
+    b = cvx.matrix(b)
+    res = cvx.solvers.lp(c=c,G=G,h=h,A=A,b=b,
+        # solver=None,
+        # solver='mosek',
+        solver='glpk',
+    )
+    return res
+
+if __name__ == '__main__':
+    pass

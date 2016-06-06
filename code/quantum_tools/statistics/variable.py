@@ -4,7 +4,7 @@ Contains classes and utilities associated with random variables.
 import itertools
 import numpy as np
 import re
-from ..utilities.timing_profiler import timing
+from ..utilities.profiler import profile
 from ..utilities.sort_lookup import SortLookup
 from ..utilities import utils
 from . import variable_sort
@@ -34,12 +34,6 @@ class RandomVariable():
             self.outcomes = outcome_desc
         self.num_outcomes = len(self.outcomes)
 
-    # def outcome_label(self, index):
-    #     return self.outcomes[index]
-
-    # def label_index(self, label):
-    #     return self.outcomes.index(label)
-
     def __repr__(self):
         _repr = "{name}: {0} -> {1}".format(self.num_outcomes, self.outcomes, name=self.name)
         return _repr
@@ -47,13 +41,14 @@ class RandomVariable():
     def __str__(self):
         return self.__repr__()
 
-def rvc(names, outcome_descs):
-    rvs = []
-    for i, name in enumerate(names):
-        rvs.append(RandomVariable(name, outcome_descs[i]))
-    return RandomVariableCollection(rvs)
-
 class RandomVariableCollection(set):
+
+    @staticmethod
+    def new(names, outcomes):
+        rvs = []
+        for i, name in enumerate(names):
+            rvs.append(RandomVariable(name, outcomes[i]))
+        return RandomVariableCollection(rvs)
 
     def __init__(self, rvs=()):
         if isinstance(rvs, RandomVariable):
@@ -62,22 +57,25 @@ class RandomVariableCollection(set):
             rvs = []
         rvs = list(filter(None, rvs))
         super(RandomVariableCollection, self).__init__(rvs)
+        __names = [rv.name for rv in rvs]
+        if len(__names) != len(set(__names)):
+            raise Exception("Two or more random variables share names.")
         self._name_lookup = dict((rv.name, rv) for rv in super().__iter__())
-        self._names = SortLookup(variable_sort.sort(self._name_lookup.keys()))
+        self.names = SortLookup(variable_sort.sort(self._name_lookup.keys()))
 
     def outcome_space(self):
         outcome_space = itertools.product(
-            *[self._name_lookup[rv_name].outcomes for rv_name in self._names.list]
+            *[self._name_lookup[rv_name].outcomes for rv_name in self.names.list]
         )
         outcome_index_space = itertools.product(
-            *[range(self._name_lookup[rv_name].num_outcomes) for rv_name in self._names.list]
+            *[range(self._name_lookup[rv_name].num_outcomes) for rv_name in self.names.list]
         )
         for outcome_index, outcome in zip(outcome_index_space, outcome_space):
-            yield self._names.list, outcome_index, outcome
+            yield self.names.list, outcome_index, outcome
 
     def get_rvs(self, names):
         """ Get random variables from a list of names """
-        if not isinstance(names, (list, tuple)):
+        if isinstance(names, str):
             names = [names]
         return [self.get_rv(name) for name in names]
 
@@ -90,8 +88,11 @@ class RandomVariableCollection(set):
     def sub(self, names):
         return RandomVariableCollection(self.get_rvs(names))
 
+    def sub_base_name(self, base_name):
+        return RandomVariableCollection([rv for rv in self if rv.base_name == base_name])
+
     def __iter__(self):
-        for i in self._names.list:
+        for i in self.names.list:
             yield self.get_rv(i)
 
     def __str__(self):
@@ -123,7 +124,7 @@ RandomVariableCollection._wrap_methods(['__ror__', 'difference_update', '__isub_
     'intersection_update', '__xor__', '__ior__', '__sub__',
 ])
 
-@timing
+@profile
 def perform_tests():
     A = RandomVariable('A', 2)
     A1 = RandomVariable('A1', ['x', 'y', 'z'])
