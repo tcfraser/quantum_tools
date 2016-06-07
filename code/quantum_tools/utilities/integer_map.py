@@ -10,7 +10,8 @@ class IntMap():
         self._dtype = dtype
         self._space_size = int(reduce(mul, digits, 1))
         self.base_size = len(self._digits)
-        self.__base = [reduce(mul, digits[i+1:], 1) for i in range(self.base_size)]
+        self.__base = np.array([reduce(mul, digits[i+1:], 1) for i in range(self.base_size)])[:, np.newaxis]
+        self.__cached_iter = None
 
     def __len__(self):
         return self._space_size
@@ -28,14 +29,18 @@ class IntMap():
     def get_integer(self, digits, base=None):
         if base is None:
             base = self.__base
-        return sum(a*b for a,b in zip(base, digits))
-        # return np.dot(np.asarray(digits), base)
+        return np.dot(np.asarray(digits), base)
 
     def get_base(self):
         return self.__base
 
     def __iter__(self):
         return itertools.product(*[range(d) for d in self._digits])
+
+    def cached_iter(self):
+        if self.__cached_iter is None:
+            self.__cached_iter = np.array(list(iter(self)))
+        return self.__cached_iter
 
 def comp_mask(integers, n):
     c_mask = np.ones(n, dtype=bool)

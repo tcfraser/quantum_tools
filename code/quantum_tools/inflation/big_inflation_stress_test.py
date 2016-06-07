@@ -32,12 +32,12 @@ sc222222 = [
 
 @profile
 def go():
-    symbolic_contexts = sc222222
+    symbolic_contexts = sc444444
     print()
-    inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[2]*6)
+    inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[4]*12)
     print(inflation_rvc)
     # inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[4]*12)
-    print(marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts))
+    # print(marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts))
 
 
 if __name__ == '__main__':
