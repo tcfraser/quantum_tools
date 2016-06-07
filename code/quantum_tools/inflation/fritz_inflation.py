@@ -46,19 +46,10 @@ def go():
 
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
     b = marginal_equality.contexts_marginals(pd, symbolic_contexts, defl_map)
-    print(A.shape, b.shape)
     # print(len(A.nonzero()[0]))
     # print(len(b.nonzero()[0]))
     res = positive_linear_solve.get_feasibility_cvx(A, b)
-    x_solution = res['x']
-    Ax = A.dot(x_solution)
-    bT = b[:,np.newaxis]
-    # print(Ax.shape)
-    # print(bT.shape)
     pprint(res)
-    if not np.any(Ax - bT):
-        print("Solution verified.")
-    # print(res['x'])
 
 if __name__ == '__main__':
     # go()

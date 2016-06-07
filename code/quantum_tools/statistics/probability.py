@@ -46,7 +46,7 @@ class ProbDist():
         array_dims = tuple(rv.num_outcomes for rv in rvc)
         # print(array_dims)
         support = np.zeros(array_dims)
-        for outcome_index, outcome in rvc.outcome_space_zip:
+        for _, outcome_index, outcome in rvc.iter_named_outcomes():
             p = callable_support(*outcome)
             support[outcome_index] = p
         return ProbDist(rvc, support)

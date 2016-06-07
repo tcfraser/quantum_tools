@@ -44,11 +44,12 @@ class INEQ_Triangle(Minimizer):
     def objective(self, param):
         qc = self.get_context(param)
         pd = self.get_prob_distribution(qc)
+        pd.update_correlation_settings({'method':'two_expect'})
 
         labels = ['A', 'B', 'C']
         C = {}
         for i in utils.powerset(labels):
-            C[''.join(i)] = pd.coincidence(i,method='two_expect')
+            C[''.join(i)] = pd.correlation(i)
         C_list = [
             C[''],
             C['A'],

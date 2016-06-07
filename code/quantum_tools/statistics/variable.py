@@ -7,6 +7,7 @@ import re
 from ..utilities.profiler import profile
 from ..utilities.sort_lookup import SortLookup
 from ..utilities import utils
+from ..utilities.integer_map import IntMap
 from . import variable_sort
 
 _rv_sep = '_'
@@ -46,7 +47,7 @@ class RandomVariableCollection(set):
     @staticmethod
     def new(names, outcomes):
         rvs = []
-        assert(len(names) == len(outcomes))
+        assert(len(names) == len(outcomes)), "Number of outcomes must match number of names."
         for i, name in enumerate(names):
             rvs.append(RandomVariable(name, outcomes[i]))
         return RandomVariableCollection(rvs)
@@ -63,20 +64,17 @@ class RandomVariableCollection(set):
             raise Exception("Two or more random variables share names.")
         self._name_lookup = dict((rv.name, rv) for rv in super().__iter__())
         self.names = SortLookup(variable_sort.sort(self._name_lookup.keys()))
-        outcome_space = itertools.product(
-            *[self._name_lookup[rv_name].outcomes for rv_name in self.names.list]
-        )
-        outcome_index_space = itertools.product(
-            *[range(self._name_lookup[rv_name].num_outcomes) for rv_name in self.names.list]
-        )
-        self.outcome_index_space = list(outcome_index_space)
-        self.outcome_space = list(outcome_space)
-        self.outcome_space_zip = zip(self.outcome_index_space, self.outcome_space)
-        self.outcome_index_space = np.array(self.outcome_index_space)
+        self.outcome_space = IntMap([self._name_lookup[rv_name].num_outcomes for rv_name in self.names.list])
+
+    def outcome_label(self, outcome_index):
+        retVal = []
+        for i, idx in enumerate(outcome_index):
+            retVal.append(self._name_lookup[self.names[i]].outcomes[idx])
+        return retVal
 
     def iter_named_outcomes(self):
-        for outcome_index, outcome in self.outcome_space_zip:
-            yield self.names.list, outcome_index, outcome
+        for outcome_index in self.outcome_space:
+            yield self.names.list, outcome_index, self.outcome_label(outcome_index)
 
     def get_rvs(self, names):
         """ Get random variables from a list of names """
