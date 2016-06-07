@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 import numpy as np
 
 i = 1j
@@ -17,3 +16,4 @@ sigx = np.array([[0,1],[1,0]])
 sigy = np.array([[0,-i],[i,0]])
 sigz = np.array([[1,0],[0,-1]])
 tqbs = np.array([qb00, qb01, qb10, qb11])
+sqrt2 = np.sqrt(2)

@@ -46,6 +46,7 @@ class RandomVariableCollection(set):
     @staticmethod
     def new(names, outcomes):
         rvs = []
+        assert(len(names) == len(outcomes))
         for i, name in enumerate(names):
             rvs.append(RandomVariable(name, outcomes[i]))
         return RandomVariableCollection(rvs)
@@ -62,15 +63,19 @@ class RandomVariableCollection(set):
             raise Exception("Two or more random variables share names.")
         self._name_lookup = dict((rv.name, rv) for rv in super().__iter__())
         self.names = SortLookup(variable_sort.sort(self._name_lookup.keys()))
-
-    def outcome_space(self):
         outcome_space = itertools.product(
             *[self._name_lookup[rv_name].outcomes for rv_name in self.names.list]
         )
         outcome_index_space = itertools.product(
             *[range(self._name_lookup[rv_name].num_outcomes) for rv_name in self.names.list]
         )
-        for outcome_index, outcome in zip(outcome_index_space, outcome_space):
+        self.outcome_index_space = list(outcome_index_space)
+        self.outcome_space = list(outcome_space)
+        self.outcome_space_zip = zip(self.outcome_index_space, self.outcome_space)
+        self.outcome_index_space = np.array(self.outcome_index_space)
+
+    def iter_named_outcomes(self):
+        for outcome_index, outcome in self.outcome_space_zip:
             yield self.names.list, outcome_index, outcome
 
     def get_rvs(self, names):

@@ -26,6 +26,13 @@ def QuantumProbDist(qc):
         measurement_operators = [qc.measurements[posn][val] for posn, val in enumerate(args)]
         joint_measurement = utils.tensor(*measurement_operators)
         joint_state = utils.tensor(*tuple(s.data for s in qc.states))
+        # if args == (0,0,0):
+        #     for i in measurement_operators:
+        #         print(i)
+        #     for s in qc.states:
+        #         print(s.data)
+        #     print(joint_measurement)
+        #     print(joint_state)
         if qc.permutation is not None:
             joint_state = utils.multidot(qc.permutationT, joint_state, qc.permutation)
 

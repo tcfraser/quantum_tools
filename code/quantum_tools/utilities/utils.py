@@ -337,6 +337,9 @@ def all_equal(iterator, to=None):
     except StopIteration:
         return True
 
+def list_mod(lst, mod):
+    return [i % mod for i in lst]
+
 def en_tuple(tup):
     if isinstance(tup, (tuple)):
         return tup

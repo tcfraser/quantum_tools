@@ -1,3 +1,5 @@
+import numpy as np
+from pprint import pprint
 from . import marginal_equality
 from ..contexts.measurement import Measurement
 from ..contexts.state import State
@@ -7,24 +9,6 @@ from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
 from . import positive_linear_solve
 from ..examples import prob_dists
-
-perm = utils.get_triangle_permutation()
-
-def uniform_sample_qdistro(rvc):
-    A = Measurement.Strats.Random.pvms_uniform(4)
-    B = Measurement.Strats.Random.pvms_uniform(4)
-    C = Measurement.Strats.Random.pvms_uniform(4)
-    rhoAB = State.Strats.Random.pure_uniform(4)
-    rhoBC = State.Strats.Random.pure_uniform(4)
-    rhoAC = State.Strats.Random.pure_uniform(4)
-    # rhoAB = State.Strats.Deterministic.mebs(2)
-    # rhoBC = State.Strats.Deterministic.mebs(2)
-    # rhoAC = State.Strats.Deterministic.mebs(2)
-    # print(A[4].shape)
-    # print(rhoBC.shape)
-    qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm)
-    pd = QuantumProbDist(qc)
-    return pd
 
 @profile
 def go():
@@ -44,24 +28,41 @@ def go():
     inflation_rvc = RandomVariableCollection.new(names=['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'C3', 'C4'], outcomes=[4,4,4,4,4,4,4,4])
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
     defl_map = marginal_equality.get_delf_map(symbolic_contexts)
-    pd = uniform_sample_qdistro(original_rvc)
-    # pd = prob_dists.fritz()
+    pd = prob_dists.fritz(original_rvc)
+
     print(pd)
-    # print(defl_map)
+    # print(pd.marginal(['A', 'B']))
+    print(pd.condition({'C': 0}))
+    # print(pd.condition({'C': 0}).correlation(['A', 'B']))
+    # print(pd.condition({'C': 1}).correlation(['A', 'B']))
+    # print(pd.condition({'C': 2}).correlation(['A', 'B']))
+    # print(pd.condition({'C': 3}).correlation(['A', 'B']))
+    CHSH = \
+         - pd.condition({'C': 0}).correlation(['A', 'B']) \
+         + pd.condition({'C': 1}).correlation(['A', 'B']) \
+         + pd.condition({'C': 2}).correlation(['A', 'B']) \
+         + pd.condition({'C': 3}).correlation(['A', 'B'])
+    print(CHSH)
 
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
     b = marginal_equality.contexts_marginals(pd, symbolic_contexts, defl_map)
-    # print(A.shape, b.shape)
+    print(A.shape, b.shape)
     # print(len(A.nonzero()[0]))
     # print(len(b.nonzero()[0]))
     res = positive_linear_solve.get_feasibility_cvx(A, b)
+    x_solution = res['x']
+    Ax = A.dot(x_solution)
+    bT = b[:,np.newaxis]
+    # print(Ax.shape)
+    # print(bT.shape)
+    pprint(res)
+    if not np.any(Ax - bT):
+        print("Solution verified.")
     # print(res['x'])
-    print(res)
 
 if __name__ == '__main__':
     # go()
 
     import cProfile
-    stats = cProfile.run('go()', sort='time')
-    print(stats)
+    cProfile.run('go()', sort='time')
 
