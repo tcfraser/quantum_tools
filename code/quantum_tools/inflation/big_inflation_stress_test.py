@@ -37,7 +37,9 @@ def go():
     inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[4]*12)
     print(inflation_rvc)
     # inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[4]*12)
-    # print(marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts))
+    x = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
+    print(x.shape)
+    print(x.nnz)
 
 
 if __name__ == '__main__':
