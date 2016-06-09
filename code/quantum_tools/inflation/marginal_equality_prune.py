@@ -6,7 +6,10 @@ from scipy import sparse
 from ..utilities import integer_map
 
 def pre_process(A, b):
-    A_csr = A.tocsr()
+    if A.format != 'csr':
+        A_csr = A.tocsr()
+    else:
+        A_csr = A
     A_csc = A.tocsc()
     zero_b = np.where(b == 0.0)[0]
     A_row_zero_b = A_csr[zero_b, :]
