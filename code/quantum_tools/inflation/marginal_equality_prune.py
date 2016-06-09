@@ -16,7 +16,7 @@ def pre_process(A, b):
     col_to_keep = integer_map.comp_mask(col_to_delete, A.shape[1])
 
     A_col_removed = A_csc[:,col_to_keep]
-    A_row_removed = A_col_removed.tocsr()[rows_to_keep,:]
+    A_row_removed = A_col_removed[rows_to_keep,:]
 
     A_pruned = A_row_removed
 
