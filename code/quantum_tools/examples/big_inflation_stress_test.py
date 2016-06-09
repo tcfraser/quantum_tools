@@ -4,7 +4,7 @@ from ..contexts.measurement import Measurement
 from ..utilities import utils
 from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
-from ..inflation import positive_linear_solve
+# from ..inflation import positive_linear_solve
 from ..examples import prob_dists
 from ..visualization.sparse_vis import plot_coo_matrix
 
