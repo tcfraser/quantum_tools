@@ -74,18 +74,3 @@ def get_feasibility_cvx(A, b, prune=True):
     verified = not np.any(Ax - bT) and np.all(np.array(x_solution) >= 0)
     res['verified'] = verified
     return res
-
-def perform_tests():
-    data = np.ones(9)
-    i = np.array([0,2,1,0,2,1,1,0,0])
-    j = np.array([0,1,2,3,4,5,6,7,8])
-    A = sparse.coo_matrix((data, (i,j)))
-    b = np.array([0.3, 0, 7])
-    print(A.toarray())
-    print(b)
-    A_prune, b_prune = pre_process(A,b)
-    print(A_prune.toarray())
-    print(b_prune)
-
-if __name__ == '__main__':
-    perform_tests()
