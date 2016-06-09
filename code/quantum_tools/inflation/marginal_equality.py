@@ -57,7 +57,7 @@ def sparse_row(n):
     return sparse.coo_matrix(np.ones(n))
 
 def multi_sparse_kron(*args):
-    return reduce(lambda a, b: sparse.kron(a, b), args)
+    return reduce(lambda a, b: sparse.kron(a, b, format='coo'), args)
 
 def marginal_mtrx_per_context(rvc, context):
     sub_rv_names = list(utils.unique_everseen(utils.flatten(context)))
