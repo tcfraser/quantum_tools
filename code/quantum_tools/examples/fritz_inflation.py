@@ -27,7 +27,6 @@ def go():
     ]
     inflation_rvc = RandomVariableCollection.new(names=['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'C3', 'C4'], outcomes=[4,4,4,4,4,4,4,4])
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
-    defl_map = marginal_equality.get_delf_map(symbolic_contexts)
     pd = prob_dists.fritz(original_rvc)
 
     print(pd)
@@ -45,7 +44,7 @@ def go():
     print(CHSH)
 
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
-    b = marginal_equality.contexts_marginals(pd, symbolic_contexts, defl_map)
+    b = marginal_equality.contexts_marginals(pd, symbolic_contexts)
     # print(len(A.nonzero()[0]))
     # print(len(b.nonzero()[0]))
     res = positive_linear_solve.get_feasibility_cvx(A, b)

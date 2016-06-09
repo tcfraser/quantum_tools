@@ -49,7 +49,8 @@ def deflate_rvc(rvc):
     outcomes = utils.unique_everseen(rv.base_name for rv in rvc)
     return RandomVariableCollection(deflated_rvs)
 
-def contexts_marginals(pd, contexts, defl_map):
+def contexts_marginals(pd, contexts):
+    defl_map = get_delf_map(contexts)
     return np.hstack((context_marginals(pd, c, defl_map) for c in contexts))
 
 def sparse_row(n):
