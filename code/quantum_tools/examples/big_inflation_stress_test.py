@@ -45,6 +45,8 @@ scABC_224__4_outcomes = [4]*(2 + 2 + 4)
 def go():
     symbolic_contexts = scABC_444__4
     outcomes = scABC_444__4_outcomes
+    # symbolic_contexts = scABC_224__4
+    # outcomes = scABC_224__4_outcomes
     # print(marginal_equality.rv_names_from_sc(symbolic_contexts))
     # print(outcomes)
     inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=outcomes)

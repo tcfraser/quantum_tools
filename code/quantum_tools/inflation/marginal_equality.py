@@ -31,8 +31,8 @@ def deflate(context, defl_map):
 def context_marginals(pd, context, defl_map):
     defl_context = deflate(context, defl_map)
     # Map Reduce Parallelization can be done here.
-    marginals = map(pd.marginal, defl_context)
-    product_marginals = reduce(ProbDist.product_marginals, marginals)
+    marginals = tuple(map(pd.marginal, defl_context))
+    product_marginals = ProbDist.product_marginals(*marginals)
     # print(product_marginals)
     # print(list(product_marginals.canonical_ravel()))
     return np.array(list(product_marginals.ravel()))
@@ -63,7 +63,7 @@ def marginal_mtrx_per_context(rvc, context):
     sub_rv_names = list(utils.unique_everseen(utils.flatten(context)))
     sub_rvc = rvc.sub(sub_rv_names)
     # print(sub_rvc)
-    sub_rv_names_indices = rvc.names[sub_rvc.names.list] # Needs to be off sub_rvc. It's sorted that way.
+    # sub_rv_names_indices = rvc.names[sub_rvc.names.list] # Needs to be off sub_rvc. It's sorted that way.
     kronecker_elems = tuple(sparse.identity(rv.num_outcomes) if rv in sub_rvc else sparse_row(rv.num_outcomes) for rv in rvc)
     return multi_sparse_kron(*kronecker_elems)
     # reduced_rvc_int_base = np.zeros(rvc.outcome_space.base_size)[:, np.newaxis]

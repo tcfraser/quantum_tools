@@ -6,6 +6,7 @@ from ..utilities import utils
 from ..utilities.profiler import profile
 from .variable import RandomVariableCollection
 from . import variable_sort
+from functools import reduce
 from ..utilities.constants import *
 
 class ProbDist():
@@ -52,20 +53,19 @@ class ProbDist():
         return ProbDist(rvc, support)
 
     @staticmethod
-    def product_marginals(A, B):
-        if A.__is_null:
-            return B
-        if B.__is_null:
-            return A
-        Av = A._rvc
-        Bv = B._rvc
-        As = A._support
-        Bs = B._support
-        ABs = np.tensordot(As, Bs, axes=0)
-        assert(ABs.shape == As.shape + Bs.shape)
-        variable_names = Av.names.list + Bv.names.list
+    def product_marginals(*args):
+        pds = [pd for pd in args if not pd.__is_null]
+        if len(pds) == 0:
+            raise Exception("Distributions are empty.")
+        if len(pds) == 1:
+            return pds[0]
+        rvcs = [pd._rvc for pd in pds]
+        supports = [pd._support for pd in pds]
+        joint_support = reduce(lambda a,b: np.tensordot(a,b,axes=0), supports)
+        assert(joint_support.shape == sum([s.shape for s in supports], ()))
+        variable_names = sum([rvs.names.list for rvs in rvcs], [])
         variable_names_sort = variable_sort.argsort(variable_names)
-        sorted_support = np.transpose(ABs, axes=variable_names_sort)
+        sorted_support = np.transpose(joint_support, axes=variable_names_sort)
         return sorted_support
 
     def __mul__(A,B):
