@@ -47,4 +47,6 @@ def go():
 
 
 if __name__ == '__main__':
-    go()
+    # go()
+    import cProfile
+    cProfile.run('go()', sort='time')
