@@ -18,7 +18,7 @@ def profile(f):
         t_i = time.time()
         ret = f(*args)
         t_f = time.time()
-        mem = max_memory()
+        # mem = max_memory()
         # print('[profiler] Function "{func}" took {t:.3f} seconds. Used {mem} memory.'.format(func = f.__name__, t = (t_f-t_i), mem = sizeof_fmt(mem)))
         print('[profiler] Function "{func}" took {t:.3f} seconds.'.format(func = f.__name__, t = (t_f-t_i)))
         return ret
