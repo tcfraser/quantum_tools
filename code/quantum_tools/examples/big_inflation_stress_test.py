@@ -1,10 +1,9 @@
 import numpy as np
-from ..inflation import marginal_equality
+import sys, getopt
+from ..inflation import marginal_equality, marginal_equality_prune
 from ..contexts.measurement import Measurement
 from ..utilities import utils
-from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
-# from ..inflation import positive_linear_solve
 from ..examples import prob_dists
 from ..visualization.sparse_vis import plot_coo_matrix
 
@@ -41,14 +40,7 @@ scABC_224__4 = [
     ]
 scABC_224__4_outcomes = [4]*(2 + 2 + 4)
 
-@profile
-def go():
-    symbolic_contexts = scABC_444__4
-    outcomes = scABC_444__4_outcomes
-    # symbolic_contexts = scABC_224__4
-    # outcomes = scABC_224__4_outcomes
-    # print(marginal_equality.rv_names_from_sc(symbolic_contexts))
-    # print(outcomes)
+def go(symbolic_contexts, outcomes):
     inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=outcomes)
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
     print(inflation_rvc)
@@ -59,10 +51,45 @@ def go():
     b = marginal_equality.contexts_marginals(fd, symbolic_contexts)
     plot_coo_matrix(A)
     print("A.shape =", A.shape)
+    print("A.nnz =", A.nnz)
     print("b.shape =", b.shape)
-    print(A.nnz)
+    A_pruned, b_pruned = marginal_equality_prune.pre_process(A,b)
+    print("A_pruned.shape =", A_pruned.shape)
+    print("A_pruned.nnz =", A_pruned.nnz)
+    print("b_pruned.shape =", b_pruned.shape)
 
 if __name__ == '__main__':
     # go()
-    import cProfile
-    cProfile.run('go()', sort='time')
+    argv = sys.argv[1:]
+    try:
+       opts, args = getopt.getopt(argv,"s:p:",["size=","profile="])
+    except getopt.GetoptError:
+       print('-s <size> -p <profile>')
+       sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-s", "--size"):
+            size = arg
+        if opt in ("-p", "--profile"):
+            if arg in ['True', 't', 'true', 1]:
+                should_profile = True
+            if arg in ['False', 'f', 'false', 0]:
+                should_profile = False
+
+    if size == 'large':
+        symbolic_contexts = scABC_444__4
+        outcomes = scABC_444__4_outcomes
+    elif size == 'small':
+        symbolic_contexts = scABC_224__4
+        outcomes = scABC_224__4_outcomes
+    else:
+        raise Exception("Needs size arg.")
+
+    def go_wrapper():
+        go(symbolic_contexts, outcomes)
+
+    if should_profile:
+        import cProfile
+
+        cProfile.run('go_wrapper()', sort='time')
+    else:
+        go_wrapper()
