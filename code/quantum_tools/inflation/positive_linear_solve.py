@@ -1,28 +1,28 @@
 import numpy as np
 import scipy
 from scipy import io, sparse, optimize
-from scipy.sparse import linalg
-from scipy.optimize import linprog
+# from scipy.sparse import linalg
+# from scipy.optimize import linprog
 import cvxopt as cvx
 from ..utilities.profiler import profile
 from ..utilities import integer_map
 
-
-def get_feasibility_scipy(A, b):
-    res = scipy.optimize.linprog(
-        c=-1*np.ones(A.shape[1]),
-        A_ub=None,
-        b_ub=None,
-        A_eq=A,
-        b_eq=b,
-        bounds=(0, None),
-        method='simplex',
-        callback=None,
-        options=None
-    )
-    if res.success:
-        assert(not np.any(np.dot(A, res.x) - b))
-    return res
+# === Not supported on cluster machines ===
+# def get_feasibility_scipy(A, b):
+#     res = scipy.optimize.linprog(
+#         c=-1*np.ones(A.shape[1]),
+#         A_ub=None,
+#         b_ub=None,
+#         A_eq=A,
+#         b_eq=b,
+#         bounds=(0, None),
+#         method='simplex',
+#         callback=None,
+#         options=None
+#     )
+#     if res.success:
+#         assert(not np.any(np.dot(A, res.x) - b))
+#     return res
 
 @profile
 def pre_process(A, b):
