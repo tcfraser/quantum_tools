@@ -68,21 +68,17 @@ if __name__ == '__main__':
        sys.exit(2)
     for opt, arg in opts:
         if opt in ("-s", "--size"):
-            size = arg
+            if arg in ['Large', 'large']:
+                symbolic_contexts = scABC_444__4
+                outcomes = scABC_444__4_outcomes
+            else:
+                symbolic_contexts = scABC_224__4
+                outcomes = scABC_224__4_outcomes
         if opt in ("-p", "--profile"):
             if arg in ['True', 't', 'true', 1]:
                 should_profile = True
             if arg in ['False', 'f', 'false', 0]:
                 should_profile = False
-
-    if size == 'large':
-        symbolic_contexts = scABC_444__4
-        outcomes = scABC_444__4_outcomes
-    elif size == 'small':
-        symbolic_contexts = scABC_224__4
-        outcomes = scABC_224__4_outcomes
-    else:
-        raise Exception("Needs size arg.")
 
     def go_wrapper():
         go(symbolic_contexts, outcomes)
