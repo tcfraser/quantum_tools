@@ -10,6 +10,7 @@ from ..statistics.variable import RandomVariableCollection
 from ..inflation import positive_linear_solve
 from ..examples import prob_dists
 from ..visualization import sparse_vis
+from ..config import *
 
 @profile
 def go():
@@ -31,7 +32,9 @@ def go():
     #     print(b[i])
     res = positive_linear_solve.get_feasibility_cvx(A, b)
     pprint(res)
-    sparse_vis.plot_coo_matrix(A)
+    # sparse_vis.plot_coo_matrix(A)
+
+    np.savetxt(OUTPUT_DIR + "x_bell_scenario_256_256.csv", np.array(res['x']))
     # print(np.array(b))
     # print(np.array(res['x']))
 

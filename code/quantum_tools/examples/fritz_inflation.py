@@ -10,6 +10,7 @@ from ..statistics.variable import RandomVariableCollection
 from ..inflation import positive_linear_solve
 from ..examples import prob_dists
 from ..visualization import sparse_vis
+from ..config import *
 
 @profile
 def go():
@@ -52,6 +53,7 @@ def go():
     # print(len(b.nonzero()[0]))
     res = positive_linear_solve.get_feasibility_cvx(A, b)
     pprint(res)
+    np.savetxt(OUTPUT_DIR + "x_fritz_inflation_1024_65536.csv", np.array(res['x']))
 
 if __name__ == '__main__':
     go()
