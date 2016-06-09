@@ -1,11 +1,12 @@
 import numpy as np
-from . import marginal_equality
+from ..inflation import marginal_equality
 from ..contexts.measurement import Measurement
 from ..utilities import utils
 from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
-from . import positive_linear_solve
+from ..inflation import positive_linear_solve
 from ..examples import prob_dists
+from ..visualization.sparse_vis import plot_coo_matrix
 
 sc444444 = [
     [['A1', 'B1', 'C1'], ['A4', 'B4', 'C4']],
@@ -21,6 +22,7 @@ sc444444 = [
     [['A4'], ['B1'], ['C3']],
     [['A4'], ['B2'], ['C1']],
 ]
+sc444444_outcomes = [4]*12
 
 sc222222 = [
     [['A2'], ['B2'], ['C2']],
@@ -29,17 +31,19 @@ sc222222 = [
     [['A2'], ['B1',   'C2']],
     [['A1',   'B1',   'C1']],
 ]
+sc222222_outcomes = [2]*6
 
 @profile
 def go():
     symbolic_contexts = sc444444
-    print()
-    inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[4]*12)
+    outcomes = sc444444_outcomes
+    inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=outcomes)
     print(inflation_rvc)
     # inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=[4]*12)
-    x = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
-    print(x.shape)
-    print(x.nnz)
+    m = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
+    plot_coo_matrix(m)
+    print(m.shape)
+    print(m.nnz)
 
 
 if __name__ == '__main__':
