@@ -10,7 +10,7 @@ def pre_process(A, b):
         A_csr = A.tocsr()
     else:
         A_csr = A
-    A_csc = A_csr.tocsc()
+    A_csc = A.tocsc()
     zero_b = np.where(b == 0.0)[0]
     A_row_zero_b = A_csr[zero_b, :]
     col_to_delete = A_row_zero_b.indices # Over counts
