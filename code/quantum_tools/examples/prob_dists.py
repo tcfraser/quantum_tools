@@ -20,16 +20,15 @@ def spekkens():
     random_variables = RandomVariableCollection.new(['A', 'B', 'C'], [4,4,4])
     return ProbDist(random_variables, support)
 
-# def tsirelson():
+def tsirelson(rvc):
 
-#     ei = utils.ei
-#     pi = np.pi
-#     e3 = (ei(3/4*pi)*qb0 + qb1)/(sqrt2)
-#     e4 = (ei(-1/4*pi)*qb0 + qb1)/(sqrt2)
-#     e5 = (ei(5/4*pi)*qb0 + qb1)/(sqrt2)
-#     e6 = (ei(1/4*pi)*qb0 + qb1)/(sqrt2)
-#     A = Measurement(AB_measurements)
-#     B = Measurement(AB_measurements)
+    def p(a,b,x,y):
+        xy = 1 if not (x and y) else -1
+        a_ = 1 if a else -1
+        b_ = 1 if b else -1
+        return 1/16 * (1 + (xy * a_ * b_)/sqrt2)
+
+    return ProbDist.from_callable_support(rvc, p)
 
 def fritz(rvc):
     ei = utils.ei
@@ -55,10 +54,10 @@ def fritz(rvc):
     # omega0 = utils.ket_to_dm(e5)
     # omega1 = utils.ket_to_dm(e6)
     A_measurements = [
-        utils.tensor(rho0, utils.ket_to_dm(e_x_0)),
-        utils.tensor(rho0, utils.ket_to_dm(e_x_1)),
         utils.tensor(rho1, utils.ket_to_dm(e_y_0)),
         utils.tensor(rho1, utils.ket_to_dm(e_y_1)),
+        utils.tensor(rho0, utils.ket_to_dm(e_x_1)),
+        utils.tensor(rho0, utils.ket_to_dm(e_x_0)),
     ]
     B_measurements = [
         utils.tensor(utils.ket_to_dm(e_xy_0), rho0),
@@ -67,10 +66,10 @@ def fritz(rvc):
         utils.tensor(utils.ket_to_dm(e_yx_1), rho1),
     ]
     C_measurements = [
-        utils.tensor(rho0, rho0),
         utils.tensor(rho0, rho1),
-        utils.tensor(rho1, rho0),
+        utils.tensor(rho0, rho0),
         utils.tensor(rho1, rho1),
+        utils.tensor(rho1, rho0),
     ]
 
     A = Measurement(A_measurements)

@@ -223,7 +223,8 @@ class ProbDist():
         print_list.append("{0} Achievable outcomes.".format(np.count_nonzero(self._support)))
         print_list.append(fs)
         for outcome, p in self._unpack_prob_space():
-            print_list.append(fs.format(outcome=outcome, probability=p))
+            if p > 0.0:
+                print_list.append(fs.format(outcome=outcome, probability=p))
         print_list.append("================")
         return '\n'.join(print_list)
 

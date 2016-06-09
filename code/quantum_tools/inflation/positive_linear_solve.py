@@ -71,7 +71,8 @@ def get_feasibility_cvx(A, b, prune=True):
     x_solution = res['x']
     Ax = A.dot(x_solution)
     bT = b[:,np.newaxis]
-    res['verified'] = not np.any(Ax - bT)
+    verified = not np.any(Ax - bT) and np.all(np.array(x_solution) >= 0)
+    res['verified'] = verified
     return res
 
 def perform_tests():

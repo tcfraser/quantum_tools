@@ -32,10 +32,13 @@ def context_marginals(pd, context, defl_map):
     defl_context = deflate(context, defl_map)
     # Map Reduce Parallelization can be done here.
     marginals = tuple(map(pd.marginal, defl_context))
+    # for i in marginals:
+    #     print(i)
     product_marginals = ProbDist.product_marginals(*marginals)
     # print(product_marginals)
     # print(list(product_marginals.canonical_ravel()))
-    return np.array(list(product_marginals.ravel()))
+    # print(product_marginals)
+    return np.asarray(product_marginals.ravel())
 
 def deflate_rvc(rvc):
     base_names = utils.unique_everseen(rv.base_name for rv in rvc)

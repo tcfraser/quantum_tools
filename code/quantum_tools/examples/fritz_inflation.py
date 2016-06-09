@@ -9,6 +9,7 @@ from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
 from ..inflation import positive_linear_solve
 from ..examples import prob_dists
+from ..visualization import sparse_vis
 
 @profile
 def go():
@@ -30,6 +31,7 @@ def go():
     pd = prob_dists.fritz(original_rvc)
 
     print(pd)
+    # return
     # print(pd.marginal(['A', 'B']))
     print(pd.condition({'C': 0}))
     # print(pd.condition({'C': 0}).correlation(['A', 'B']))
@@ -37,13 +39,14 @@ def go():
     # print(pd.condition({'C': 2}).correlation(['A', 'B']))
     # print(pd.condition({'C': 3}).correlation(['A', 'B']))
     CHSH = \
-         - pd.condition({'C': 0}).correlation(['A', 'B']) \
+         + pd.condition({'C': 0}).correlation(['A', 'B']) \
          + pd.condition({'C': 1}).correlation(['A', 'B']) \
          + pd.condition({'C': 2}).correlation(['A', 'B']) \
-         + pd.condition({'C': 3}).correlation(['A', 'B'])
+         - pd.condition({'C': 3}).correlation(['A', 'B'])
     print(CHSH)
 
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
+    # print(A.toarray()[0, 0:100])
     b = marginal_equality.contexts_marginals(pd, symbolic_contexts)
     # print(len(A.nonzero()[0]))
     # print(len(b.nonzero()[0]))
@@ -51,8 +54,8 @@ def go():
     pprint(res)
 
 if __name__ == '__main__':
-    # go()
+    go()
 
-    import cProfile
-    cProfile.run('go()', sort='time')
+    # import cProfile
+    # cProfile.run('go()', sort='time')
 

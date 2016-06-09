@@ -80,12 +80,14 @@ if __name__ == '__main__':
             if arg in ['False', 'f', 'false', 0]:
                 should_profile = False
 
-    def go_wrapper():
-        go(symbolic_contexts, outcomes)
-
     if should_profile:
-        import cProfile
-
-        cProfile.run('go_wrapper()', sort='time')
+        import cProfile, pstats
+        pr = cProfile.Profile()
+        pr.enable()
+        go(symbolic_contexts, outcomes)
+        pr.disable()
+        ps = pstats.Stats(pr).sort_stats('tottime')
+        ps.strip_dirs()
+        ps.print_stats(.1)
     else:
-        go_wrapper()
+        go(symbolic_contexts, outcomes)

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from scipy.sparse import coo_matrix
 
 def plot_coo_matrix(m):
-    if m.nnz < 100000:
+    if m.nnz < 1e5:
         if not isinstance(m, coo_matrix):
             m = coo_matrix(m)
         fig = plt.figure()
@@ -20,4 +20,4 @@ def plot_coo_matrix(m):
         # ax.set_yticks([])
         plt.show()
     else:
-        pass
+        print("m is too big to plot.")
