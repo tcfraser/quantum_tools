@@ -11,7 +11,6 @@ from ..statistics import variable_sort
 from ..statistics.probability import ProbDist
 from ..utilities.profiler import profile
 from ..config import *
-from . import positive_linear_solve
 from ..utilities import integer_map
 import time
 
