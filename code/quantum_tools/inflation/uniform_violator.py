@@ -7,6 +7,7 @@ from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
 from . import positive_linear_solve
 from ..examples import prob_dists
+from pprint import pprint
 
 perm = utils.get_triangle_permutation()
 
@@ -17,24 +18,15 @@ def uniform_sample_qdistro(rvc):
     rhoAB = State.Strats.Random.pure_uniform(4)
     rhoBC = State.Strats.Random.pure_uniform(4)
     rhoAC = State.Strats.Random.pure_uniform(4)
-    # rhoAB = State.Strats.Deterministic.mebs(2)
-    # rhoBC = State.Strats.Deterministic.mebs(2)
-    # rhoAC = State.Strats.Deterministic.mebs(2)
-    # print(A[4].shape)
-    # print(rhoBC.shape)
+    # rhoAB = State.Strats.Deterministic.mebs(0)
+    # rhoBC = State.Strats.Deterministic.mebs(0)
+    # rhoAC = State.Strats.Deterministic.mebs(0)
     qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm)
     pd = QuantumProbDist(qc)
     return pd
 
 @profile
 def go():
-    # symbolic_contexts = [
-    #     [['A2'], ['B2'], ['C2']],
-    #     [['B2'], ['A2',   'C1']],
-    #     [['C2'], ['A1',   'B2']],
-    #     [['A2'], ['B1',   'C2']],
-    #     [['A1',   'B1',   'C1']],
-    # ]
     symbolic_contexts = [
         [['C1'], ['A2', 'B2', 'C4']],
         [['C2'], ['A1', 'B2', 'C3']],
@@ -45,23 +37,11 @@ def go():
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
     defl_map = marginal_equality.get_delf_map(symbolic_contexts)
     pd = uniform_sample_qdistro(original_rvc)
-    # pd = prob_dists.fritz()
     print(pd)
-    # print(defl_map)
-
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
-    b = marginal_equality.contexts_marginals(pd, symbolic_contexts, defl_map)
-    # print(A.shape, b.shape)
-    # print(len(A.nonzero()[0]))
-    # print(len(b.nonzero()[0]))
+    b = marginal_equality.contexts_marginals(pd, symbolic_contexts)
     res = positive_linear_solve.get_feasibility_cvx(A, b)
-    # print(res['x'])
-    print(res)
+    pprint(res)
 
 if __name__ == '__main__':
-    # go()
-
-    import cProfile
-    stats = cProfile.run('go()', sort='time')
-    print(stats)
-
+    go()

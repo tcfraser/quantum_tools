@@ -53,7 +53,7 @@ class ProbDist():
         return ProbDist(rvc, support)
 
     @staticmethod
-    def product_marginals(*args):
+    def product_marginals(*args, **kwargs):
         pds = [pd for pd in args if not pd.__is_null]
         if len(pds) == 0:
             raise Exception("Distributions are empty.")
@@ -63,16 +63,21 @@ class ProbDist():
         supports = [pd._support for pd in pds]
         joint_support = reduce(lambda a,b: np.tensordot(a,b,axes=0), supports)
         assert(joint_support.shape == sum([s.shape for s in supports], ()))
-        variable_names = sum([rvs.names.list for rvs in rvcs], [])
-        variable_names_sort = variable_sort.argsort(variable_names)
-        sorted_support = np.transpose(joint_support, axes=variable_names_sort)
-        return sorted_support
+        # print("---------")
+        # print(joint_support.ravel())
+        if kwargs.get('transpose_sort', True):
+            variable_names = sum([rvs.names.list for rvs in rvcs], [])
+            variable_names_sort = variable_sort.argsort(variable_names)
+            joint_support = np.transpose(joint_support, axes=variable_names_sort)
+        # print(variable_names_sort)
+        # print(sorted_support.ravel())
+        return joint_support
 
     def __mul__(A,B):
         if A._rvc.intersection(B._rvc):
             raise Exception("Can't multiply distributions that share random variables.")
-        AB_rvc = A_.rvc.union(B._rvc)
-        AB = A.__new_child(AB_rvc, ProbDist.product_marginals(A,B))
+        AB_rvc = A._rvc.union(B._rvc)
+        AB = A.__new_child(AB_rvc, ProbDist.product_marginals(A,B, transpose_sort=True))
         return AB
 
     def _sub_support(self, outcome_dict):

@@ -51,9 +51,10 @@ def go():
     b = marginal_equality.contexts_marginals(pd, symbolic_contexts)
     # print(len(A.nonzero()[0]))
     # print(len(b.nonzero()[0]))
-    res = positive_linear_solve.get_feasibility_cvx(A, b)
+    res = positive_linear_solve.get_feasibility_cvx(A, b, prune=True)
+    # res = positive_linear_solve.get_feasibility_scipy(A, b)
     pprint(res)
-    np.savetxt(OUTPUT_DIR + "x_fritz_inflation_1024_65536.csv", np.array(res['x']))
+    # np.savetxt(OUTPUT_DIR + "x_fritz_inflation_1024_65536.csv", np.array(res['x']))
 
 if __name__ == '__main__':
     go()

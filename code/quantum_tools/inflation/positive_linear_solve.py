@@ -9,21 +9,27 @@ from ..utilities import integer_map
 from .marginal_equality_prune import pre_process
 
 # === Not supported on cluster machines ===
-# def get_feasibility_scipy(A, b):
-#     res = scipy.optimize.linprog(
-#         c=-1*np.ones(A.shape[1]),
-#         A_ub=None,
-#         b_ub=None,
-#         A_eq=A,
-#         b_eq=b,
-#         bounds=(0, None),
-#         method='simplex',
-#         callback=None,
-#         options=None
-#     )
-#     if res.success:
-#         assert(not np.any(np.dot(A, res.x) - b))
-#     return res
+def get_feasibility_scipy(A, b):
+    try:
+        from scipy.sparse import linalg
+        from scipy.optimize import linprog
+    except Exception as e:
+        raise e
+
+    res = scipy.optimize.linprog(
+        c=-1*np.ones(A.shape[1]),
+        A_ub=None,
+        b_ub=None,
+        A_eq=A,
+        b_eq=b,
+        bounds=(0, None),
+        method='simplex',
+        callback=None,
+        options=None
+    )
+    if res.success:
+        assert(not np.any(np.dot(A, res.x) - b))
+    return res
 
 def get_feasibility_cvx(A, b, prune=True):
     """
@@ -68,9 +74,12 @@ def get_feasibility_cvx(A, b, prune=True):
         # solver='mosek',
         solver='glpk',
     )
-    x_solution = res['x']
-    Ax = A.dot(x_solution)
-    bT = b[:,np.newaxis]
-    verified = not np.any(Ax - bT) and np.all(np.array(x_solution) >= 0)
-    res['verified'] = verified
+    if res['x']:
+        x_solution = res['x']
+        Ax = A.dot(x_solution)
+        bT = b[:,np.newaxis]
+        verified = not np.any(Ax - bT) and \
+                   np.all(np.array(x_solution) >= 0) and \
+                   abs(np.sum(np.array(x_solution)) - 1.0) <= 1e-5
+        res['verified'] = verified
     return res

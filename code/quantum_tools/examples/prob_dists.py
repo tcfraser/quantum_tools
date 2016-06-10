@@ -124,24 +124,26 @@ def null():
 
 @profile
 def perform_tests():
-    spd = spekkens()
+    # spd = spekkens()
     # print(fpd.prob({'B': 0, 'C': 3}))
     # print(fpd.prob({'C': 1, 'A': 0, 'B': 0}))
     # print(fpd._dev_slice((0,0,1)))
-    return
-    print(spd)
-    npd = null()
-    print(npd)
-    print(spd * npd)
+    # return
+    # print(spd)
+    # npd = null()
+    # print(npd)
+    # print(spd * npd)
     # print(spd.H('B', 'B'))
     # print(spd.I(['B', 'B'], ['B']))
-    return
-    pd = demo_distro
+    # return
+    pd = demo_distro()
     print(pd)
+    print(pd.marginal(['A', 'B']))
+    print(pd.marginal(['C']))
+    print(pd.marginal(['C']) * pd.marginal(['A', 'B']))
     # print(pd.condition({'A': 'a'}))
     # print(pd.prob({'A': 'a', 'B': 'b1'}))
     # print(pd.prob({'A': 'a', 'C': 'c2'}))
-    print(pd.correlation(['A', 'B']))
 
 if __name__ == '__main__':
     # import cProfile
