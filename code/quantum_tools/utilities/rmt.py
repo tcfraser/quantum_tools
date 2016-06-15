@@ -22,9 +22,9 @@ def GL_knit_QR(GL_n):
 def U(n):
     return GL_knit_QR(GL_C(n))
 
-def P_I(size, count):
-    S = [np.zeros((size,size)) for _ in range(count)]
-    for i in range(size):
+def P_I(dim, count):
+    S = [np.zeros((dim,dim)) for _ in range(count)]
+    for i in range(dim):
         S[np.random.randint(0, count)][i,i] = 1
     return S
 

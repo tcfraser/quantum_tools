@@ -71,8 +71,8 @@ def get_feasibility_cvx(A, b, prune=True):
     cvx_b = cvx.matrix(b)
     res = cvx.solvers.lp(c=cvx_c,G=cvx_G,h=cvx_h,A=cvx_A,b=cvx_b,
         # solver=None,
-        # solver='mosek',
-        solver='glpk',
+        solver='mosek',
+        # solver='glpk',
     )
     if res['x']:
         x_solution = res['x']

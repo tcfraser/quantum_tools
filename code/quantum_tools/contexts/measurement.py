@@ -6,6 +6,7 @@ import numpy as np
 from scipy import linalg
 from ..utilities import utils
 from ..utilities import rmt
+import random
 
 class Measurement():
 
@@ -47,6 +48,7 @@ class MeasurementStratsRandom():
     def pvms_uniform(size):
         u = rmt.U(size)
         S = [utils.ket_to_dm(u[:,i]) for i in range(size)]
+        random.shuffle(S)
         m = Measurement(S)
         return m
 
@@ -61,13 +63,13 @@ class MeasurementStratsRandom():
         return m
 
     @staticmethod
-    def seesaw(size):
-        S = rmt.P_I(size, size)
-        unitary = rmt.U(size)
-        for i in range(size):
-            S[i] = utils.multidot(unitary, S[i], unitary.conj().T)
+    def seesaw(dim, count):
+        S = rmt.P_I(dim, count)
+        unitary = rmt.U(dim)
+        unitaryt = unitary.conj().T
+        for i in range(count):
+            S[i] = utils.multidot(unitary, S[i], unitaryt)
         m = Measurement(S)
-        # print(sum(S))
         return m
 
 class MeasurementStratsDeterministic():

@@ -1,11 +1,11 @@
-from . import marginal_equality
+from ..inflation import marginal_equality
 from ..contexts.measurement import Measurement
 from ..contexts.state import State
 from ..contexts.quantum_context import QuantumContext, QuantumProbDist
 from ..utilities import utils
 from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
-from . import positive_linear_solve
+from ..inflation import positive_linear_solve
 from ..examples import prob_dists
 from pprint import pprint
 
