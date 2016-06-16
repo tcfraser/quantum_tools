@@ -1,0 +1,89 @@
+.TH traf 1 "March 7, 1997"
+.SH NAME traf
+.SH
+\fBtraf\fP \- transformation of polyhedron representations  
+.SH SYNOPSIS
+.nf
+        traf [-poscvl] filename_with_suffix_'.ieq'_or'.poi'
+.SH DESCRIPTION
+traf transforms polyhedra between the following  two  representations:
+.sp1
+- convex hull of points + convex cone of vectors (poi-representation)
+.sp0
+- system of linear equations and inequalities (ieq-representation)
+.sp1
+The direction  of  transformation  is  determined  by  the  input
+filename, which ends either in '.poi' or in '.ieq'.
+.sp1
+All computations are carried out in rational arithmetic  to  have
+guaranteed  correct  numerical  results. Rational arithmetic uses
+only integer operations. A possible arithmetic overflow is recognized. In
+this case the computations can be restarted with a special arithmetic 
+allowing the integers to have arbitrary length. This 
+arithmetic is not as efficient as the system's integer arithmetic with
+respect to time and storage requirements.
+.sp1
+The computation of  the  ieq-representation  is  performed  using
+Gaussian  and Fourier-Motzkin elimination. In the output file the
+right hand sides are 0, or  determined  by  the  smallest  integer
+value  for which the coefficients of the inequality are integral.
+If this is not possible with system integer arithmetic or if multiple 
+precision  integer arithmetic is set, the right hand sides
+are 0 or 1 or -1 and the values are reduced as far as possible.
+If PORTA terminates successfully then the resulting inequalities 
+are all facet-defining for your polyhedron and give
+together with equations a minimal linear description
+of your polyhedron.
+.sp1
+If an 'ieq'-representation is given as input  and  if  0  is  not
+valid for the linear system, 'traf' needs a valid points. To give
+such a valid point use the function specific keyword  VALID.  The
+line  after VALID contains exactly dim rational values, where dim
+is the dimension of the space considered. 'traf' transforms  the
+ieq  representation  to the poi-representation, after elimination
+of equations and 0-centering, by applying the 'poi'-to-'ieq'
+direction to the polar polyhedron. Hint: If you give a valid
+point  or if 0 is valid, then this vector may appear again in the 
+resulting system, even if this vector might be redundant in a 
+minimal description. (All other vectors are non-redundant.)
+.SH OPTIONS
+.TP
+.B \-p
+Unbuffered redirection of terminal messages into  file
+filename_'.prt'
+.TP
+.B \-o
+Use a heuristic to eliminate that variable  next,  for
+which the number of new inequalities is minimal (local 
+criterion). If this option  is set, inequalities  which  
+are  recognized  to  be facet-inducing  for the finite 
+linear system are printed into a  file as soon as they
+are identified.
+.TP
+.B \-c
+Fourier-Motzkin elimination without using the rule  of
+Chernikov
+.TP
+.B \-s
+Appends a statistical  part  to  each  line  with  the
+number  of coefficients         
+.TP
+.B \-v
+Printing a   table in the  output file which indicates 
+strong validity
+.TP
+.B \-l
+Use a special integer arithmetic 
+allowing the integers to have arbitrary lengths.
+This arithmetic is not as efficient as the system's
+integer arithmetic with respect to time and storage
+requirements. 
+Note: Output values which exceed the 32-bit integer storage size 
+are written in hexadecimal format (hex). Such hexadecimal format can
+not be reread as input. 
+.so man1/poiieq.1
+.SH SEE ALSO
+porta(1), dim(1), fmel(1), iespo(1), portsort(1),
+fctp(1), posie(1), vint(1)
+ort(1),
+fctp(1), posie(1), vint(1)

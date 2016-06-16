@@ -1,0 +1,31 @@
+.TH fctp 1 "February 16, 1994"
+.SH NAME fctp
+.SH
+\fBfctp\fP \- checks inequalities for facet inducing property
+.SH SYNOPSIS
+.nf
+        fctp fname_with_suffix_'.ieq' fname_with_suffix_'.poi'
+.SH DESCRIPTION
+fctp performs a check whether the inequalities  given  in  the
+'ieq'-input  file  are facet inducing for the polyhedron given by
+the 'poi'-input file.
+.sp1
+For all inequalities fctp does the following:
+.sp1
+In a first step fctp checks if the inequality is valid.  If  this
+is  not  the  case  fctp writes the points and rays which are not
+valid into a file.
+.sp1
+In a second step fctp computes those valid points and rays 
+which satisfy the inequality with equality and - if there are any -
+writes them into a file. For these points and rays the dimension 
+is computed by using the routine 'dim'.
+.sp1
+The filenames result  from  the  ieq-filename  by  appending first
+the number of the corresponding inequality and then
+the suffix '.poi' resp. '.poi.poi'.
+.so man1/poiieq.1
+.SH SEE ALSO
+porta(1), dim(1), fmel(1), iespo(1), portsort(1), traf(1),
+posie(1), vint(1)
+t(1)

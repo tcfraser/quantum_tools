@@ -1,0 +1,51 @@
+.TH fmel 1 "February 11, 1997"
+.SH NAME fmel
+.SH
+\fBfmel\fP \- projection of linear system on subspaces xi = 0
+.SH SYNOPSIS
+.nf
+        fmel [-pcl] input_fname_with_suffix_'ieq'
+.SH DESCRIPTION
+fmel reads a system of linear inequalities and eliminates choosen
+variables.  That is,  fmel projects the given system to the subspace
+given by xi = 0, for i is contained in I, where I is the index set
+of the variables that should be eliminated.
+.sp1
+The set I and the elimination order are given in the input  file
+by a line containing   the   function   specific   keyword
+"ELIMINATION_ORDER", followed by a line containing exactly  dim
+integers, where dim is the dimension of the problem.
+.sp1
+A '0' as the i-th entry of the line indicates that the i-th variable 
+should not be eliminated, that is, i is not in I. An entry
+'j', for 0 < j < dim, as the i-th entry
+of the line indicates that the i-th variable should be eliminated
+in  the  j-th iteration. (All nonzero numbers must be different
+and it must be possible to put them into an order 1,2,3,4...)
+.sp1
+fmel writes its output into a file, whose name is obtained 
+by appending ".ieq" to the filename of the input file.
+.SH OPTIONS
+.TP
+.B \-p
+Unbuffered redirection of the  terminal messages  
+into the file input_fname_with_suffix_'prt'
+.TP
+.B \-c
+Generation of new inequalities without the rule 
+of Chernikov.
+.TP
+.B \-l
+Use a special integer arithmetic 
+allowing the integers to have arbitrary lengths.
+This arithmetic is not as efficient as the system's
+integer arithmetic with respect to time and storage
+requirements. 
+Note: Output values which exceed the 32-bit integer storage size 
+are written in hexadecimal format (hex). Such hexadecimal format can
+not be reread as input. 
+.so man1/ieq.1
+.SH SEE ALSO
+porta(1), dim(1), iespo(1), portsort(1), traf(1),
+fctp(1), posie(1), vint(1)
+osie(1), vint(1)

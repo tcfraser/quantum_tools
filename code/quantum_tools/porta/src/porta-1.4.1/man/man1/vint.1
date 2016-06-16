@@ -1,0 +1,25 @@
+.TH vint 1 "February 16, 1994"
+.SH NAME vint
+.SH
+\fBvint\fP \- enumeration of integral inner points of  a  linear
+       system
+.SH SYNOPSIS
+.nf
+        vint filename_with_suffix_'.ieq'
+.SH DESCRIPTION
+vint enumerates all integral points within given bounds that  are
+valid for a linear system.
+.sp1
+In the input file lower and upper bounds for each component  must
+be  given.  The  function  specific keywords are LOWER_BOUNDS and
+UPPER_BOUNDS. The line after each keyword  contains  exactly  dim
+integers.  The  i-th  entry  of such a line gives the upper resp.
+lower bound for the i-th component.
+.sp1
+vint writes the points found into a file.  The  filename  results
+from  the  input  filename  by  replacing  the suffix '.ieq' with
+'.poi'.
+.so man1/ieq.1
+.SH SEE ALSO
+porta(1), dim(1), fmel(1), iespo(1), portsort(1), traf(1),
+fctp(1), posie(1)

@@ -1,0 +1,35 @@
+.TH dim 1 "February 21, 1997"
+.SH NAME dim
+.SH
+\fBdim\fP \- compute the dimension of  convex  hull  and  convex
+      cone for a set of given points
+.SH SYNOPSIS
+.nf
+        dim [-pl] filename_with_suffix_'.poi'
+.SH DESCRIPTION
+.sp1
+dim computes the dimension of the convex hull and the convex cone
+of a given set of points by using a gaussian elimination algorithm.
+It displays the computed dimension as a terminal message and also
+writes to the end of the input file. Moreover, in the case that
+the input system is not full dimensional, dim displays the 
+equations satisfied by the system.
+.SH OPTIONS
+.TP
+.B \-p
+Unbuffered   redirection  of  terminal  messages  into
+filename_'.prt'
+.TP
+.B \-l 
+Use a special integer arithmetic 
+allowing the integers to have arbitrary lengths.
+This arithmetic is not as efficient as the system's
+integer arithmetic with respect to time and storage
+requirements. 
+Note: Output values which exceed the 32-bit integer storage size 
+are written in hexadecimal format (hex). Such hexadecimal format can
+not be reread as input. 
+.so man1/poi.1
+.SH SEE ALSO
+porta(1), fmel(1), iespo(1), portsort(1), traf(1),
+fctp(1), posie(1), vint(1)

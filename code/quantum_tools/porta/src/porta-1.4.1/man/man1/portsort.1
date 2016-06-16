@@ -1,0 +1,30 @@
+.TH portsort 1 "February 16, 1994"
+.SH NAME portsort
+.SH
+\fBportsort\fP \- sort inequality or point systems
+.SH SYNOPSIS
+.nf
+        portsort [-s] filename_with_suffix_'.ieq'_or_'.poi'
+.SH DESCRIPTION
+portsort puts the points or inequalities into an increasing order  
+according to the following criteria:
+.sp1
+1. right hand sides of inequalities or equations 
+.sp0
+2. frequency  of the values -5 .. -1, 1 .. 5
+.sp0
+3. lexicographical order
+.sp1
+Additionally portsort formats the output.
+.sp1
+The output filename arises from the filename of the input file by
+appending the suffix of the input filename once again.
+.SH OPTIONS
+.TP
+.B \-s
+Appending a statistical part to each line containing the
+number of nonzero coefficients
+.so man1/poiieq.1
+.SH SEE ALSO
+porta(1), dim(1), fmel(1), iespo(1), traf(1),
+fctp(1), posie(1), vint(1)

@@ -1,0 +1,74 @@
+\"  LAST EDIT: Tue Oct 14 12:07:08 2003 by Andreas Loebel (boss.local.de) 
+.TH poi 1 "February 16, 1994"
+.SH FORMAT OF '.poi' - FILES
+.SH
+The first line contains the dimension of the problem.
+.nf
+
+        DIM = dim
+.SH
+In general, lines consisting of a capitalized keyword are 
+significant for input recognition. Such keywords can be 
+.nf  
+  
+    COMMENT
+    CONV_SECTION          
+    CONE_SECTION          
+    END  
+.SH
+and function specific keywords (such as ELIMINATION_ORDER).
+There is no restriction concerning the order of sections.
+.sp1
+The keyword
+.nf  
+       
+    COMMENT 
+.SH
+causes the programs to ignore the text until the next capitalized 
+keyword occurs.
+.sp1
+Usually the input contains a set of points to be considered. 
+If this is missing (the case of a cone)
+the origin is assumed to be feasible.
+The list of points is started by the keyword
+.nf
+
+        CONV_SECTION 
+.SH
+The following lines until the  next  keyword
+contain  points, each in one seperate
+row with exactly dim rational  values, given 
+by numerator and denominator. A denominator with
+value 1 can be omitted. A line number in parantheses 
+at  the  beginning  of  the  line  is  optional:
+.nf 
+
+ (ln)  num1/den1  num2/den2 .......   numdim/dendim
+.SH
+Also the input may contain a set of vectors spanning
+a convex cone. Such a set starts with the keyword
+.nf
+
+        CONE_SECTION
+.SH
+The  requirements for the vectors are the same as for points.
+.nf
+
+        END 
+.SH
+is needed to terminate the input file.
+.SH EXAMPLE
+.nf
+
+file 'example.poi':
+DIM = 3
+
+CONV_SECTION
+ 3 3 0
+ 5/3 1 0
+ 1 5/2 0
+
+CONE_SECTION
+ 0 0 2/3
+
+END

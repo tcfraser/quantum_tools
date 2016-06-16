@@ -1,0 +1,18 @@
+DIM = {dim}
+VALID
+{valid}
+
+LOWER_BOUNDS
+{lower_bounds}
+UPPER_BOUNDS
+{upper_bounds}
+
+ELIMINATION_ORDER
+{elimination_order}
+
+INEQUALITIES_SECTION
+{equalities_section}
+
+{inequalities_section}
+
+END
