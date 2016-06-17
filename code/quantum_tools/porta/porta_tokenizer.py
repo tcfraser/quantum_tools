@@ -3,16 +3,30 @@ from parse import parse
 import re
 from pprint import pprint
 from fractions import Fraction
-from . import porta_file_templates
 from string import Formatter
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def _get_template_file():
-    template_loc = os.path.join(_THIS_DIR, 'template.ieq')
+def _get_template_file(file_name):
+    # For all fields
+    # template_loc = os.path.join(_THIS_DIR, 'template_full.ieq')
+    # For the fields required
+    template_loc = os.path.join(_THIS_DIR, file_name)
     with open(template_loc, 'r') as template_file:
         template = template_file.read()
     return template
+
+_MINIMAL_TEMPLATE = {
+    'input':  _get_template_file('template_minimal_input.ieq'),
+    'output': _get_template_file('template_minimal_output.ieq'),
+}
+
+_FULL_TEMPLATE = {
+    'input':  _get_template_file('template_full_input.ieq'),
+    'output': _get_template_file('template_full_output.ieq'),
+}
+
+_TEMPLATES = _MINIMAL_TEMPLATE
 
 def _remove_text_inside_brackets(text, brackets="()[]"):
     count = [0] * (len(brackets) // 2) # count open/close brackets
@@ -31,7 +45,7 @@ def _remove_text_inside_brackets(text, brackets="()[]"):
     return ''.join(saved_chars)
 
 def _get_example_file_name(name):
-    return os.path.join(_THIS_DIR, '{0}.ieq'.format(name))
+    return os.path.join(_THIS_DIR, 'test_files', '{0}'.format(name))
 
 TERM = re.compile(r'(?!$)(?P<sign>\+|\-|)(?P<coeff>[0-9]+\/[0-9]+|[0-9]+|)(?P<var>[A-Za-z]+[0-9]+|)')
 RELATION = re.compile(r'(?P<lhs>.*)(?P<eqstr>\=\=|\>\=|\=\>|\=\<|\<\=)(?P<rhs>.*)')
@@ -94,8 +108,8 @@ class Relation():
 
     def __str__(self):
         return "{LHS} {eq} {RHS}".format(
-            LHS=self._LHS,
-            RHS=self._RHS,
+            LHS=str(self._LHS),
+            RHS=str(self._RHS),
             eq=self._eqstr,
         )
 
@@ -111,12 +125,20 @@ class Relation():
 
 class PortaFile():
 
-    def __init__(self):
+    def __init__(self, template):
+        self._template = template
         pass
 
+    @staticmethod
+    def clean(file_name):
+        pf = PortaFile.fromFile(file_name)
+        cleaned_file_name = "{fn}.cleaned".format(fn=file_name)
+        pf.toFile(cleaned_file_name)
+        print("Cleaned {fn} to {cfn}.".format(fn=file_name, cfn=cleaned_file_name))
+
     @classmethod
-    def fromObj(cls, obj):
-        portaFile = cls()
+    def fromObj(cls, obj, template='intput'):
+        portaFile = cls(template)
         for obj_key in obj:
             setattr(portaFile, obj_key, obj[obj_key])
         # print(portaFile.__dict__)
@@ -126,32 +148,41 @@ class PortaFile():
     def fromFile(cls, file_name):
         with open(file_name, 'r') as _file:
             read_data = _file.read()
-        template = _get_template_file()
-        parse_result = parse(template, read_data)
-        assert(parse_result is not None), "Failed to parse raw porta file."
+        found_matching_template = False
+        for key in _TEMPLATES:
+            parse_result = parse(_TEMPLATES[key], read_data)
+            if parse_result is not None:
+                matched_template = key
+                found_matching_template = True
+                break
+        assert(found_matching_template), "Failed to parse raw porta file."
         source = parse_result.named
         target = {}
         for key in source:
             target[key] = PortaFile.__str_parse(key, source[key], fromfile = True)
-        portaFile = PortaFile.fromObj(target)
+        portaFile = PortaFile.fromObj(target, template=matched_template)
         return portaFile
 
     def __str__(self):
         str_list = []
-        fs = _get_template_file()
+        fs = _TEMPLATES[self._template]
         fs_kwargs = {}
         # for literal_test, field_name, format_spec, conversion in Formatter.parse(Formatter, fs):
         for _, field_name, _, _ in Formatter.parse(Formatter, fs):
-            if field_name is not None and hasattr(self, field_name):
-                attr = getattr(self, field_name, None)
-                parsed_attr = PortaFile.__str_parse(field_name, attr, tofile = True)
-                fs_kwargs[field_name] = parsed_attr
+            if field_name is not None:
+                if hasattr(self, field_name):
+                    attr = getattr(self, field_name, None)
+                    parsed_attr = PortaFile.__str_parse(field_name, attr, tofile = True)
+                    fs_kwargs[field_name] = parsed_attr
+                else:
+                    fs_kwargs[field_name] = ''
         str_list.append(fs.format(**fs_kwargs))
         return ''.join(str_list)
 
     def toFile(self, file_name):
         with open(file_name, 'w+') as _file:
             _file.write(str(self))
+        print("Wrote {0} to file.".format(file_name))
 
     @staticmethod
     def __str_parse(key, value, fromfile=False, tofile=False):
@@ -186,7 +217,9 @@ class PortaFile():
         return parsed_value
 
 def test():
-    pf = PortaFile.fromFile(_get_example_file_name('example'))
+    PortaFile.clean(_get_example_file_name('bell_scenario.ieq.ieq'))
+    return
+    pf = PortaFile.fromFile(_get_example_file_name('example.ieq'))
     # pf.toFile(_get_example_file_name('example_passed_through_python'))
     print(pf)
     # print(_get_template_file())

@@ -68,56 +68,8 @@ def multi_sparse_kron(*args):
 def marginal_mtrx_per_context(rvc, context):
     sub_rv_names = list(utils.unique_everseen(utils.flatten(context)))
     sub_rvc = rvc.sub(sub_rv_names)
-    # print(sub_rvc)
-    # sub_rv_names_indices = rvc.names[sub_rvc.names.list] # Needs to be off sub_rvc. It's sorted that way.
     kronecker_elems = tuple(sparse.identity(rv.num_outcomes) if rv in sub_rvc else sparse_row(rv.num_outcomes) for rv in rvc)
     return multi_sparse_kron(*kronecker_elems)
-    # reduced_rvc_int_base = np.zeros(rvc.outcome_space.base_size)[:, np.newaxis]
-    # # rvc_int_base[integer_map.comp_mask(sub_rv_names_indices, len(rvc.outcome_space))] = 0
-    # # print(rvc_int_base)
-    # # reduced_rvc_int_base = rvc_int_base[]
-    # # np.zeros(rvc.outcome_space.base_size)[:, np.newaxis]
-    # # print(sub_rvc.outcome_space.get_base().shape)
-    # reduced_rvc_int_base[sub_rv_names_indices,:] = sub_rvc.outcome_space.get_base()
-
-
-    # # reduced_rvc_int_base = np.array(reduced_rvc_int_base)[:, np.newaxis]
-    # # print(reduced_rvc_int_base)
-    # # print(sub_rv_names_indices)
-    # # print(reduced_rvc_int_base)
-    # # outcome_space = rvc.outcome_index_space
-    # # sub_outcome_space = sub_rvc.outcome_index_space
-    # # reduced_outcome_space = outcome_space[:, sub_rv_names_indices]
-    # # marginal_mtrx_I = np.dot(reduced_outcome_space, sub_rvc.int_base)
-
-    # non_zero_size = len(rvc.outcome_space)
-    # # print(len(sub_rvc.outcome_space))
-    # marginal_mtrx_J = np.arange(non_zero_size)
-    # marginal_mtrx_I = np.squeeze(np.dot(rvc.outcome_space.cached_iter(), reduced_rvc_int_base))
-    # # i = 0
-    # # print(marginal_mtrx_I.shape)
-    # # print(rvc.outcome_space.cached_iter().shape)
-    # # # print(rvc.outcome_space)
-    # # for outcome_idx in :
-    # #     # print(outcome_idx)
-    # #     # print(rvc.outcome_space._digits)
-    # #     # print(sub_rv_names_indices)
-    # #     # reduced_outcome_idx = outcome_idx[sub_rv_names_indices]
-    #     # print(outcome_idx)
-    #     # sub_row = sub_rvc.outcome_space.get_integer(outcome_idx, base=reduced_rvc_int_base)
-    #     # print(sub_row)
-    #     # print(sub_rv_names_indices)
-    #     # print(reduced_rvc_int_base)
-    #     # print(outcome_idx)
-    #     # print(sub_row)
-    #     # assert(i < 5)
-    #     # marginal_mtrx_I[i] = sub_row
-    #     # i += 1
-    # # print(marginal_mtrx_I)
-    # marginal_mtrx_data = np.ones(non_zero_size, dtype='int8')
-    # marginal_mtrx_context = sparse.coo_matrix((marginal_mtrx_data, (marginal_mtrx_I, marginal_mtrx_J)), shape=(len(sub_rvc.outcome_space), len(rvc.outcome_space)), dtype='int8')
-    # # print(marginal_mtrx_context.toarray())
-    # return marginal_mtrx_context
 
 def marginal_mtrx(rvc, contexts):
     return sparse.vstack((marginal_mtrx_per_context(rvc, context) for context in contexts))

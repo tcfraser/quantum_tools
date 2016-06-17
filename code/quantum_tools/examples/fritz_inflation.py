@@ -9,11 +9,12 @@ from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
 from ..inflation import positive_linear_solve
 from ..examples import prob_dists
+from ..statistics.probability import ProbDist
 from ..visualization import sparse_vis
+from ..porta import marginal_problem_pipeline, porta_tokenizer
 from ..config import *
 
-@profile
-def go():
+def set_up():
     # symbolic_contexts = [
     #     [['A2'], ['B2'], ['C2']],
     #     [['B2'], ['A2',   'C1']],
@@ -31,10 +32,10 @@ def go():
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
     pd = prob_dists.fritz(original_rvc)
 
-    print(pd)
+    # print(pd)
     # return
     # print(pd.marginal(['A', 'B']))
-    print(pd.condition({'C': 0}))
+    # print(pd.condition({'C': 0}))
     # print(pd.condition({'C': 0}).correlation(['A', 'B']))
     # print(pd.condition({'C': 1}).correlation(['A', 'B']))
     # print(pd.condition({'C': 2}).correlation(['A', 'B']))
@@ -47,17 +48,21 @@ def go():
     print(CHSH)
 
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
-    # print(A.toarray()[0, 0:100])
     b = marginal_equality.contexts_marginals(pd, symbolic_contexts)
-    # print(len(A.nonzero()[0]))
-    # print(len(b.nonzero()[0]))
-    res = positive_linear_solve.get_feasibility_cvx(A, b, prune=True)
-    # res = positive_linear_solve.get_feasibility_scipy(A, b)
-    pprint(res)
+    return A, b, symbolic_contexts, inflation_rvc, original_rvc, pd
+
+def linear_feasibility():
+    A, b, symbolic_contexts, inflation_rvc, original_rvc, pd = set_up()
+    res = positive_linear_solve.get_feasibility_cvx(A, b)
+    print(res)
     # np.savetxt(OUTPUT_DIR + "x_fritz_inflation_1024_65536.csv", np.array(res['x']))
 
+def fmel():
+    A, b, symbolic_contexts, inflation_rvc, original_rvc, pd = set_up()
+    marginal_problem_pipeline.perform_pipeline('fritz_scenario', A)
+
 if __name__ == '__main__':
-    go()
+    fmel()
 
     # import cProfile
     # cProfile.run('go()', sort='time')

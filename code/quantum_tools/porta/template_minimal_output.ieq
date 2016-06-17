@@ -1,0 +1,8 @@
+DIM = {dim}
+
+INEQUALITIES_SECTION
+{equalities_section}
+
+{inequalities_section}
+
+END

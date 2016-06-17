@@ -1,0 +1,4 @@
+The template files need to end in
+    'EOF\n'
+
+Where the newline is crucial. Check 'inout.c' for details.

@@ -1,0 +1,11 @@
+DIM = {dim}
+
+ELIMINATION_ORDER
+{elimination_order}
+
+INEQUALITIES_SECTION
+{equalities_section}
+
+{inequalities_section}
+
+END
