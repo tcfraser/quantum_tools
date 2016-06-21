@@ -2,6 +2,7 @@ import numpy
 import os
 from functools import reduce
 import sys
+
 # === Configure ===
 numpy.set_printoptions(precision=3, linewidth=120, suppress=True)
 __directory = os.path.dirname(os.path.abspath(__file__))

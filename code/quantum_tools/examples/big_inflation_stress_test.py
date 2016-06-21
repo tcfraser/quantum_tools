@@ -6,39 +6,7 @@ from ..utilities import utils
 from ..statistics.variable import RandomVariableCollection
 from ..examples import prob_dists
 from ..visualization.sparse_vis import plot_coo_matrix
-
-scABC_444__4 = [
-    [['A1', 'B1', 'C1'], ['A4', 'B4', 'C4']],
-    [['A1', 'B2', 'C3'], ['A4', 'B3', 'C2']],
-    [['A2', 'B3', 'C1'], ['A3', 'B2', 'C4']],
-    [['A2', 'B4', 'C3'], ['A3', 'B1', 'C2']],
-    [['A1'], ['B3'], ['C4']],
-    [['A1'], ['B4'], ['C2']],
-    [['A2'], ['B1'], ['C4']],
-    [['A2'], ['B2'], ['C2']],
-    [['A3'], ['B3'], ['C3']],
-    [['A3'], ['B4'], ['C1']],
-    [['A4'], ['B1'], ['C3']],
-    [['A4'], ['B2'], ['C1']],
-]
-scABC_444__4_outcomes = [4]*12
-
-scABC_222__2 = [
-    [['A2'], ['B2'], ['C2']],
-    [['B2'], ['A2',   'C1']],
-    [['C2'], ['A1',   'B2']],
-    [['A2'], ['B1',   'C2']],
-    [['A1',   'B1',   'C1']],
-]
-scABC_222__2_outcomes = [2]*6
-
-scABC_224__4 = [
-        [['C1'], ['A2', 'B2', 'C4']],
-        [['C2'], ['A1', 'B2', 'C3']],
-        [['C3'], ['A2', 'B1', 'C2']],
-        [['C4'], ['A1', 'B1', 'C1']],
-    ]
-scABC_224__4_outcomes = [4]*(2 + 2 + 4)
+from ..examples.symbolic_contexts import *
 
 def go(symbolic_contexts, outcomes):
     inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=outcomes)

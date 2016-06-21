@@ -115,4 +115,5 @@ def perform_pipeline(name, mtrx):
         raise Exception("return code for porta was {0}".format(ret_code))
     file_to_clean = os.path.join(working_dir, 'setup.ieq.ieq')
     print("Cleaning file {0}.".format(file_to_clean))
-    PortaFile.clean(file_to_clean)
+    cleaned_file = PortaFile.clean(file_to_clean)
+    return cleaned_file

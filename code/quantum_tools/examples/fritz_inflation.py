@@ -28,18 +28,13 @@ def set_up():
         [['C3'], ['A2', 'B1', 'C2']],
         [['C4'], ['A1', 'B1', 'C1']],
     ]
-    inflation_rvc = RandomVariableCollection.new(names=['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'C3', 'C4'], outcomes=[4,4,4,4,4,4,4,4])
+    inflation_rvc = RandomVariableCollection.new(
+        names=['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'C3', 'C4'],
+        outcomes=[4,4,4,4,4,4,4,4],
+    )
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
     pd = prob_dists.fritz(original_rvc)
 
-    # print(pd)
-    # return
-    # print(pd.marginal(['A', 'B']))
-    # print(pd.condition({'C': 0}))
-    # print(pd.condition({'C': 0}).correlation(['A', 'B']))
-    # print(pd.condition({'C': 1}).correlation(['A', 'B']))
-    # print(pd.condition({'C': 2}).correlation(['A', 'B']))
-    # print(pd.condition({'C': 3}).correlation(['A', 'B']))
     CHSH = \
          + pd.condition({'C': 0}).correlation(['A', 'B']) \
          + pd.condition({'C': 1}).correlation(['A', 'B']) \

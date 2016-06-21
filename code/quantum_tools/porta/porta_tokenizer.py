@@ -135,6 +135,7 @@ class PortaFile():
         cleaned_file_name = "{fn}.cleaned".format(fn=file_name)
         pf.toFile(cleaned_file_name)
         print("Cleaned {fn} to {cfn}.".format(fn=file_name, cfn=cleaned_file_name))
+        return PortaFile.fromFile(cleaned_file_name)
 
     @classmethod
     def fromObj(cls, obj, template='intput'):

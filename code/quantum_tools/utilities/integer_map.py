@@ -3,39 +3,47 @@ import itertools
 from operator import mul
 from functools import reduce
 
+def get_digits(integer, base):
+    digits = []
+    for b in base:
+        digit = integer // b
+        digits.append(digit)
+        integer -= b * digit
+    return digits
+
+def get_integer(digits, base):
+    tot = 0
+    for i in range(len(base)):
+        tot += digits[i] * base[i]
+    return tot
+
+
+
 class IntMap():
 
-    def __init__(self, digits, dtype='int32'):
-        self._digits = digits
-        self._dtype = dtype
-        self._space_size = int(reduce(mul, digits, 1))
-        self.base_size = len(self._digits)
-        self.__base = np.array([reduce(mul, digits[i+1:], 1) for i in range(self.base_size)])[:, np.newaxis]
+    # def __init__(self, input_base, dtype='int32'):
+    def __init__(self, input_base):
+        self.__input_base = input_base
+        # self._dtype = dtype
+        self.__space_size = int(reduce(mul, input_base, 1))
+        self.__base_size = len(input_base)
+        self.__base = [reduce(mul, input_base[i+1:], 1) for i in range(self.__base_size)]
         self.__cached_iter = None
 
     def __len__(self):
-        return self._space_size
+        return self.__space_size
 
-    def get_digits(self, integer, base=None):
-        if base is None:
-            base = self.__base
-        digits = []
-        for b in base:
-            digit = integer // b
-            digits.append(digit)
-            integer -= b * digit
-        return digits
+    def get_digits(self, integer):
+        return get_digits(integer, self.get_base())
 
-    def get_integer(self, digits, base=None):
-        if base is None:
-            base = self.__base
-        return np.dot(np.asarray(digits), base)
+    def get_integer(self, digits):
+        return get_integer(digits, self.get_base())
 
     def get_base(self):
         return self.__base
 
     def __iter__(self):
-        return itertools.product(*[range(d) for d in self._digits])
+        return itertools.product(*[range(d) for d in self.__input_base])
 
     def cached_iter(self):
         if self.__cached_iter is None:
@@ -54,12 +62,10 @@ def perform_tests():
     print(im.get_integer((4,2,3)))
     print(im.get_integer(np.array([[4,2,3],[4,2,3]])))
 
-
     a = np.arange(11)
     mask = np.array([0,3,4,7,8,9])
     c_mask = comp_mask(mask, len(a))
     print(a[c_mask])
-
 
     # print(len(a))
     # int_base = get_base(a[-1])

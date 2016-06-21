@@ -8,6 +8,7 @@ from ..utilities.profiler import profile
 from ..utilities.sort_lookup import SortLookup
 from ..utilities import utils
 from ..utilities.integer_map import IntMap
+from ..sets import *
 from . import variable_sort
 
 _rv_sep = '_'
@@ -35,6 +36,9 @@ class RandomVariable():
             self.outcomes = outcome_desc
         self.num_outcomes = len(self.outcomes)
 
+    # def is_possible(self, outcome):
+    #     return outcome in self.outcomes
+
     def __repr__(self):
         _repr = "{name}: {0} -> {1}".format(self.num_outcomes, self.outcomes, name=self.name)
         return _repr
@@ -42,7 +46,11 @@ class RandomVariable():
     def __str__(self):
         return self.__repr__()
 
-class RandomVariableCollection(set):
+class RandomVariableCollection(SortedFrozenSet):
+
+    @classmethod
+    def __sort__(cls, rv):
+        return variable_sort.alphanum_key(rv.name)
 
     @staticmethod
     def new(names, outcomes):
@@ -52,19 +60,22 @@ class RandomVariableCollection(set):
             rvs.append(RandomVariable(name, outcomes[i]))
         return RandomVariableCollection(rvs)
 
-    def __init__(self, rvs=()):
-        if isinstance(rvs, RandomVariable):
-            rvs = [rvs]
-        if rvs is None:
-            rvs = []
-        rvs = list(filter(None, rvs))
-        super(RandomVariableCollection, self).__init__(rvs)
-        __names = [rv.name for rv in rvs]
+    def __post_init__(self):
+        __names = [rv.name for rv in self]
         if len(__names) != len(set(__names)):
             raise Exception("Two or more random variables share names.")
         self._name_lookup = dict((rv.name, rv) for rv in super().__iter__())
         self.names = SortLookup(variable_sort.sort(self._name_lookup.keys()))
         self.outcome_space = IntMap([self._name_lookup[rv_name].num_outcomes for rv_name in self.names.list])
+
+    @classmethod
+    def __sanitize_init_args__(cls, rvs):
+        if isinstance(rvs, RandomVariable):
+            rvs = [rvs]
+        if rvs is None:
+            rvs = []
+        rvs = list(filter(None, rvs))
+        return (rvs,)
 
     def outcome_label(self, outcome_index):
         retVal = []
@@ -94,9 +105,8 @@ class RandomVariableCollection(set):
     def sub_base_name(self, base_name):
         return RandomVariableCollection([rv for rv in self if rv.base_name == base_name])
 
-    def __iter__(self):
-        for i in self.names.list:
-            yield self.get_rv(i)
+    def __getitem__(self, slice):
+        return self.get_rvs(self.names.list[slice])
 
     def __str__(self):
         print_list = []
@@ -106,26 +116,7 @@ class RandomVariableCollection(set):
         for rv in self:
             print_list.append(rv.__repr__())
         return '\n'.join(print_list)
-
-    @classmethod
-    def _wrap_methods(cls, names):
-        def wrap_method_closure(name):
-            def inner(self, *args):
-                result = getattr(super(cls, self), name)(*args)
-                if isinstance(result, set):
-                    result = cls(result)
-                return result
-            inner.fn_name = name
-            setattr(cls, name, inner)
-        for name in names:
-            wrap_method_closure(name)
-
-RandomVariableCollection._wrap_methods(['__ror__', 'difference_update', '__isub__',
-    'symmetric_difference', '__rsub__', '__and__', '__rand__', 'intersection',
-    'difference', '__iand__', 'union', '__ixor__',
-    'symmetric_difference_update', '__or__', 'copy', '__rxor__',
-    'intersection_update', '__xor__', '__ior__', '__sub__',
-])
+WrapMethods(RandomVariableCollection)
 
 @profile
 def perform_tests():
@@ -139,6 +130,8 @@ def perform_tests():
     print(A1)
 
     AB = RandomVariableCollection([A, B, A2, A1])
+    # for rv in AB:
+    #     print(rv)
     print(AB)
     # As = RandomVariableCollection([A, A1, A2])
     # Bs = RandomVariableCollection([B, B1, B2])

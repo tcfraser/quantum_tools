@@ -7,6 +7,13 @@ from operator import mul
 from .constants import *
 import random as rndm
 import math
+from collections import defaultdict
+
+def list_duplicates(seq):
+    tally = defaultdict(list)
+    for i, item in enumerate(seq):
+        tally[item].append(i)
+    return tally
 
 def u2pi():
     return rndm.uniform(0.0,1.0) * 2 * np.pi
@@ -334,6 +341,14 @@ def all_equal(iterator, to=None):
             return all(first == rest for rest in iterator)
         else:
             return all(first == rest == to for rest in iterator)
+    except StopIteration:
+        return True
+
+def all_equal_length(iterator):
+    try:
+        iterator = iter(iterator)
+        first = next(iterator)
+        return all(len(first) ==len(rest) for rest in iterator)
     except StopIteration:
         return True
 
