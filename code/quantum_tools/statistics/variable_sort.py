@@ -3,8 +3,11 @@ import re
 def int_covert(text):
     return int(text) if text.isdigit() else text
 
+__numeric_split = re.compile(r'([0-9]+)')
+
 def alphanum_key(key):
-    return [int_covert(c) for c in re.split('([0-9]+)', key)]
+    return key
+    # return [int_covert(c) for c in __numeric_split.split(key)]
 
 def sort(seq):
     """ Sort the given iterable in the way that humans expect."""

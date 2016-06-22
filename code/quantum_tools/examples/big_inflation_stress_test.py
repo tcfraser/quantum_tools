@@ -56,6 +56,6 @@ if __name__ == '__main__':
         pr.disable()
         ps = pstats.Stats(pr).sort_stats('tottime')
         ps.strip_dirs()
-        ps.print_stats(.1)
+        ps.print_stats(.2)
     else:
         go(symbolic_contexts, outcomes)

@@ -4,34 +4,43 @@ class SortedFrozenSet(frozenset):
     def __sort__(cls, elem):
         return elem
 
-    def __new__(cls, *args):
-        args = cls.__sanitize_init_args__(*args)
-        return super(SortedFrozenSet,cls).__new__(cls, *args)
+    def __new__(cls, *args, **kwargs):
+        args, kwargs = cls.__sanitize_init_args__(*args, **kwargs)
+        return super(SortedFrozenSet,cls).__new__(cls, *args, **kwargs)
 
-    def __init__(self, elems, *args):
+    def __init__(self, *args, **kwargs):
+        elems = args[0]
+        should_sort = not kwargs.get('sorted', False)
         elems = list(super().__iter__())
         # print(self.__class__)
-        elems.sort(key=self.__class__.__sort__)
+        if should_sort:
+            elems.sort(key=self.__class__.__sort__)
         self.__sorted_elems = elems
-        self.__post_init__(*args)
-        self.__hash_map = dict((hash(elems[i]), i) for i in range(len(elems)))
+        self.__hash_map = None
+        # print(args, kwargs)
+        self.__post_init__(*args, **kwargs)
 
-    def __post_init__(self, *args):
+    def __post_init__(self, *args, **kwargs):
         pass
 
     def __getitem__(self, slice):
         return self.__sorted_elems[slice]
 
+    def __get_hash_map(self):
+        if self.__hash_map is None:
+            self.__hash_map = dict((hash(self.__sorted_elems[i]), i) for i in range(len(self.__sorted_elems)))
+        return self.__hash_map
+
     def index(self, elem):
         try:
-            idx = self.__hash_map[hash(elem)]
+            idx = self.__get_hash_map()[hash(elem)]
         except KeyError as e:
             raise KeyError("Element {0} not in set.".format(str(elem)))
         return idx
 
     @classmethod
-    def __sanitize_init_args__(cls, *args):
-        return args
+    def __sanitize_init_args__(cls, *args, **kwargs):
+        return args, kwargs
 
     # def _get_sort():
     #     if not hasattr(self, '__sorted_elems'):

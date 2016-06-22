@@ -60,7 +60,7 @@ class RandomVariableCollection(SortedFrozenSet):
             rvs.append(RandomVariable(name, outcomes[i]))
         return RandomVariableCollection(rvs)
 
-    def __post_init__(self):
+    def __post_init__(self, *args, **kwargs):
         __names = [rv.name for rv in self]
         if len(__names) != len(set(__names)):
             raise Exception("Two or more random variables share names.")
@@ -69,13 +69,15 @@ class RandomVariableCollection(SortedFrozenSet):
         self.outcome_space = IntMap([self._name_lookup[rv_name].num_outcomes for rv_name in self.names.list])
 
     @classmethod
-    def __sanitize_init_args__(cls, rvs):
+    def __sanitize_init_args__(cls, *args, **kwargs):
+        rvs = args[0]
         if isinstance(rvs, RandomVariable):
             rvs = [rvs]
         if rvs is None:
             rvs = []
         rvs = list(filter(None, rvs))
-        return (rvs,)
+        args = (rvs,)
+        return (args, kwargs)
 
     def outcome_label(self, outcome_index):
         retVal = []

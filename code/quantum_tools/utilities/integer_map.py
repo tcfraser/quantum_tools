@@ -17,8 +17,6 @@ def get_integer(digits, base):
         tot += digits[i] * base[i]
     return tot
 
-
-
 class IntMap():
 
     # def __init__(self, input_base, dtype='int32'):

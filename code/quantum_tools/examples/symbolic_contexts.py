@@ -29,6 +29,16 @@ ABC_222_222 = SymbolicContext(
     ],
     outcomes=[2]*(2 + 2 + 2),
 )
+ABC_222_444 = SymbolicContext(
+    preinjectable_sets=[
+        [['A2'], ['B2'], ['C2']],
+        [['B2'], ['A2',   'C1']],
+        [['C2'], ['A1',   'B2']],
+        [['A2'], ['B1',   'C2']],
+        [['A1',   'B1',   'C1']],
+    ],
+    outcomes=[4]*(2 + 2 + 2),
+)
 ABC_224_444 = SymbolicContext(
     preinjectable_sets=[
         [['C1'], ['A2', 'B2', 'C4']],
