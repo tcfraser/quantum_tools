@@ -28,7 +28,7 @@ class PositivityTree(Node):
         else:
             self.v = val
 
-    def find(self, path):
+    def find_iter(self, path):
         path_iter = iter(path)
         return self.__iter_find(path_iter)
 
@@ -47,6 +47,17 @@ class PositivityTree(Node):
                 if self.l is None:
                     return None
                 return self.l.__iter_find(path_iter)
+
+    def find(self, path):
+        subtree = self
+        for p in path:
+            if subtree is None:
+                return None
+            if p >= 0:
+                subtree = subtree.r
+            else:
+                subtree = subtree.l
+        return subtree.v
 
     # def printTree(self):
     #     if(self.root != None):

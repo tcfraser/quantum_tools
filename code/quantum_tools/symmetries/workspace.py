@@ -44,25 +44,19 @@ def mtrx_rep_perm(perms):
 def group_avg_rep(reps):
     return sum(reps) / len(reps)
 
-def get_orbits(actions, elems, f=None, hasher=hash):
-    f = f if f is not None else np.dot
-    hashed_elems = {}
-    for i, elem in enumerate(elems):
-        hashed_elem = hasher(elem)
-        hashed_elems[elem] = i
+def get_orbits(actions, elems, indexof, num_elems=None):
+    num_elems = num_elems if num_elems is not None else len(elems)
+    seen = np.zeros(num_elems, dtype=bool)
     orbits = []
-    for elem in elems:
-        # print(elem)
-        hashed_elem = hasher(elem)
-        if hashed_elem not in seen:
+    for i, elem in enumerate(elems):
+        if not seen[i]:
             orbit = []
             for action in actions:
-                res = f(action, elem)
-                res_hash = hasher(res)
-                if res_hash not in seen:
-                    orbit.append(res)
-                    seen[res_hash]
-            orbit = orbit
+                image = action(elem)
+                image_index = indexof(image)
+                if not seen[image_index]:
+                    orbit.append(image_index)
+                    seen[image_index] = True
             orbits.append(orbit)
     return orbits
 
@@ -148,6 +142,21 @@ def orbit_scale_test():
     # print_orbits(orbits)
     # itemgetter()
 
+def orbit_small_test():
+    elems = product(*((range(2)) for _ in range(6)))
+    actions = []
+    invariants = [[0,1],[2,3],[4,5]]
+    for p in permutations([0,1,2]):
+        permutation_action = list(utils.flatten(itemgetter(*p)(invariants)))
+        # print(permutation_action)
+        actions.append(itemgetter(*permutation_action))
+    # pprint(actions)
+    # f = lambda action, elem: itemgetter(*action)(elem)
+    orbits = get_orbits(actions, elems, indexof=f, num_elems=2**6)
+    # print(len(orbits))
+    # print_orbits(orbits)
+    # itemgetter()
+
 def scale_tests():
     a = (1,2,3,4,5,6,7,8)
     base = (128,64,32,16,8,4,2,1)
@@ -162,7 +171,7 @@ def scale_tests():
 
     # return
     iterable = product(*perm)
-    hash_stash = np.zeros(4**12, dtype='int64')
+    # hash_stash = np.zeros(4**12, dtype='int64')
     # hash_stash_dict = {}
     # with Pool(processes=cpu_count()-1) as pool:
     #     pooled_hash = pool.map(hash,iterable)
@@ -171,7 +180,7 @@ def scale_tests():
     for i, outcome in enumerate(iterable):
         hash_val = hash(outcome)
         hashes[hash_val] = i
-        hash_stash[i] = hash_val
+        # hash_stash[i] = hash_val
         # hash_stash_dict[hash_val] = i
 
     # hash_keys =
@@ -191,18 +200,32 @@ def scale_tests():
         # sum(x*y for (x,y) in zip(a, base))
 
 def test_number_system():
-    ns = number_system.MultiBaseLookup()
+    # === Binary Tree ===
+    ns = number_system.MultiBaseLookupBT()
     a = (-1,1,-1,2,-1,3,-1,4,-1,-1,-1,-1)
-    ns.register_base(a,tuple(range(12)))
-    for i in range(1000000):
+    ns.register_base(a,tuple(range(12)), shift=2)
+    # hashes = {}
+    for i in range(4**10):
+        # hash(a)
         ns.get_val(a)
+    # print(ns.get_val(a))
+
+    # === Numpy lookup ===
+    # ns = number_system.MultiBaseLookupNP(12)
+    # a = (-1,1,-1,2,-1,3,-1,4,-1,-1,-1,-1)
+    # a = np.asarray(a, dtype='int16')
+    # ns.register_base(a,tuple(range(12)), shift=2)
+    # for i in range(100000):
+    #     ns.get_val(a)
+    # print(ns.get_val(a))
 
 
 if __name__ == '__main__':
     # PROFILE_MIXIN(profile)
     # PROFILE_MIXIN(scale_tests)
     # PROFILE_MIXIN(orbit_scale_test)
-    PROFILE_MIXIN(test_number_system)
+    PROFILE_MIXIN(orbit_small_test)
+    # PROFILE_MIXIN(test_number_system)
     # import timeit
     # print(timeit.timeit('[hash((1,2,3,4,5,6,7,8)) for i in range(4**12)]', number=1))
     # print(timeit.timeit('[[1,2,3,4,5,6,7,8][7,6,5,4,3,2,1,0] for i in range(4**12)]', number=1))
