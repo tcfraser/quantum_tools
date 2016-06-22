@@ -2,6 +2,7 @@ import numpy as np
 from .binary_tree import PositivityTree
 from operator import mul
 from collections import namedtuple
+from functools import reduce
 
 class MultiBaseLookupBT():
 
@@ -17,40 +18,47 @@ class MultiBaseLookupBT():
     def register_base(self, digits, base, shift=0):
         self.__bases.add_val(digits, (shift, base))
 
-def BaseTuple(max_values, base_indices=None, size=0):
-    base_multipliers = tuple(reduce(mul, max_values[i+1:], 1) for i in range(len(max_values)))
-    if base_indices is None:
-        return base_multipliers
-    else:
-        assert(size > len(max_values))
-        assert(len(base_indices) == len(max_values))
-        filled_base_multipliers = [0]*size
-        for i, bi in enumerate(base_indices):
-            filled_base_multipliers[bi] = max_values[i]
-        return filled_base_multipliers
-
 class MultiBaseLookupBTOptimized():
 
     def __init__(self):
         self.__bases = PositivityTree()
-        self.__singleton_base = None
+        self.__fpbase = None
+        self.__current_shift = 0
 
-    def get_val(self, digits):
-        if self.__singleton_base:
-            shift, base = self.__singleton_base
+    def get_val(self, digits, use_fpb=False):
+        if use_fpb:
+            if self.__fpbase:
+                shift, base = self.__fpbase
+            else:
+                raise Exception("There is no fully positive base.")
         else:
             shift, base = self.__bases.find(digits)
         val = shift + sum(map(mul, digits, base))
         # val = shift + np.dot(digits, base) # Way longer
         return val
 
-    def register_base(self, digits, base, shift=0):
-        sb = ShiftedBase(shift, base)
-        if self.__singleton_base == None:
-            self.__singleton_base = sb
-        else:
-            self.__singleton_base = False
-        self.__bases.add_val(digits, sb)
+    def register_base(self, max_values, base_indices=None, size=0, shift=False):
+        base_multipliers = tuple(reduce(mul, max_values[i+1:], 1) for i in range(len(max_values)))
+        base_space_size = int(reduce(mul, max_values, 1))
+        if base_indices is not None:
+            assert(size > len(max_values))
+            assert(len(base_indices) == len(max_values))
+            filled_base_multipliers = [0]*size
+            for i, bi in enumerate(base_indices):
+                filled_base_multipliers[bi] = base_multipliers[i]
+            base_multipliers = tuple(filled_base_multipliers)
+        local_shift = 0
+        if shift:
+            local_shift = self.__current_shift
+            self.__current_shift += base_space_size
+        sb = ShiftedBase(local_shift, base_multipliers)
+
+        path = tuple(1 if b != 0 else -1 for b in base_multipliers)
+        is_fp = all(p > 0 for p in path)
+        if is_fp:
+            self.__fpbase = sb
+        self.__bases.add_val(path, sb)
+        print(sb)
 
 class MultiBaseLookupNP():
 

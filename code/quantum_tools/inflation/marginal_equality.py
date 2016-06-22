@@ -32,15 +32,9 @@ def context_marginals(pd, context, defl_map):
     infl_rv_names = list(utils.flatten(context))
     infl_rv_names_arg_sort = variable_sort.argsort(infl_rv_names)
     defl_context = deflate(context, defl_map)
-    # Map Reduce Parallelization can be done here.
     marginals = tuple(map(pd.marginal, defl_context))
-    # for i in marginals:
-    #     print(i)
     product_marginals = ProbDist.product_marginals(*marginals, transpose_sort=False)
     product_marginals = np.transpose(product_marginals, axes=infl_rv_names_arg_sort)
-    # print(product_marginals)
-    # print(list(product_marginals.canonical_ravel()))
-    # print(product_marginals)
     return np.asarray(product_marginals.ravel())
 
 def deflate_rvc(rvc):

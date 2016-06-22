@@ -104,8 +104,8 @@ class RandomVariableCollection(SortedFrozenSet):
     def sub(self, names):
         return RandomVariableCollection(self.get_rvs(names))
 
-    def sub_base_name(self, base_name):
-        return RandomVariableCollection([rv for rv in self if rv.base_name == base_name])
+    # def sub_base_name(self, base_name):
+    #     return RandomVariableCollection([rv for rv in self if rv.base_name == base_name])
 
     def __getitem__(self, slice):
         return self.get_rvs(self.names.list[slice])

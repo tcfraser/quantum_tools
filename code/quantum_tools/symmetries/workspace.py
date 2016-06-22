@@ -19,6 +19,7 @@ from ..examples.symbolic_contexts import *
 from ..visualization.sparse_vis import plot_coo_matrix
 import multiprocessing
 from ..utilities import number_system
+from functools import partial
 from multiprocessing import Pool, cpu_count
 
 
@@ -30,10 +31,10 @@ def get_face_sets(rvc):
 
 def permutations_of_face_sets(rvc):
     face_sets_dict = get_face_sets(rvc)
-    posn_indices = [[posn_of(rv.name) for rv in rvs] for rvs in face_sets_dict.values()]
+    posn_indices = [[rvc.names[rv.name] for rv in rvs] for rvs in face_sets_dict.values()]
     perm_group = [list(utils.flatten(p)) for p in permutations(posn_indices)]
     assert(utils.all_equal_length(posn_indices)), "posn_indices need to be all equal length."
-    return perm_maps
+    return perm_group
 
 def get_permutations(n):
     return permutations(range(n))
@@ -96,32 +97,76 @@ def get_row_sum_description(indices_structure):
     # print('row count', len(indices_structure))
     return get_sum_description(indices_structure, sparse.csr_matrix)
 
-def get_contraction(rvc, symbolic_contexts, ret_jo=False):
-    jos = rvc.generate_joint_outcomes(rvc)
+def generate_joint_outcomes_for_sc(rvc, symbolic_contexts):
+    for sc_i in symbolic_contexts:
+        rvs = utils.flatten(sc_i)
+        sub_rvc = rvc.sub(rvs)
+        prods = tuple(rv.outcomes if rv in sub_rvc else [-1] for rv in rvc)
+        for i in product(*prods):
+            yield i
+        # print(sc_i)
+        # print(prods)
+        # sub_rvc_indices = rvc.names[sub_rvc.names.list]
+        # for
+        # print(sub_rvc_indices)
+
+def num_sc_joint_outcome(rvc, symbolic_contexts):
+    num = 0
+    for sc_i in symbolic_contexts:
+        rvs = utils.flatten(sc_i)
+        sub_rvc = rvc.sub(rvs)
+        num += len(sub_rvc.outcome_space)
+    return num
+
+def build_mblbt(rvc, symbolic_contexts):
+    mblbt = number_system.MultiBaseLookupBTOptimized()
+    # Non-marginal joint outcomes
+    nmjob = tuple(rv.num_outcomes for rv in rvc)
+    mblbt.register_base(nmjob) # fpbase
+
+    # Marginal joint outcomes
+    for sc_i in symbolic_contexts:
+        rvs = utils.flatten(sc_i)
+        sub_rvc = rvc.sub(rvs)
+        sub_rvc_indices = rvc.names[sub_rvc.names.list]
+        mblbt.register_base(tuple(rv.num_outcomes for rv in sub_rvc),
+            base_indices=sub_rvc_indices, size=len(rvc), shift=True)
+
+    return mblbt
+
+def get_contraction(rvc, symbolic_contexts):
+    jos = rvc.outcome_space
+    num_jos = len(rvc.outcome_space)
     jos_sc = generate_joint_outcomes_for_sc(rvc, symbolic_contexts)
+    num_jos_sc = num_sc_joint_outcome(rvc, symbolic_contexts)
+    print(num_jos_sc, num_jos)
+    mblbt = build_mblbt(rvc, symbolic_contexts)
+    # TODO replace these
     perms = permutations_of_face_sets(rvc)
+    actions = [itemgetter(*perm) for perm in perms]
+    # END TODO
 
     # Row summing
-    row_orbits = get_orbits(perms, jos_sc, f=flip_name)
-    row_orbit_indices = get_orbit_indices(row_orbits, jos_sc)
-    row_sum = get_row_sum_description(row_orbit_indices)
+    row_orbits = get_orbits(actions, jos_sc, indexof=mblbt.get_val, num_elems=num_jos_sc)
+    # row_orbit_indices = get_orbit_indices(row_orbits, jos_sc)
+    row_sum = get_row_sum_description(row_orbits)
     print("Found {0} row_orbits.".format(len(row_orbits)))
 
-    # Col summing
-    col_orbits = get_orbits(perms, jos, f=flip_name)
-    col_orbit_indices = get_orbit_indices(col_orbits, jos)
-    col_sum = get_col_sum_description(col_orbit_indices)
+    # # Col summing
+    col_orbits = get_orbits(actions, jos, indexof=partial(mblbt.get_val, use_fpb=True), num_elems=num_jos)
+    # col_orbit_indices = get_orbit_indices(col_orbits, jos)
+    col_sum = get_col_sum_description(col_orbits)
     print("Found {0} col_orbits.".format(len(col_orbits)))
 
     # plot_coo_matrix(col_sum)
     # plot_coo_matrix(row_sum)
 
-    if ret_jo:
-        return row_sum, jos_sc, col_sum, jos
-    else:
-        return row_sum, col_sum
+    # if ret_jo:
+    #     return row_sum, jos_sc, col_sum, jos
+    # else:
+    return row_sum, col_sum
 
-def profile():
+def profile_old():
     symbolic_contexts, outcomes = ABC_224_444
     rvc = RandomVariableCollection.new(
         names=marginal_equality.rv_names_from_sc(symbolic_contexts),
@@ -142,17 +187,28 @@ def orbit_scale_test():
     # print_orbits(orbits)
     # itemgetter()
 
-def orbit_small_test():
-    elems = product(*((range(2)) for _ in range(6)))
-    actions = []
-    invariants = [[0,1],[2,3],[4,5]]
-    for p in permutations([0,1,2]):
-        permutation_action = list(utils.flatten(itemgetter(*p)(invariants)))
-        # print(permutation_action)
-        actions.append(itemgetter(*permutation_action))
-    # pprint(actions)
-    # f = lambda action, elem: itemgetter(*action)(elem)
-    orbits = get_orbits(actions, elems, indexof=f, num_elems=2**6)
+def profile():
+    symbolic_contexts, outcomes = ABC_444_444
+    rvc = RandomVariableCollection.new(
+        names=marginal_equality.rv_names_from_sc(symbolic_contexts),
+        outcomes=outcomes)
+    row_sum, col_sum = get_contraction(rvc, symbolic_contexts)
+    # get_contraction(rvc, symbolic_contexts)
+    # elems = rvc.outcome_space
+    # actions = []
+    # invariants = [[0,1],[2,3],[4,5]]
+    # for p in permutations([0,1,2]):
+    #     permutation_action = list(utils.flatten(itemgetter(*p)(invariants)))
+    #     # print(permutation_action)
+    #     actions.append(itemgetter(*permutation_action))
+
+    # mblbt = number_system.MultiBaseLookupBTOptimized()
+    # mblbt.register_base(
+    #     tuple(rvc.outcome_space.get_input_base()),
+    #     )
+    # # pprint(actions)
+    # # f = lambda action, elem: itemgetter(*action)(elem)
+    # orbits = get_orbits(actions, elems, indexof=mblbt.get_val, num_elems=len(rvc.outcome_space))
     # print(len(orbits))
     # print_orbits(orbits)
     # itemgetter()
@@ -224,7 +280,7 @@ if __name__ == '__main__':
     # PROFILE_MIXIN(profile)
     # PROFILE_MIXIN(scale_tests)
     # PROFILE_MIXIN(orbit_scale_test)
-    PROFILE_MIXIN(orbit_small_test)
+    PROFILE_MIXIN(profile)
     # PROFILE_MIXIN(test_number_system)
     # import timeit
     # print(timeit.timeit('[hash((1,2,3,4,5,6,7,8)) for i in range(4**12)]', number=1))

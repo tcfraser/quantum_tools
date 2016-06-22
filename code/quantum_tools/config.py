@@ -29,8 +29,8 @@ def PROFILE_MIXIN(func, *args):
         ps = pstats.Stats(pr)
         ps.strip_dirs()
         ps.sort_stats('cumulative')
-        ps.print_stats()
-        # ps.print_stats(.1)
+        # ps.print_stats()
+        ps.print_stats(.2)
         if error is not None:
             raise error
 

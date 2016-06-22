@@ -28,6 +28,9 @@ class IntMap():
         self.__base = [reduce(mul, input_base[i+1:], 1) for i in range(self.__base_size)]
         self.__cached_iter = None
 
+    def get_input_base(self):
+        return self.__input_base
+
     def __len__(self):
         return self.__space_size
 
