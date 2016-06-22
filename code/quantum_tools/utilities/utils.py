@@ -117,7 +117,7 @@ def multiplicity(iterable):
             multi.append(1)
     return zip(seen, multi)
 
-def factorization(nums):
+def factorization(nums, dot='*'):
     s = []
     total = 0
     for num, multi in multiplicity(nums):
@@ -127,7 +127,7 @@ def factorization(nums):
         else:
             s.append("{0}^{1}".format(num, multi))
             total += num**multi
-    return str(total) + ' = ' + '*'.join(s)
+    return str(total) + ' = ' + dot.join(s)
 
 def flip_list(lst):
     return dict((i,j) for j, i in enumerate(lst))

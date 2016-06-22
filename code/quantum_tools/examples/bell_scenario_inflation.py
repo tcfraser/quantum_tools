@@ -13,16 +13,16 @@ from ..statistics.probability import ProbDist
 from ..visualization import sparse_vis
 from ..porta import marginal_problem_pipeline, porta_tokenizer
 from ..config import *
+from ..examples.symbolic_contexts import *
 
 def set_up():
-    symbolic_contexts = [
-        [['X1', 'Y1'], ['A2', 'B2', 'X2', 'Y2']],
-        [['X1', 'Y2'], ['A2', 'B1', 'X2', 'Y1']],
-        [['X2', 'Y1'], ['A1', 'B2', 'X1', 'Y2']],
-        [['X2', 'Y2'], ['A1', 'B1', 'X1', 'Y1']],
-    ]
-    inflation_rvc = RandomVariableCollection.new(names=['A1', 'A2', 'B1', 'B2', 'X1', 'X2', 'Y1', 'Y2'], outcomes=[2]*8)
+    symbolic_contexts, outcomes = ABXY_2222_2222
+    inflation_rvc = RandomVariableCollection.new(names=marginal_equality.rv_names_from_sc(symbolic_contexts), outcomes=outcomes)
     original_rvc = marginal_equality.deflate_rvc(inflation_rvc)
+    # print(original_rvc.sub('A'))
+    # print(str(original_rvc))
+    # return original_rvc
+    # print(original_rvc)
     pd = prob_dists.tsirelson(original_rvc)
     A = marginal_equality.marginal_mtrx(inflation_rvc, symbolic_contexts)
     b = marginal_equality.contexts_marginals(pd, symbolic_contexts)
@@ -41,5 +41,6 @@ def fmel():
 if __name__ == '__main__':
     # linear_feasibility()
     fmel()
+    # set_up()
     # import cProfile
     # cProfile.run('fmel()', sort='time')

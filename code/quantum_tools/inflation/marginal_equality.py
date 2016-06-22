@@ -41,12 +41,13 @@ def deflate_rvc(rvc):
     base_names = utils.unique_everseen(rv.base_name for rv in rvc)
     deflated_rvs = []
     for base_name in base_names:
-        base_name_sub_rvc = rvc.sub_base_name(base_name)
+        sub_names = [rv.name for rv in rvc if rv.base_name == base_name]
+        base_name_sub_rvc = rvc.sub(sub_names)
         outcomes_in_sub = list(rv.outcomes for rv in base_name_sub_rvc)
         assert(utils.all_equal(outcomes_in_sub)), "Outcomes of random variables not equal. {0}".format(str(outcomes_in_sub))
         outcome_for_base_name_set = outcomes_in_sub[0] # they're all equal
         deflated_rvs.append(RandomVariable(base_name, outcome_for_base_name_set))
-    outcomes = utils.unique_everseen(rv.base_name for rv in rvc)
+    # print(deflated_rvs)
     return RandomVariableCollection(deflated_rvs)
 
 def contexts_marginals(pd, contexts):

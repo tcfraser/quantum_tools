@@ -48,3 +48,13 @@ ABC_224_444 = SymbolicContext(
     ],
     outcomes=[4]*(2 + 2 + 4),
 )
+
+ABXY_2222_2222 = SymbolicContext(
+    preinjectable_sets= [
+        [['X1', 'Y1'], ['A2', 'B2', 'X2', 'Y2']],
+        [['X1', 'Y2'], ['A2', 'B1', 'X2', 'Y1']],
+        [['X2', 'Y1'], ['A1', 'B2', 'X1', 'Y2']],
+        [['X2', 'Y2'], ['A1', 'B1', 'X1', 'Y1']],
+    ],
+    outcomes=[2]*(2+2+2+2),
+)

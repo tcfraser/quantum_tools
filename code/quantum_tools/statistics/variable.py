@@ -40,8 +40,14 @@ class RandomVariable():
     #     return outcome in self.outcomes
 
     def __repr__(self):
-        _repr = "{name}: {0} -> {1}".format(self.num_outcomes, self.outcomes, name=self.name)
+        _repr = "{name} -> {0}".format(self.outcomes, name=self.name)
         return _repr
+
+    def _repr_latex_(self):
+        if self.name_modifier is not None:
+            return r"$${0}_{1} \rightarrow {2}$$".format(self.base_name, self.name_modifier, self.outcomes)
+        else:
+            return r"$${0} \rightarrow {1}$$".format(self.name, self.outcomes)
 
     def __str__(self):
         return self.__repr__()
@@ -105,19 +111,30 @@ class RandomVariableCollection(SortedFrozenSet):
         return RandomVariableCollection(self.get_rvs(names))
 
     # def sub_base_name(self, base_name):
-    #     return RandomVariableCollection([rv for rv in self if rv.base_name == base_name])
+    #     return RandomVariableCollection()
 
     def __getitem__(self, slice):
         return self.get_rvs(self.names.list[slice])
 
-    def __str__(self):
-        print_list = []
-        print_list.append("RandomVariableCollection")
-        print_list.append('{0} Random Variables:'.format(len(self)))
-        print_list.append('Outcomes: {0}'.format(utils.factorization([rv.num_outcomes for rv in self])))
+    def __repr__(self):
+        buf = []
+        buf.append("RandomVariableCollection")
+        buf.append('{0} Random Variables:'.format(len(self)))
+        buf.append('Outcomes: {0}'.format(utils.factorization([rv.num_outcomes for rv in self])))
         for rv in self:
-            print_list.append(rv.__repr__())
-        return '\n'.join(print_list)
+            buf.append(rv.__repr__())
+        return '\n'.join(buf)
+
+    def _repr_latex_(self):
+        buf = []
+        buf.append(r"$$\mathcal{{R}}, \left|\mathcal{{R}}\right| = {{{0}}}, \mathcal{{O}}(\mathcal{{R}}) = {{{1}}}$$".format(len(self), utils.factorization([rv.num_outcomes for rv in self], dot=r'\cdot')))
+        for rv in self:
+            buf.append(rv._repr_latex_())
+        return r''.join(buf)
+
+    def __str__(self):
+        return repr(self)
+
 WrapMethods(RandomVariableCollection)
 
 @profile
@@ -132,6 +149,8 @@ def perform_tests():
     print(A1)
 
     AB = RandomVariableCollection([A, B, A2, A1])
+    B_rvc = RandomVariableCollection(B)
+    print(B_rvc)
     # for rv in AB:
     #     print(rv)
     print(AB)

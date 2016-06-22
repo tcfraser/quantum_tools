@@ -2,6 +2,7 @@ from ..porta.porta_tokenizer import Term, Terms, Relation, PortaFile
 from ..porta import porta_tokenizer
 from fractions import Fraction
 import numpy as np
+from scipy import sparse, io
 import math
 import os
 import shutil
@@ -81,38 +82,46 @@ def convert_to_porta_file(A):
     pf = PortaFile.fromObj(pf_obj, template='input')
     return pf, row_vm, col_vm
 
-def perform_pipeline(name, mtrx):
+def save_sparse_mtrx_to_file():
+    pass
+
+def perform_pipeline(name, mtrx, optional_mtrxs=None):
     working_dir = os.path.join(_PIPE_LINE_DIRECTORY, name)
-    setup_file_name = os.path.join(working_dir, 'setup.ieq')
-    fmel_log_file_name = os.path.join(working_dir, 'porta_fmel.log')
     print("Using directory {0}.".format(working_dir))
     if os.path.exists(working_dir):
         print("Removing previous directory {0}.".format(working_dir))
         shutil.rmtree(working_dir)
     os.makedirs(working_dir)
+    if optional_mtrxs is not None:
+        for name, optional_mtrx in optional_mtrxs.items():
+            save_slot = os.path.join(working_dir, name + '.mtx')
+            print("Saving optional matrix {0}.".format(save_slot))
+            io.mmwrite(save_slot, optional_mtrx)
+    setup_file_name = os.path.join(working_dir, 'setup.ieq')
+    fmel_log_file_name = os.path.join(working_dir, 'porta_fmel.log')
     print("Making setup file {0}.".format(setup_file_name))
     pf, row_vm, col_vm = convert_to_porta_file(mtrx)
     pf.toFile(setup_file_name)
-    print("Sleeping.")
-    time.sleep(0.5) # Wait for file to be ready.
     print("Calling fourier motzkin elimination:")
     subprocess_call = [_PORTA_EXE, '-F', setup_file_name]
     print(" ".join(subprocess_call))
-    fmel_log_file = open(fmel_log_file_name, 'w+')
     p = subprocess.Popen(
         args=subprocess_call,
+        close_fds=True,
+        bufsize=-1,
         # shell=True, # Nope.
         universal_newlines=True,
-        stdout=fmel_log_file,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
     )
-    ret_code = p.wait()
-    print("Wrote log file {0}.".format(fmel_log_file_name))
-    fmel_log_file.flush()
-    fmel_log_file.close()
-    if ret_code != 0:
-        with open(fmel_log_file_name, 'r') as _log_file_error:
-            print(_log_file_error.read())
-        raise Exception("return code for porta was {0}".format(ret_code))
+    output, error = p.communicate()
+    print("Writing log file {0}.".format(fmel_log_file_name))
+    if not error:
+        with open(fmel_log_file_name, 'w+') as _file:
+            _file.write(output)
+    else:
+        raise Exception("return code for porta was {0}".format(error))
     file_to_clean = os.path.join(working_dir, 'setup.ieq.ieq')
     print("Cleaning file {0}.".format(file_to_clean))
     cleaned_file = PortaFile.clean(file_to_clean)

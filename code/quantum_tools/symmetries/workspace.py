@@ -157,15 +157,17 @@ def get_contraction(rvc, symbolic_contexts):
     print(num_jos_sc, num_jos)
     mblbt = build_mblbt(rvc, symbolic_contexts)
     # TODO replace these
-    group_gen = ((3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8),
-                 (0, 2, 1, 3, 8, 10, 9, 11, 4, 6, 5, 7),
-                 (8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7),
-                 (0, 1, 2, 3, 5, 4, 7, 6, 10, 11, 8, 9))
-    perms = find_actions(group_gen, perm_bin_op)
+    if len(rvc) == 12:
+        group_gen = ((3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8),
+                     (0, 2, 1, 3, 8, 10, 9, 11, 4, 6, 5, 7),
+                     (8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7),
+                     (0, 1, 2, 3, 5, 4, 7, 6, 10, 11, 8, 9))
+        perms = find_actions(group_gen, perm_bin_op)
     # print(perms)
     # print(len(perms))
     # return (0,0)
-    # perms = permutations_of_face_sets(rvc)
+    elif len(rvc) == 6:
+        perms = permutations_of_face_sets(rvc)
     actions = [itemgetter(*perm) for perm in perms]
     # END TODO
 
@@ -211,7 +213,7 @@ def orbit_scale_test():
     # itemgetter()
 
 def profile():
-    symbolic_contexts, outcomes = ABC_444_444
+    symbolic_contexts, outcomes = ABC_222_222
     # symbolic_contexts, outcomes = ABC_222_222
     rvc = RandomVariableCollection.new(
         names=marginal_equality.rv_names_from_sc(symbolic_contexts),
@@ -224,6 +226,16 @@ def profile():
     print(col_sum.shape)
     print(contracted_A.shape)
     print(contracted_A.nnz)
+
+    marginal_problem_pipeline.perform_pipeline(
+        'contracted_big',
+        contracted_A,
+        optional_mtrxs={
+            'row_sum': row_sum,
+            'col_sum': col_sum,
+            'contracted_A': contracted_A,
+            'A': A,
+    })
     # get_contraction(rvc, symbolic_contexts)
     # elems = rvc.outcome_space
     # actions = []
