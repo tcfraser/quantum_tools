@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 *.stackdump
+*.dll
 
 # C extensions
 *.so
