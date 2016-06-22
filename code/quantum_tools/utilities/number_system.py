@@ -3,6 +3,7 @@ from .binary_tree import PositivityTree
 from operator import mul
 from collections import namedtuple
 from functools import reduce
+from .number_system_tools import shift_sum
 
 class MultiBaseLookupBT():
 
@@ -28,12 +29,16 @@ class MultiBaseLookupBTOptimized():
     def get_val(self, digits, use_fpb=False):
         if use_fpb:
             if self.__fpbase:
-                shift, base = self.__fpbase
+                shifted_base = self.__fpbase
             else:
                 raise Exception("There is no fully positive base.")
         else:
-            shift, base = self.__bases.find(digits)
-        val = shift + sum(map(mul, digits, base))
+            shifted_base = self.__bases.find(digits)
+        if shifted_base is None:
+            raise Exception("Digits {0} have no registered base.".format(digits))
+        else:
+            shift, base = shifted_base
+        val = shift_sum(shift, digits, base)
         # val = shift + np.dot(digits, base) # Way longer
         return val
 

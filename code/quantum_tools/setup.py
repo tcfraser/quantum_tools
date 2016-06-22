@@ -1,16 +1,14 @@
-# from distutils.core import setup, Extension
-# from Cython.Build import cythonize
+from distutils.core import setup, Extension
+from Cython.Build import cythonize
 
-# extensions = [
-#     Extension(
-#         language='c',
-#         name='quantum_tools.utilities.integer_map',
-#         sources=['quantum_tools/utilities/integer_map.pyx']
-#         )
-# ]
+extensions = [
+    Extension(
+        language='c',
+        name='quantum_tools.utilities.number_system_tools',
+        sources=['quantum_tools/utilities/number_system_tools.pyx']
+        )
+]
 
-# setup(
-#     ext_modules = \
-#         cythonize(extensions)
-
-# )
+setup(
+    ext_modules = cythonize(extensions),
+)

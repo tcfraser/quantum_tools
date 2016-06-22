@@ -22,6 +22,8 @@ from ..utilities import number_system
 from functools import partial
 from multiprocessing import Pool, cpu_count
 
+def perm_bin_op(a,b):
+    return itemgetter(*a)(b)
 
 def get_face_sets(rvc):
     face_map = defaultdict(list)
@@ -53,6 +55,8 @@ def get_orbits(actions, elems, indexof, num_elems=None):
         if not seen[i]:
             orbit = []
             for action in actions:
+                # print(elem)
+                # print(action)
                 image = action(elem)
                 image_index = indexof(image)
                 if not seen[image_index]:
@@ -60,6 +64,17 @@ def get_orbits(actions, elems, indexof, num_elems=None):
                     seen[image_index] = True
             orbits.append(orbit)
     return orbits
+
+def find_actions(g_gen, bin_op):
+    return _find_actions(g_gen, g_gen[0], set(), bin_op)
+
+def _find_actions(g_gen, g_i, g_working, bin_op):
+    if g_i not in g_working:
+        g_working.add(g_i)
+        for gen in g_gen:
+            g_i = bin_op(gen, g_i)
+            g_working.update(_find_actions(g_gen, g_i, g_working, bin_op))
+    return g_working
 
 def print_orbits(orbits):
     for i, orbit in enumerate(orbits):
@@ -142,7 +157,15 @@ def get_contraction(rvc, symbolic_contexts):
     print(num_jos_sc, num_jos)
     mblbt = build_mblbt(rvc, symbolic_contexts)
     # TODO replace these
-    perms = permutations_of_face_sets(rvc)
+    group_gen = ((3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8),
+                 (0, 2, 1, 3, 8, 10, 9, 11, 4, 6, 5, 7),
+                 (8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7),
+                 (0, 1, 2, 3, 5, 4, 7, 6, 10, 11, 8, 9))
+    perms = find_actions(group_gen, perm_bin_op)
+    # print(perms)
+    # print(len(perms))
+    # return (0,0)
+    # perms = permutations_of_face_sets(rvc)
     actions = [itemgetter(*perm) for perm in perms]
     # END TODO
 
@@ -189,10 +212,18 @@ def orbit_scale_test():
 
 def profile():
     symbolic_contexts, outcomes = ABC_444_444
+    # symbolic_contexts, outcomes = ABC_222_222
     rvc = RandomVariableCollection.new(
         names=marginal_equality.rv_names_from_sc(symbolic_contexts),
         outcomes=outcomes)
     row_sum, col_sum = get_contraction(rvc, symbolic_contexts)
+    A = marginal_equality.marginal_mtrx(rvc, symbolic_contexts)
+    contracted_A = row_sum.dot(A.dot(col_sum))
+    print(row_sum.shape)
+    print(A.shape)
+    print(col_sum.shape)
+    print(contracted_A.shape)
+    print(contracted_A.nnz)
     # get_contraction(rvc, symbolic_contexts)
     # elems = rvc.outcome_space
     # actions = []
@@ -212,6 +243,11 @@ def profile():
     # print(len(orbits))
     # print_orbits(orbits)
     # itemgetter()
+
+def test_gen_action():
+    gen = [(0,1,2,3), (0,2,1,3), (1,0,3,2)]
+    bin_op = lambda a,b: itemgetter(*a)(b)
+    print(find_actions(gen, bin_op))
 
 def scale_tests():
     a = (1,2,3,4,5,6,7,8)
@@ -281,6 +317,7 @@ if __name__ == '__main__':
     # PROFILE_MIXIN(scale_tests)
     # PROFILE_MIXIN(orbit_scale_test)
     PROFILE_MIXIN(profile)
+    # PROFILE_MIXIN(test_gen_action)
     # PROFILE_MIXIN(test_number_system)
     # import timeit
     # print(timeit.timeit('[hash((1,2,3,4,5,6,7,8)) for i in range(4**12)]', number=1))
