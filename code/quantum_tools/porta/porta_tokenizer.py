@@ -1,5 +1,5 @@
 import os
-from parse import parse
+from ..parse.parse import parse
 import re
 from pprint import pprint
 from fractions import Fraction
