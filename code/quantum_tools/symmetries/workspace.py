@@ -21,7 +21,7 @@ import multiprocessing
 from ..utilities import number_system
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from ..esp import rayshooting
+# from ..esp import rayshooting
 
 def perm_bin_op(a,b):
     return itemgetter(*a)(b)
