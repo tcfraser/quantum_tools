@@ -10,6 +10,7 @@ __path_to_output = os.path.join(os.sep, 'examples', 'outputs')
 
 SOURCE_DIR = __directory
 OUTPUT_DIR = __directory + __path_to_output + os.sep # Why python is this so hard?
+BULK_DIR = os.path.join(os.path.dirname(__directory), 'bulk')
 
 def STOP():
     sys.exit(0)
