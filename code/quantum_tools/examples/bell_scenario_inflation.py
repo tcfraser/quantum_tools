@@ -7,7 +7,6 @@ from ..contexts.quantum_context import QuantumContext, QuantumProbDist
 from ..utilities import utils
 from ..utilities.profiler import profile
 from ..statistics.variable import RandomVariableCollection
-from ..inflation import positive_linear_solve
 from ..examples import prob_dists
 from ..statistics.probability import ProbDist
 from ..visualization import sparse_vis
@@ -29,6 +28,7 @@ def set_up():
     return A, b, symbolic_contexts, inflation_rvc, original_rvc, pd
 
 def linear_feasibility():
+    from ..inflation import positive_linear_solve
     A, b, symbolic_contexts, inflation_rvc, original_rvc, pd = set_up()
     res = positive_linear_solve.get_feasibility_cvx(A, b)
     print(res)
