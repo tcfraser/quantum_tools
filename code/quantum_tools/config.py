@@ -27,7 +27,7 @@ def PROFILE_MIXIN(func, *args):
         pr.disable()
         # ps = pstats.Stats(pr).sort_stats('tottime')
         ps = pstats.Stats(pr)
-        ps.strip_dirs()
+        # ps.strip_dirs()
         ps.sort_stats('cumulative')
         # ps.print_stats()
         ps.print_stats(.2)

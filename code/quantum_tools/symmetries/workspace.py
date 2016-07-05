@@ -21,6 +21,7 @@ import multiprocessing
 from ..utilities import number_system
 from functools import partial
 from multiprocessing import Pool, cpu_count
+from ..esp import rayshooting
 
 def perm_bin_op(a,b):
     return itemgetter(*a)(b)
@@ -213,7 +214,10 @@ def orbit_scale_test():
     # itemgetter()
 
 def profile():
-    symbolic_contexts, outcomes = ABC_222_222
+    get_contraction_elements(perform_pipeline=True)
+
+def get_contraction_elements(sc, perform_pipeline=False):
+    symbolic_contexts, outcomes = sc
     # symbolic_contexts, outcomes = ABC_222_222
     rvc = RandomVariableCollection.new(
         names=marginal_equality.rv_names_from_sc(symbolic_contexts),
@@ -221,21 +225,24 @@ def profile():
     row_sum, col_sum = get_contraction(rvc, symbolic_contexts)
     A = marginal_equality.marginal_mtrx(rvc, symbolic_contexts)
     contracted_A = row_sum.dot(A.dot(col_sum))
-    print(row_sum.shape)
-    print(A.shape)
-    print(col_sum.shape)
-    print(contracted_A.shape)
-    print(contracted_A.nnz)
+    # print(row_sum.shape)
+    # print(A.shape)
+    # print(col_sum.shape)
+    # print(contracted_A.shape)
+    # print(contracted_A.nnz)
 
-    marginal_problem_pipeline.perform_pipeline(
-        'contracted_big',
-        contracted_A,
-        optional_mtrxs={
-            'row_sum': row_sum,
-            'col_sum': col_sum,
-            'contracted_A': contracted_A,
-            'A': A,
-    })
+    if perform_pipeline:
+        marginal_problem_pipeline.perform_pipeline(
+            'contracted_big',
+            contracted_A,
+            optional_mtrxs={
+                'row_sum': row_sum,
+                'col_sum': col_sum,
+                'contracted_A': contracted_A,
+                'A': A,
+        })
+    return row_sum, A, col_sum, contracted_A
+
     # get_contraction(rvc, symbolic_contexts)
     # elems = rvc.outcome_space
     # actions = []
