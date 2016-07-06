@@ -58,9 +58,10 @@ EXP_DTYPE = 'int16' # Can't be bool. Scipy sparse arrays don't support boolean m
 
 class FoundTransversals():
 
-    def __init__(self):
+    def __init__(self, strat):
         self._raw = None
         self._raw_sum = None
+        self._strat = strat
 
     def __len__(self):
         if self._raw is None:
@@ -84,6 +85,7 @@ class FoundTransversals():
 
             self._raw = sparse.hstack((self._raw[:, fts_to_keep], ft))
             self._raw_sum = np.append(self._raw_sum[fts_to_keep], total_ft)
+        return self._strat.is_max_transversal(len(self))
 
     def minimal_present(self, ft):
         if self._raw is None:
@@ -142,11 +144,26 @@ def cernikov_filter(wts, fts=None):
     vl.log('...down to {0}'.format(wts.shape[1]))
     return wts
 
-class SearchStrat():
-    pass
+class HTStrat():
 
-    depth   = 'depth'
-    breadth = 'breadth'
+    def __init__(self, search=None, max_t=None):
+        self._search = search
+        self._max_t = max_t
+
+    def get_worker(self):
+        if self._search is None:
+            return work_on_transversals_depth
+        if self._search == 'depth':
+            return work_on_transversals_depth
+        if self._search == 'breadth':
+            return work_on_transversals_breadth
+        raise Exception("Invalid search strat.")
+
+    def is_max_transversal(self, count):
+        if self._max_t is None:
+            return False
+        else:
+            return count >= self._max_t
 
 def get_null_transveral(size):
     """
@@ -184,14 +201,12 @@ def np_ones(shape):
         _numpy_ones_pool[shape] = np.ones(shape, dtype=EXP_DTYPE)
     return _numpy_ones_pool[shape]
 
-def find_transversals(H, strat=SearchStrat.depth):
+def find_transversals(H, strat=None):
+    strat = HTStrat() if strat is None else strat
     H = sparse.csc_matrix(H) # Needed for the algorithm
-    fts = FoundTransversals() # Empty found transversals
+    fts = FoundTransversals(strat) # Empty found transversals
     num_nodes = H.shape[0]
-    if strat == SearchStrat.depth:
-        work_on_transversals_depth(H, get_null_transveral(num_nodes), fts)
-    else:
-        work_on_transversals_breadth(H, get_null_transveral(num_nodes), fts)
+    strat.get_worker()(H, get_null_transveral(num_nodes), fts)
     return fts
 
 def verify_completion(H, wt, fts):
@@ -202,9 +217,9 @@ def verify_completion(H, wt, fts):
     vl.log('is_completion')
     vl.log(is_complete_transversal(completion))
     if is_complete_transversal(completion):
-        fts.update(wt) # Update the list of transversals with the new found one
-        return True, None
-    return False, completion
+        fts_response = fts.update(wt) # Update the list of transversals with the new found one
+        return True, None, fts_response
+    return False, completion, False # Haven't hit max iterations
 
 def work_on_transversals_breadth(H, wts, fts, current_depth=0):
     """ Work on a particular transversal going breadth first """
@@ -221,9 +236,11 @@ def work_on_transversals_breadth(H, wts, fts, current_depth=0):
     for wt_i in range(wts.shape[1]):
         wt = wts[:, wt_i]
         # Check if transversal is complete
-        is_complete, completion = verify_completion(H, wt, fts)
+        is_complete, completion, fts_response = verify_completion(H, wt, fts)
+        if fts_response:
+            vl.log('Finished: Maximum iterations hit.')
+            return
         if is_complete:
-            fts.update(wt)
             continue
 
         # Otherwise, branch to nodes that can contribute
@@ -250,9 +267,12 @@ def work_on_transversals_depth(H, wt, fts, current_depth=0):
     vl.log(current_depth)
 
     # Check if transversal is complete
-    is_complete, completion = verify_completion(H, wt, fts)
+    is_complete, completion, fts_response = verify_completion(H, wt, fts)
+    if fts_response:
+        vl.log('Finished: Maximum iterations hit.')
+        return True # Finish everything
     if is_complete:
-        return
+        return False # Branch is over, keep searching
 
     # Otherwise, branch to nodes that can contribute
     for node in branch_to_nodes(H, wt, completion):
@@ -260,7 +280,10 @@ def work_on_transversals_depth(H, wt, fts, current_depth=0):
         if fts.minimal_present(next_wt):
             # A more minimal transversal is present, just continue on
             continue
-        work_on_transversals_depth(H, next_wt, fts, current_depth + 1)
+        terminate = work_on_transversals_depth(H, next_wt, fts, current_depth + 1)
+        if terminate:
+            vl.log('Propagate finished.')
+            return True # Finish everything
 
 def is_complete_transversal(completion):
     """ Given a completion is it complete """
@@ -362,12 +385,12 @@ def perform_tests():
             ]))
     # plot_coo_matrix(mediumH)
     print(hyper_graph(A, 0).toarray())
-    fts = find_transversals(hyper_graph(A, 0), strat='depth')
+    fts = find_transversals(hyper_graph(A, 0), strat=HTStrat(search='depth', max_t=np.inf))
     print(fts.raw().toarray())
 
     # continue_transveral(get_null_transveral(6), 1)
     # PROFILE_MIXIN(find_transversals, hyper_graph(A, 11), 'depth')
 
 if __name__ == '__main__':
-    pass
-    # perform_tests()
+    # pass
+    PROFILE_MIXIN(perform_tests)
