@@ -1,6 +1,6 @@
 from ..examples.symbolic_contexts import *
 from ..symmetries.workspace import *
-from ..visualization.sparse_vis import plot_coo_matrix
+from ..visualization.sparse_vis import plot_matrix
 from ..config import *
 from scipy import sparse
 import numpy as np
@@ -46,8 +46,8 @@ def hyper_graph_contraction(A, ant, remove_ant):
 
 def hyper_graph(A, ant):
     A_csr = sparse.csr_matrix(A)
-    H_rows, H_cols = extendable_consequents(A, ant, True)
-    H = A_csr[H_rows, H_cols]
+    H_rows, H_cols = hyper_graph_contraction(A, ant, True)
+    H = A_csr[:, H_cols][H_rows, :]
     return H
 
 class VerboseLog():
@@ -356,7 +356,7 @@ def perform_tests():
     row_sum, A, col_sum, contracted_A = get_contraction_elements(ABC_222_222)
 
     H = hyper_graph(A, 0)
-    # plot_coo_matrix(H)
+    # plot_matrix(H)
     H_bool = H.astype(bool)
     mediumH = sparse.csr_matrix(np.array([
                 [1, 0, 1, 0, 0, 1, 0, 1],
@@ -386,7 +386,7 @@ def perform_tests():
                 [0, 1, 1],
                 [1, 1, 0],
             ]))
-    # plot_coo_matrix(mediumH)
+    # plot_matrix(mediumH)
     print(hyper_graph(A, 0).toarray())
     fts = find_transversals(hyper_graph(A, 0), strat=HTStrat(search='depth', max_t=np.inf))
     print(fts.raw().toarray())

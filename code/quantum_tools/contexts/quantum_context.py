@@ -17,14 +17,13 @@ class QuantumContext():
         self.measurements = measurements
         self.states = states
         self.permutation = permutation
-        self.permutationT = permutation.T if permutation is not None else None
         self.num_measurements = len(measurements)
         self.num_states = len(states)
 
 def QuantumProbDist(qc):
     joint_state = utils.tensor(*tuple(s.data for s in qc.states))
     if qc.permutation is not None:
-        joint_state = utils.multidot(qc.permutationT, joint_state, qc.permutation)
+        joint_state = utils.multidot(qc.permutation.T, joint_state, qc.permutation)
     def pdf(*args):
         measurement_operators = [qc.measurements[posn][val] for posn, val in enumerate(args)]
         joint_measurement = utils.tensor(*measurement_operators)
@@ -36,24 +35,18 @@ def QuantumProbDist(qc):
     pd = ProbDist.from_callable_support(qc.random_variables, pdf)
     return pd
 
-# === FAILED IDEA ===
-# No matter what, 64 kronecker products need to be taken
-# def QuantumProbDistOptimized(qc):
-#     joint_state = utils.tensor(*tuple(s.data for s in qc.states))
-#     if qc.permutation is not None:
-#         joint_state = utils.multidot(qc.permutationT, joint_state, qc.permutation)
+def QuantumProbDistOptimized(qc):
+    """
+    Only works for pure measurements
+    """
+    despectral = [sum(o for o in m) for m in qc.measurements] # A*, B*, C*
+    cum_measure_operators = utils.tensor(*despectral) # A* x B* x C*
+    if qc.permutation is not None:
+        cum_measure_operators = np.dot(qc.permutation, cum_measure_operators)
+    joint_state = utils.tensor(*tuple(s.data for s in qc.states))
+    super_support = utils.multidot(cum_measure_operators.conj().T, joint_state, cum_measure_operators)
+    super_support_diag = np.diagonal(super_support)
+    super_support_lookup = super_support_diag.reshape(qc.random_variables.outcome_space.get_input_base())
 
-#     despectral = [sum(o for o in m) for m in qc.measurements]
-#     cum_measure_operators = utils.tensor(*despectral)
-
-
-#     def pdf(*args):
-#         measurement_operators = [qc.measurements[posn][val] for posn, val in enumerate(args)]
-#         joint_measurement = utils.tensor(*measurement_operators)
-
-#         p = np.trace(utils.multidot(joint_state, joint_measurement))
-#         assert(utils.is_small(p.imag)), "Probability is not real. It is {0}.".format(p)
-#         return p.real
-
-#     pd = ProbDist.from_callable_support(qc.random_variables, pdf)
-#     return pd
+    pd = ProbDist(qc.random_variables, np.real(super_support_lookup))
+    return pd

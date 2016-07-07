@@ -30,7 +30,6 @@ class StateStratsParam():
     def dm(t):
         g = utils.cholesky(t)
         g /= (np.trace(g) + mach_eps)
-        # assert(is_trace_one(groundn)), "Trace of g is not 1.0! Difference: {0}".format(np.trace(g) - 1)
         rho = State(g)
         return rho
 

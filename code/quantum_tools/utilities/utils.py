@@ -273,7 +273,7 @@ def multidot(*args):
 
 def is_hermitian(A):
     """ Checks if matrix A is hermitian """
-    return np.array_equal(A, A.conj().T)
+    return np.allclose(A, A.conj().T)
 
 def is_psd(A):
     """ Checks if matrix A is positive semi-definite """

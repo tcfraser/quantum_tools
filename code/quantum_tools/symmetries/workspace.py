@@ -16,7 +16,7 @@ from ..sets import *
 from ..config import *
 from operator import itemgetter
 from ..examples.symbolic_contexts import *
-from ..visualization.sparse_vis import plot_coo_matrix
+from ..visualization.sparse_vis import plot_matrix
 import multiprocessing
 from ..utilities import number_system
 from functools import partial
@@ -188,8 +188,8 @@ def get_contraction(rvc, symbolic_contexts):
     col_sum = get_col_sum_description(col_orbits)
     print("Found {0} col_orbits.".format(len(col_orbits)))
 
-    # plot_coo_matrix(col_sum)
-    # plot_coo_matrix(row_sum)
+    # plot_matrix(col_sum)
+    # plot_matrix(row_sum)
 
     # if ret_jo:
     #     return row_sum, jos_sc, col_sum, jos

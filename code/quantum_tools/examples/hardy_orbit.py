@@ -9,6 +9,8 @@ from ..inflation import marginal_equality
 from ..examples import symbolic_contexts
 from ..contexts.quantum_context import QuantumContext, QuantumProbDist
 
+# This needs to be updated, currently working on this in another notebook
+
 class HardyOrbitMinimizer(Minimizer):
 
     def __init__(self, config):
