@@ -41,10 +41,10 @@ class Measurement():
 class ProjectiveMeasurement(Measurement):
 
     def __init__(self, projectors):
-        self._projectors = projectors
-        operators = utils.ket_to_dm(p) for p in projectors
+        self.projectors = projectors
+        operators = [utils.ket_to_dm(p) for p in projectors]
         super().__init__(operators)
-
+        
 class MeasurementStrats():
     # Namespace Declarations
     pass

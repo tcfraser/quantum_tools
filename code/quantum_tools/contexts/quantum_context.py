@@ -5,7 +5,7 @@ from __future__ import print_function, division
 import numpy as np
 from ..statistics.probability import ProbDist
 from ..utilities import utils
-from .measurement import Measurement
+from .measurement import Measurement, ProjectiveMeasurement
 from ..statistics.variable import RandomVariableCollection
 from .state import State
 from .. import config
@@ -39,7 +39,8 @@ def QuantumProbDistOptimized(qc):
     """
     Only works for pure measurements
     """
-    despectral = [sum(o for o in m) for m in qc.measurements] # A*, B*, C*
+    assert(all(isinstance(m, ProjectiveMeasurement) for m in qc.measurements)), "measurements are not projective"
+    despectral = [np.array(m.projectors).T for m in qc.measurements] # A*, B*, C*
     cum_measure_operators = utils.tensor(*despectral) # A* x B* x C*
     if qc.permutation is not None:
         cum_measure_operators = np.dot(qc.permutation, cum_measure_operators)
