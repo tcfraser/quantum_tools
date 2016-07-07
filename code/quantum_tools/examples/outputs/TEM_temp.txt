@@ -1,77 +1,310 @@
 Best Objective Result:
-[ -1.485  -2.133   9.217  -4.288  20.415 -21.874  -1.748  -1.05    2.785   0.372   1.463 -13.323  -1.323  44.678 -37.907
-  -8.303   1.535   4.457  -0.94    1.485  29.252 -13.221  -0.009  -1.686  12.77   -7.779  24.962   1.601   3.426  15.577
- -33.608   0.107  -6.921  14.581   1.11   25.68   -9.058   3.037   2.398  -5.691 -18.615   4.198  -1.     -7.842 -17.194
-  -5.892   0.416  10.976 -26.168 -18.913  -7.231   0.225 -13.143 -27.193   0.407   0.067   5.589  17.151 -17.772   0.063
-   0.324   0.623   5.452  -0.032  -0.03    6.418   0.699   7.856   5.032 -21.83    4.043 -26.444  -0.03   27.521  -1.355
-  32.374  -3.936  -0.103  -0.047  -0.118   7.725  11.643   2.485 -23.06    6.615  -1.963  -4.792 -19.187  -0.018  21.095
- -10.937  -5.1   -24.353  -0.033  -0.035  -0.036]
-Best Probability Distribution:
+[ -1.443 -10.296  22.71    0.512  14.683  -2.781 -11.059 -12.889   9.304  -8.211  31.431 -16.511   0.048   8.758  11.502
+ -17.426 -12.266 -12.422  -5.069  -3.823   4.812   6.2    13.542   2.422  -5.428  -1.791  14.174   6.968 -17.537   3.583
+   5.523   4.565   8.76  -18.32    2.541   2.795   3.477  -3.269  19.375  17.876  -0.302 -13.869   7.013   9.604  -1.284
+ -11.073 -12.251   4.816  -0.036   0.187 -28.368 -25.982 -14.282  20.977  28.733   1.492   5.869  -0.615  11.47   -3.343
+  -3.022  22.397   1.057  23.577   2.235   1.974  -7.128  -7.588 -15.119  14.72    6.31   -6.536   3.85   11.25   -6.875
+  -8.814 -11.538   1.073   7.104  11.412   0.372   6.089  -2.406   1.623 -13.48   10.358   8.261   1.36    7.06   11.198
+ -11.091  10.98   -6.883  14.491   4.305   1.571  -0.231   7.746  -7.216  -1.889  19.106   4.127   0.449  -3.041   9.164
+   2.893 -25.36   -3.93    4.99    6.311   7.177 -17.888   7.588  11.165 -11.579 -18.212  -5.845   9.717  -0.625  -7.645
+  -4.122 -24.11   -4.74   -2.593   0.753 -15.013   8.15   -1.724 -10.378  -2.074   6.281   4.917  -0.009  15.643  -5.397
+  -8.036 -15.79   -3.34    3.427   2.024 -12.64   -7.583  15.463  24.367]
 Best Context:
-<quantum_tools.contexts.quantum_context.QuantumContext object at 0x0000000004126A58>
+<quantum_tools.contexts.quantum_context.QuantumContext object at 0x6fffe9d84e0>
 Logs:
 Initialized
-Minimize Step result: 3.3033880574624863
-New Best Objective Result: 3.3033880574624863
-Minimize Step result: 3.1490844005652185
-New Best Objective Result: 3.1490844005652185
-Minimize Step result: 2.9551909751588266
-New Best Objective Result: 2.9551909751588266
-Minimize Step result: 2.8331057729327913
-New Best Objective Result: 2.8331057729327913
-Minimize Step result: 2.041133407478326
-New Best Objective Result: 2.041133407478326
-Minimize Step result: 1.4747751331362
-New Best Objective Result: 1.4747751331362
-Minimize Step result: 1.1911118181789213
-New Best Objective Result: 1.1911118181789213
-Minimize Step result: 0.7155408901648198
-New Best Objective Result: 0.7155408901648198
-Minimize Step result: 0.3742043309266322
-New Best Objective Result: 0.3742043309266322
-Minimize Step result: 0.22854684902359806
-New Best Objective Result: 0.22854684902359806
-Minimize Step result: 0.16678581970143108
-New Best Objective Result: 0.16678581970143108
-Minimize Step result: 0.10665208290735358
-New Best Objective Result: 0.10665208290735358
-Minimize Step result: 0.07023485639374052
-New Best Objective Result: 0.07023485639374052
-Minimize Step result: 0.041653389702922844
-New Best Objective Result: 0.041653389702922844
-Minimize Step result: 0.03339159409069472
-New Best Objective Result: 0.03339159409069472
-Minimize Step result: 0.02812275331837789
-New Best Objective Result: 0.02812275331837789
-Minimize Step result: 0.02107913489175765
-New Best Objective Result: 0.02107913489175765
-Minimize Step result: 0.01447417239381809
-New Best Objective Result: 0.01447417239381809
-Minimize Step result: 0.013511227916320825
-New Best Objective Result: 0.013511227916320825
-Minimize Step result: 0.7660259310812371
-Minimize Step result: 0.5792677198105654
-Minimize Step result: 0.2382563470602374
-Minimize Step result: 0.12883349064118832
-Minimize Step result: 0.07960445329395338
-Minimize Step result: 0.05772104731124302
-Minimize Step result: 0.0455702612339499
-Minimize Step result: 0.03844320972898657
-Minimize Step result: 0.02930786057609118
-Minimize Step result: 0.021805937039510424
-Minimize Step result: 0.014444155489675972
-Minimize Step result: 0.00973560207868334
-New Best Objective Result: 0.00973560207868334
-Minimize Step result: 0.007416485859028484
-New Best Objective Result: 0.007416485859028484
-Minimize Step result: 0.005812739642928299
-New Best Objective Result: 0.005812739642928299
-Minimize Step result: 0.004368473823494026
-New Best Objective Result: 0.004368473823494026
-Minimize Step result: 0.0033897210023444203
-New Best Objective Result: 0.0033897210023444203
-BH Step result: 0.0033897210023444203
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039386
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039422
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792041407
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040717
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039645
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039829
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040541
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792041232
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040398
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.0008067920406
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.0008067920398
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040662
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.00080679204018
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039936
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040082
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040055
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039601
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040463
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792038822
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040711
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792038563
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039952
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792039913
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040689
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040271
+Calculated objective, 0.000806792040269
+Calculated objective, 0.000806792040201
+Calculated objective, 0.00080679204051
+Calculated objective, 0.000806792040336
+Calculated objective, 0.000806792040155
+Calculated objective, 0.000806792040246
+Calculated objective, 0.000806792040514
+Calculated objective, 0.000806792040257
+Calculated objective, 0.000806792041052
+Calculated objective, 0.000806792040186
+Calculated objective, 0.000806792040444
+Calculated objective, 0.000806792040084
+Calculated objective, 0.000806792040073
+Calculated objective, 0.000806792039313
+Calculated objective, 0.000806792039084
+Calculated objective, 0.000806792039413
+Calculated objective, 0.000806792040273
+Calculated objective, 0.000806792040325
+Calculated objective, 0.00080679204015
+Calculated objective, 0.000806792040464
+Calculated objective, 0.000806792040218
+Calculated objective, 0.000806792040483
+Calculated objective, 0.000806792040488
+Calculated objective, 0.000806792040261
+Calculated objective, 0.000806792040169
+Calculated objective, 0.00080679204013
+Calculated objective, 0.000806792040606
+Calculated objective, 0.000806792040296
+Calculated objective, 0.000806792040216
+Calculated objective, 0.000806792040217
+Calculated objective, 0.00080679203985
+Calculated objective, 0.0008067920401
+Calculated objective, 0.000806792040316
+Calculated objective, 0.00080679204023
+Calculated objective, 0.000806792039973
+Calculated objective, 0.000806792039893
+Calculated objective, 0.00080679204026
+Calculated objective, 0.000806792040114
+Calculated objective, 0.00080679203952
+Calculated objective, 0.000806792039781
+Calculated objective, 0.000806792040277
+Calculated objective, 0.000806792039975
+Calculated objective, 0.000806792040149
+Calculated objective, 0.00080679204111
+Calculated objective, 0.000806792039793
+Calculated objective, 0.000806792040343
+Calculated objective, 0.000806792039726
+Calculated objective, 0.000806792040286
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521401
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521134
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520686
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520967
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520878
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520989
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520885
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521038
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521067
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520999
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521023
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.00030367352108
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.00030367352107
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520943
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520846
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521133
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521103
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521055
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521089
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521137
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520797
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521152
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521508
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521031
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673521018
+Calculated objective, 0.000303673520998
+Calculated objective, 0.000303673521029
+Calculated objective, 0.000303673521057
+Calculated objective, 0.000303673520935
+Calculated objective, 0.00030367352098
+Calculated objective, 0.000303673521055
+Calculated objective, 0.000303673521029
+Calculated objective, 0.000303673521065
+Calculated objective, 0.000303673521062
+Calculated objective, 0.000303673521037
+Calculated objective, 0.000303673521129
+Calculated objective, 0.000303673520891
+Calculated objective, 0.000303673520855
+Calculated objective, 0.000303673521296
+Calculated objective, 0.000303673520902
+Calculated objective, 0.000303673520993
+Calculated objective, 0.000303673520976
+Calculated objective, 0.000303673521047
+Calculated objective, 0.000303673521138
+Calculated objective, 0.000303673521059
+Calculated objective, 0.000303673520974
+Calculated objective, 0.000303673521028
+Calculated objective, 0.000303673521073
+Calculated objective, 0.000303673520955
+Calculated objective, 0.000303673521147
+Calculated objective, 0.000303673520962
+Calculated objective, 0.000303673521035
+Calculated objective, 0.000303673521011
+Calculated objective, 0.000303673520716
+Calculated objective, 0.000303673521302
+Calculated objective, 0.000303673520965
+Calculated objective, 0.000303673521053
+Calculated objective, 0.000303673521035
+Calculated objective, 0.000303673520994
+Calculated objective, 0.000303673520995
+Calculated objective, 0.000303673520984
+Calculated objective, 0.000303673521033
+Calculated objective, 0.000303673521003
+Calculated objective, 0.000303673521136
+Calculated objective, 0.00030367352092
+Calculated objective, 0.000303673521093
+Calculated objective, 0.000303673520934
+Calculated objective, 0.000303673521078
+Calculated objective, 0.000303673520978
+Calculated objective, 0.000303673521205
+Calculated objective, 0.000303673521
+Calculated objective, 0.000303673521073
+BH Step result: 0.0003036735210176461
 Local Minimum Accepted?: True
-Reached target.
+New Best Objective Result: 0.0003036735210176461
 Hit max iterations.
 Solved

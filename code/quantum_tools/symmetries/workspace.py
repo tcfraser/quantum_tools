@@ -87,22 +87,26 @@ def print_orbits(orbits):
 def get_sum_description(indices_structure, mtrx_constructor=None):
     if not callable(mtrx_constructor):
         raise ValueError("mtrx_constructor is not callable but needs to be.")
-    indices = np.array(list(utils.flatten(indices_structure)))
-    data = np.ones(len(indices))
-    indptr = np.zeros(len(indices_structure) + 1)
+    dtype = 'int32'
+    # print('Building sum description.')
+    num_blocks = len(indices_structure) # the number of group orbits
+    # print('Allocating ptr mem.')
+    indptr = np.zeros(num_blocks + 1, dtype=dtype)
+    # print('Populating indptr array.')
     i = 0
     ptr = 0
     for index_set in indices_structure:
         i += 1
         ptr += len(index_set)
         indptr[i] = ptr
-    # print(data)
-    # print(len(data))
-    # print(indices)
-    # print(len(indices))
-    # print(indptr)
-    # print(len(indptr))
-    mtrx = mtrx_constructor((data, indices, indptr))
+    # ptr now stores total number of indicies in indices structure
+    # print('Falttening indices.')
+    indices = np.fromiter(utils.flatten(indices_structure), dtype=dtype, count=ptr)
+    # print('Generating data.')
+    data = np.ones(len(indices), dtype=dtype)
+    # print('Contructing sparse.')
+    mtrx = mtrx_constructor((data, indices, indptr), dtype=dtype)
+    # print('Done sum description.')
     return mtrx
 
 def get_col_sum_description(indices_structure):

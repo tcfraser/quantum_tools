@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 import numpy as np
 from ..optimizers.minimizer import Minimizer
 from ..utilities import utils
@@ -34,12 +33,9 @@ class TEM(Minimizer):
         qc = QuantumContext(measurements=(A,B,C), states=(rhoAB,rhoBC,rhoAC), permutation=self.permutation)
         return qc
 
-    def get_prob_distribution(self, context):
-        return QuantumProbDist(context)
-
     def objective(self, param):
         qc = self.get_context(param)
-        pd = self.get_prob_distribution(qc)
+        pd = QuantumProbDist(qc)
 
         # IAB = pd.mutual_information(0,1)
         # IAC = pd.mutual_information(0,2)
