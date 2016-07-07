@@ -1,6 +1,8 @@
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
 
+# python3 setup.py build_ext --inplace
+
 extensions = [
     Extension(
         language='c',

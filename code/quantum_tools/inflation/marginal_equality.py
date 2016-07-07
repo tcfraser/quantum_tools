@@ -54,17 +54,15 @@ def contexts_marginals(pd, contexts):
     defl_map = get_delf_map(contexts)
     return np.hstack((context_marginals(pd, c, defl_map) for c in contexts))
 
-def sparse_row(n):
-    return sparse.coo_matrix(np.ones(n))
-
 def multi_sparse_kron(*args):
     return reduce(lambda a, b: sparse.kron(a, b, format='coo'), args)
 
 def marginal_mtrx_per_context(rvc, context):
     sub_rv_names = list(utils.unique_everseen(utils.flatten(context)))
     sub_rvc = rvc.sub(sub_rv_names)
-    kronecker_elems = tuple(sparse.identity(rv.num_outcomes) if rv in sub_rvc else sparse_row(rv.num_outcomes) for rv in rvc)
-    return multi_sparse_kron(*kronecker_elems)
+    kronecker_elems = tuple(sparse.identity(rv.num_outcomes, format='coo', dtype='bool') if rv in sub_rvc else sparse.coo_matrix(np.ones(rv.num_outcomes), dtype='bool') for rv in rvc)
+    ret_val = multi_sparse_kron(*kronecker_elems)
+    return ret_val
 
 def marginal_mtrx(rvc, contexts):
-    return sparse.vstack((marginal_mtrx_per_context(rvc, context) for context in contexts))
+    return sparse.vstack((marginal_mtrx_per_context(rvc, context) for context in contexts), dtype='bool')
