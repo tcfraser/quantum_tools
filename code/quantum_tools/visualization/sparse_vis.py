@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 from scipy.sparse import coo_matrix
 
-def plot_coo_matrix(m):
+def plot_matrix(m):
     if m.nnz < 1e5:
-        if not isinstance(m, coo_matrix):
-            m = coo_matrix(m)
+        m = coo_matrix(m)
         fig = plt.figure()
         ax = fig.add_subplot(111, axisbg='white')
         ax.scatter(m.col, m.row, marker='s', c=m.data)
@@ -12,7 +11,7 @@ def plot_coo_matrix(m):
         padding = 0.5
         ax.set_xlim(0-padding, m.shape[1]+padding)
         ax.set_ylim(0-padding, m.shape[0]+padding)
-        ax.set_aspect('equal')
+        # ax.set_aspect('equal')
         # for spine in ax.spines.values():
         #     spine.set_visible(False)
         ax.invert_yaxis()

@@ -86,7 +86,7 @@ class MeasurementStratsDeterministic():
 class MeasurementStratsParam():
 
     @staticmethod
-    def pvms_old(param):
+    def pvms_older(param):
         g = utils.cholesky(param)
         eigen_values, eigen_vectors = linalg.eigh(g)
         density_matrices = [utils.ket_to_dm(eigen_vectors[:,i]) for i in range(eigen_values.shape[0])]
@@ -103,12 +103,20 @@ class MeasurementStratsParam():
         return m
 
     @staticmethod
-    def pvms(num_outcomes, param):
+    def pvms_outcomes(num_outcomes, param):
         GL_C = utils.param_GL_C(param)
         U = rmt.GL_knit_QR(GL_C)
         Ut = U.conj().T
         projectors = utils.projectors(num_outcomes)
         operators = [utils.multidot(Ut, o, U) for o in projectors]
+        m = Measurement(operators)
+        return m
+
+    @staticmethod
+    def pvms(param):
+        GL_C = utils.param_GL_C(param)
+        U = rmt.GL_knit_QR(GL_C)
+        operators = [utils.ket_to_dm(U[:, i]) for i in range(U.shape[1])]
         m = Measurement(operators)
         return m
 

@@ -29,17 +29,25 @@ def sparse_any_eq(A, B):
     else:
         return True
 
-def hyper_graph(A, ant):
-    A_coo = sparse.coo_matrix(A)
+def hyper_graph_contraction(A, ant, remove_ant):
+    """ Prefers csr format. Find contraction for hypergraph. """
     A_csr = sparse.csr_matrix(A)
-    # A_csc = sparse.csc_matrix(A)
     # Take only columns that are extendable versions of the antescedant (ant)
     ext_ant = nzcfr(A_csr, ant)
     ext_A = A_csr[:, ext_ant]
     # Take only rows that would contribute
     row_entry_flux = ext_A.indptr[1:] - ext_A.indptr[:-1] # Finds where the row pointers change
-    row_entry_flux[ant] = 0 # Make antecedant zero so it doesn't get selected
-    H = ext_A[np.nonzero(row_entry_flux)[0], :]
+    if remove_ant:
+        row_entry_flux[ant] = 0 # Make antecedant zero so it doesn't get selected
+
+    H_rows = np.nonzero(row_entry_flux)[0] # The rows that should be used in the hypergraph
+    H_cols = ext_ant # The cols that should be used in the hypergraph
+    return H_rows, H_cols
+
+def hyper_graph(A, ant):
+    A_csr = sparse.csr_matrix(A)
+    H_rows, H_cols = extendable_consequents(A, ant, True)
+    H = A_csr[H_rows, H_cols]
     return H
 
 class VerboseLog():
@@ -142,11 +150,26 @@ def cernikov_filter(wts, fts=None):
     vl.log('...down to {0}'.format(wts.shape[1]))
     return wts
 
-class SearchStrat():
-    pass
+class HTStrat():
 
-    depth   = 'depth'
-    breadth = 'breadth'
+    def __init__(self, search=None, max_t=None):
+        self._search = search
+        self._max_t = max_t
+
+    def get_worker(self):
+        if self._search is None:
+            return work_on_transversals_depth
+        if self._search == 'depth':
+            return work_on_transversals_depth
+        if self._search == 'breadth':
+            return work_on_transversals_breadth
+        raise Exception("Invalid search strat.")
+
+    def is_max_transversal(self, count):
+        if self._max_t is None:
+            return False
+        else:
+            return count >= self._max_t
 
 def get_null_transveral(size):
     """
@@ -184,14 +207,12 @@ def np_ones(shape):
         _numpy_ones_pool[shape] = np.ones(shape, dtype=EXP_DTYPE)
     return _numpy_ones_pool[shape]
 
-def find_transversals(H, strat=SearchStrat.depth):
+def find_transversals(H, strat=None):
+    strat = HTStrat() if strat is None else strat
     H = sparse.csc_matrix(H) # Needed for the algorithm
     fts = FoundTransversals() # Empty found transversals
     num_nodes = H.shape[0]
-    if strat == SearchStrat.depth:
-        work_on_transversals_depth(H, get_null_transveral(num_nodes), fts)
-    else:
-        work_on_transversals_breadth(H, get_null_transveral(num_nodes), fts)
+    strat.get_worker()(H, get_null_transveral(num_nodes), fts, strat)
     return fts
 
 def verify_completion(H, wt, fts):
@@ -206,7 +227,7 @@ def verify_completion(H, wt, fts):
         return True, None
     return False, completion
 
-def work_on_transversals_breadth(H, wts, fts, current_depth=0):
+def work_on_transversals_breadth(H, wts, fts, strat, current_depth=0):
     """ Work on a particular transversal going breadth first """
     # Current depth
     vl.log('current_depth')
@@ -222,8 +243,10 @@ def work_on_transversals_breadth(H, wts, fts, current_depth=0):
         wt = wts[:, wt_i]
         # Check if transversal is complete
         is_complete, completion = verify_completion(H, wt, fts)
+        if strat.is_max_transversal(len(fts)):
+            vl.log('Finished: Maximum iterations hit.')
+            return
         if is_complete:
-            fts.update(wt)
             continue
 
         # Otherwise, branch to nodes that can contribute
@@ -241,9 +264,9 @@ def work_on_transversals_breadth(H, wts, fts, current_depth=0):
     # Filter out minimal copies
     next_wts = cernikov_filter(next_wts_mtrx, fts.raw()) # Will iterate over columns
 
-    work_on_transversals_breadth(H, next_wts, fts, current_depth + 1)
+    work_on_transversals_breadth(H, next_wts, fts, strat, current_depth + 1)
 
-def work_on_transversals_depth(H, wt, fts, current_depth=0):
+def work_on_transversals_depth(H, wt, fts, strat, current_depth=0):
     """ Work on a particular transversal going depth first """
     # Current depth
     vl.log('current_depth')
@@ -251,8 +274,11 @@ def work_on_transversals_depth(H, wt, fts, current_depth=0):
 
     # Check if transversal is complete
     is_complete, completion = verify_completion(H, wt, fts)
+    if strat.is_max_transversal(len(fts)):
+        vl.log('Finished: Maximum iterations hit.')
+        return True # Finish everything
     if is_complete:
-        return
+        return False # Branch is over, keep searching
 
     # Otherwise, branch to nodes that can contribute
     for node in branch_to_nodes(H, wt, completion):
@@ -260,7 +286,10 @@ def work_on_transversals_depth(H, wt, fts, current_depth=0):
         if fts.minimal_present(next_wt):
             # A more minimal transversal is present, just continue on
             continue
-        work_on_transversals_depth(H, next_wt, fts, current_depth + 1)
+        terminate = work_on_transversals_depth(H, next_wt, fts, strat, current_depth + 1)
+        if terminate:
+            vl.log('Propagate finished.')
+            return True # Finish everything
 
 def is_complete_transversal(completion):
     """ Given a completion is it complete """
@@ -303,9 +332,6 @@ def branch_to_edges(H, wt, completion):
     edges = missing_edges.indices
     if len(edges) != 0:
         yield edges[0] # Even if it's not sorted, take a missing edge
-
-# def edge_vector(edge, size):
-#     return sparse.csr_matrix((np.ones(1), np.array([edge]), np.array([0, 1])),  shape=(1, size))
 
 def branch_to_nodes(H, wt, completion):
     """
@@ -362,12 +388,12 @@ def perform_tests():
             ]))
     # plot_coo_matrix(mediumH)
     print(hyper_graph(A, 0).toarray())
-    fts = find_transversals(hyper_graph(A, 0), strat='depth')
+    fts = find_transversals(hyper_graph(A, 0), strat=HTStrat(search='depth', max_t=np.inf))
     print(fts.raw().toarray())
 
     # continue_transveral(get_null_transveral(6), 1)
     # PROFILE_MIXIN(find_transversals, hyper_graph(A, 11), 'depth')
 
 if __name__ == '__main__':
-    pass
-    # perform_tests()
+    # pass
+    PROFILE_MIXIN(perform_tests)

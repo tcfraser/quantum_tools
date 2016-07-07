@@ -2,11 +2,15 @@ from itertools import *
 import numpy as np
 import collections
 from scipy import linalg
+from scipy import sparse
+from scipy import io
 from functools import reduce
 from operator import mul
 from .constants import *
 import random as rndm
 import math
+from ..config import *
+import os
 from collections import defaultdict
 
 def list_duplicates(seq):
@@ -231,6 +235,24 @@ def random_combination_with_replacement(iterable, r):
     n = len(pool)
     indices = sorted(random.randrange(n) for i in range(r))
     return tuple(pool[i] for i in indices)
+
+def sparse_density(A):
+    try:
+        max_size = reduce(mul, A.shape, 1)
+        density = A.nnz / max_size
+        return density
+    except Exception as e:
+        print(str(e))
+        raise Exception("Likely not a sparse matrix. A.__class__: {0}".format(A.__class__))
+
+def bulk_file(name):
+    return os.path.join(BULK_DIR, name)
+
+def save_sparse(name, M):
+    io.mmwrite(bulk_file(name), M)
+
+def load_sparse(name):
+    return io.mmread(bulk_file(name))
 
 def ei(x):
     """ Exponential notation for complex numbers """
@@ -459,7 +481,7 @@ def partial_identities(seed_desc):
     return As
 
 def param_GL_C(t):
-    assert(is_square(len(t)/2))
+    assert(is_square(len(t)/2)), "Number of parameters needs to be a twice a square number, not {0}.".format(len(t))
     size = int((len(t)/2)**(1/2))
     t = np.asarray(t)
     GL_RR = np.reshape(t, (2, size, size))
