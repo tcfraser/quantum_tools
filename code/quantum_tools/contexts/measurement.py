@@ -38,6 +38,13 @@ class Measurement():
             print_list.append(str(operator))
         return '\n'.join(print_list)
 
+class ProjectiveMeasurement(Measurement):
+
+    def __init__(self, projectors):
+        self._projectors = projectors
+        operators = utils.ket_to_dm(p) for p in projectors
+        super().__init__(operators)
+
 class MeasurementStrats():
     # Namespace Declarations
     pass
@@ -116,8 +123,8 @@ class MeasurementStratsParam():
     def pvms(param):
         GL_C = utils.param_GL_C(param)
         U = rmt.GL_knit_QR(GL_C)
-        operators = [utils.ket_to_dm(U[:, i]) for i in range(U.shape[1])]
-        m = Measurement(operators)
+        projectors = [U[:, i] for i in range(U.shape[1])]
+        m = ProjectiveMeasurement(projectors)
         return m
 
     @staticmethod
