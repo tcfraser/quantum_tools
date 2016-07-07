@@ -341,9 +341,6 @@ def branch_to_nodes(H, wt, completion):
     H = sparse.csc_matrix(H) # Ensures the matrix is csc format (should already be)
     for edge in next_edges:
         node_indices_to_contribute = H[:, edge].indices
-#         edge_v = edge_vector(edge, H.shape[1])
-#         nodes_to_contribute = transversal_overlap(H, edge_v)
-#         node_indices_to_contribute = ptrflux(nodes_to_contribute.indptr)
         for i in node_indices_to_contribute:
             if not wt[i, 0] > 0: # not already part of working transversal
                 vl.log('Branching to node')
