@@ -511,3 +511,31 @@ if __name__ == '__main__':
     perform_tests()
     # def norm_real_parameter(x):
     #     return np.cos(x)**2
+
+def min_col(v):
+    min_val = np.inf
+    min_i = None
+    for i in range(v.shape[0]):
+        v_i = v.data[v.indptr[i]:v.indptr[i+1]]
+        if len(v_i) == 0: # No entries
+            val_v_i = 0
+        else:
+            val_v_i = v_i[0]
+        if val_v_i < min_val:
+            min_val = val_v_i
+            min_i = i
+    return min_i, min_val
+
+def max_col(v):
+    max_val = -np.inf
+    max_i = None
+    for i in range(v.shape[0]):
+        v_i = v.data[v.indptr[i]:v.indptr[i+1]]
+        if len(v_i) == 0: # No entries
+            val_v_i = 0
+        else:
+            val_v_i = v_i[0]
+        if val_v_i > max_val:
+            max_val = val_v_i
+            max_i = i
+    return max_i, max_val

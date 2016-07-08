@@ -228,6 +228,7 @@ def get_contraction_elements(sc, perform_pipeline=False):
         outcomes=outcomes)
     row_sum, col_sum = get_contraction(rvc, symbolic_contexts)
     A = marginal_equality.marginal_mtrx(rvc, symbolic_contexts)
+    A = A.astype('int16') # Comes out as bool
     contracted_A = row_sum.dot(A.dot(col_sum))
     # print(row_sum.shape)
     # print(A.shape)

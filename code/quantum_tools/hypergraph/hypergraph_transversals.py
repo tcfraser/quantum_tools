@@ -124,7 +124,6 @@ def cernikov_filter(wts, fts=None):
     """ Remove any of the working transversals that are minimal versions of each other """
     wt_i = 0
     wts = sparse.csc_matrix(wts)
-    vl.log('Filtering {0}...'.format(wts.shape[1]))
     if fts is not None:
         fts = sparse.csc_matrix(fts)
 
@@ -147,7 +146,6 @@ def cernikov_filter(wts, fts=None):
         else:
             # [logic] wts = wts # Keep target
             wt_i += 1
-    vl.log('...down to {0}'.format(wts.shape[1]))
     return wts
 
 #============================
@@ -191,21 +189,15 @@ def np_ones(shape):
 
 class TransversalStrat():
 
-    def __init__(self, search_type=None, find_up_to=None, node_brancher=None):
+    def __init__(self, search_type=None, find_up_to=np.inf, node_brancher=None):
         self.search_type = search_type
         self.find_up_to = find_up_to
         self.node_brancher = node_brancher
 
-    def hit_max(self, count):
-        if self.find_up_to is None:
-            return False
-        else:
-            return count >= self.find_up_to
-
 class HGT():
 
-    STOP = 1
-    CONTINUE = None
+    STOP = 'STOP'
+    CONTINUE = 'CONTINUE'
 
     @staticmethod
     def completion(H, t):
@@ -242,9 +234,9 @@ class HGT():
     @staticmethod
     def get_missing_edges(completion):
         completion.data.fill(1) # unitize
-        missing_edges_sparse = get_unit_completion(completion.shape[1]) - completion # find what edges are missing
-        missing_edges_indices = missing_edges_sparse.indices # Potentially very unsorted
-        return missing_edges_indices
+        missing_edges_sparse = get_unit_completion(completion.shape[1]) - completion # find what edges are
+        missing_edges = missing_edges_sparse # Keep in sparse format
+        return missing_edges
 
 class HyperGraphTransverser():
 
@@ -303,8 +295,8 @@ class HyperGraphTransverser():
             wt = wts[:, wt_i]
             # Check if transversal is complete
             is_complete, completion = self.verify_completion(wt)
-            if self.strat.hit_max(len(self.fts)): # Stop if obtained enough transversals
-                self.log('Finished: Maximum iterations hit.')
+            if len(self.fts) >= self.strat.find_up_to: # Stop if obtained enough transversals
+                self.log('Finished: Maximum transversals found.')
                 return HGT.STOP
             if is_complete: # If this particular transversal is complete, it would have been updated
                 continue
@@ -332,8 +324,8 @@ class HyperGraphTransverser():
 
         # Check if transversal is complete
         is_complete, completion = self.verify_completion(wt)
-        if self.strat.hit_max(len(self.fts)):
-            self.log('Finished: Maximum iterations hit.')
+        if len(self.fts) >= self.strat.find_up_to:
+            self.log('Finished: Maximum transversals found.')
             return HGT.STOP # Finish everything
         if is_complete:
             return HGT.CONTINUE # Branch is over, keep searching
@@ -357,18 +349,30 @@ class HyperGraphTransverser():
         missing_edges = HGT.get_missing_edges(completion) # Obtain the missing edge sparse list
 
         if self.strat.node_brancher is None: # Default
-            edge = missing_edges[0] # Grab any next edge
+            edge = missing_edges.indices[0] # Grab any next edge
 
             node_indices = self.H[:, edge].indices
-        elif self.strat.node_brancher == 'greedy':
-            pass
+            for i in node_indices:
+                if not wt[i, 0] > 0: # not already part of working transversal
+                    self.log('Branching to node:', i)
+                    yield i
+
+        elif self.strat.node_brancher['name'] == 'greedy':
+            # Gets the nodes that overlap the most with what's missing
+            greedy_max = self.strat.node_brancher['max']
+            overlap = self.H.dot(missing_edges.T)
+            node_indices = overlap.indices[np.argsort(overlap.data)[::-1]]
+            count = 0
+            for i in node_indices:
+                if count >= greedy_max:
+                    break
+                if not wt[i, 0] > 0: # not already part of working transversal
+                    self.log('Greedy branching to node:', i)
+                    count += 1
+                    yield i
         else:
             raise ValueError("Invalid strat.node_brancher: {0}".format(self.strat.node_brancher))
 
-        for i in node_indices:
-            if not wt[i, 0] > 0: # not already part of working transversal
-                self.log('Branching to node:', i)
-                yield i
 
 #================================================
 #================ Main Method ===================
@@ -417,14 +421,24 @@ def perform_tests():
                 [1, 1, 0],
             ]))
     # plot_matrix(mediumH)
-    print(hyper_graph(A, 0).toarray())
-    strat = TransversalStrat(search_type='depth', find_up_to=np.inf)
-    fts = find_transversals(xsmallH, strat=strat, log=False)
-    print(fts.toarray())
+    # print(hyper_graph(A, 0))
+    strat = TransversalStrat(
+        search_type='depth',
+        find_up_to=10,
+        node_brancher={
+            'name': 'greedy',
+            'max': 5,
+        }
+    )
+    fts = find_transversals(H, strat=strat, log=False)
+    fts_array = fts.toarray()
+    print(fts_array)
+    print(fts_array.shape)
 
     # continue_transveral(get_null_transveral(6), 1)
     # PROFILE_MIXIN(find_transversals, hyper_graph(A, 11), 'depth')
 
 if __name__ == '__main__':
     # pass
-    PROFILE_MIXIN(perform_tests)
+    # PROFILE_MIXIN(perform_tests)
+    perform_tests()
