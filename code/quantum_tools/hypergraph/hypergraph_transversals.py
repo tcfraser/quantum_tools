@@ -13,6 +13,7 @@ def nzcfr(M, row):
     return M.indices[M.indptr[row]:M.indptr[row+1]]
 
 def ptrflux(indptr):
+    """ Compute the indices flux, determining which elements contain data """
     flux = indptr[1:] - indptr[:-1]
     return np.nonzero(flux)[0]
 
@@ -50,18 +51,6 @@ def hyper_graph(A, ant):
     H = A_csr[:, H_cols][H_rows, :]
     return H
 
-class VerboseLog():
-
-    def __init__(self, on=False):
-        self.on = on
-
-    def log(self, *args):
-        if self.on:
-            curframe = inspect.currentframe()
-            calframe = inspect.getouterframes(curframe, 2)
-            caller_name = calframe[1][3]
-            print('[{name}]:'.format(name=caller_name), *args)
-
 EXP_DTYPE = 'int16' # Can't be bool. Scipy sparse arrays don't support boolean matrices well
 
 class FoundTransversals():
@@ -75,6 +64,17 @@ class FoundTransversals():
             return 0
         else:
             return self._raw.shape[1]
+
+    def __getitem__(self, slice):
+        if self._raw is None:
+            return None
+        else:
+            return self._raw[:, slice]
+
+    def __iter__(self):
+        if self._raw is not None:
+            for i in range(self._raw.shape[1]):
+                yield self._raw[:, i]
 
     def update(self, ft):
         ft = sparse.csc_matrix(ft)
@@ -150,27 +150,9 @@ def cernikov_filter(wts, fts=None):
     vl.log('...down to {0}'.format(wts.shape[1]))
     return wts
 
-class HTStrat():
-
-    def __init__(self, search=None, max_t=None):
-        self._search = search
-        self._max_t = max_t
-
-    def get_worker(self):
-        if self._search is None:
-            return work_on_transversals_depth
-        if self._search == 'depth':
-            return work_on_transversals_depth
-        if self._search == 'breadth':
-            return work_on_transversals_breadth
-        raise Exception("Invalid search strat.")
-
-    def is_max_transversal(self, count):
-        if self._max_t is None:
-            return False
-        else:
-            return count >= self._max_t
-
+#============================
+#==== Pooled Resources ======
+#============================
 def get_null_transveral(size):
     """
     size : number of nodes
@@ -207,147 +189,198 @@ def np_ones(shape):
         _numpy_ones_pool[shape] = np.ones(shape, dtype=EXP_DTYPE)
     return _numpy_ones_pool[shape]
 
-def find_transversals(H, strat=None):
-    strat = HTStrat() if strat is None else strat
-    H = sparse.csc_matrix(H) # Needed for the algorithm
-    fts = FoundTransversals() # Empty found transversals
-    num_nodes = H.shape[0]
-    strat.get_worker()(H, get_null_transveral(num_nodes), fts, strat)
-    return fts
+class TransversalStrat():
 
-def verify_completion(H, wt, fts):
-    # Check if transversal is complete
-    completion = transversal_completion(H, wt)
-    vl.log('completion')
-    vl.log(completion)
-    vl.log('is_completion')
-    vl.log(is_complete_transversal(completion))
-    if is_complete_transversal(completion):
-        fts.update(wt) # Update the list of transversals with the new found one
-        return True, None
-    return False, completion
+    def __init__(self, search_type=None, find_up_to=None, node_brancher=None):
+        self.search_type = search_type
+        self.find_up_to = find_up_to
+        self.node_brancher = node_brancher
 
-def work_on_transversals_breadth(H, wts, fts, strat, current_depth=0):
-    """ Work on a particular transversal going breadth first """
-    # Current depth
-    vl.log('current_depth')
-    vl.log(current_depth)
+    def hit_max(self, count):
+        if self.find_up_to is None:
+            return False
+        else:
+            return count >= self.find_up_to
 
-    # Nothing to work on
-    if wts is None or wts.shape[1] == 0:
-        vl.log('Finished: Nothing to branch to.')
-        return
+class HGT():
 
-    next_wts_list = []
-    for wt_i in range(wts.shape[1]):
-        wt = wts[:, wt_i]
+    STOP = 1
+    CONTINUE = None
+
+    @staticmethod
+    def completion(H, t):
+        """
+        Determines which edges have been included in a given transversal t
+        Note: Returns a sparse row vector
+        """
+        return t.T * H
+
+    @staticmethod
+    def is_complete(completion):
+        """
+        Given a completion is it complete?
+        Note: Completion is a row vector
+        """
+        return completion.nnz == completion.shape[1] # No nonzero elements means completion
+
+    @staticmethod
+    def continue_transveral(wt, node):
+        """
+        wt : working transversal
+        node : node to be chosen
+        """
+        new_indices = np.append(wt.indices, [node])
+        new_indptr = np.copy(wt.indptr)
+        new_indptr[1] = len(new_indices)
+
+        new_data = np_ones(len(wt.data) + 1)
+
+        wt_new = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=wt.shape)
+
+        return wt_new
+
+    @staticmethod
+    def get_missing_edges(completion):
+        completion.data.fill(1) # unitize
+        missing_edges_sparse = get_unit_completion(completion.shape[1]) - completion # find what edges are missing
+        missing_edges_indices = missing_edges_sparse.indices # Potentially very unsorted
+        return missing_edges_indices
+
+class HyperGraphTransverser():
+
+    def __init__(self, H, strat, log=False):
+        self.H = sparse.csc_matrix(H)
+        self.strat = strat if strat is not None else TransversalStrat()
+        self.fts = FoundTransversals()
+        self.__log = log
+        self.num_nodes = self.H.shape[0]
+        self.num_edges = self.H.shape[1]
+        self.transverse(get_null_transveral(self.num_nodes))
+
+    def log(self, *args):
+        """ Log info regarding the transversal algorithm. """
+        if self.__log:
+            curframe = inspect.currentframe()
+            calframe = inspect.getouterframes(curframe, 2)
+            caller_name = calframe[1][3]
+            print('[{name}]:'.format(name=caller_name), *args)
+
+    def verify_completion(self, wt):
+        """
+        Determines if the working transversal is complete and if so,
+        store it in the list of found Transversals
+
+        Returns: is_complete, completion
+        """
+        completion = HGT.completion(self.H, wt)
+        self.log('completion')
+        self.log(completion)
+        self.log('is_completion:', HGT.is_complete(completion))
+        if HGT.is_complete(completion):
+            self.fts.update(wt) # Update the list of transversals with the new found one
+            return True, None # If complete, one shouldn't be doing anything with the completion
+        return False, completion
+
+    def transverse(self, wts, current_depth=0):
+        if self.strat.search_type == 'breadth':
+            return self.transverse_breadth(wts, current_depth)
+        elif self.strat.search_type == 'depth':
+            return self.transverse_depth(wts, current_depth)
+        else:
+            raise ValueError("Invalid strat.search_type: {0}".format(self.strat.search_type))
+
+    def transverse_breadth(self, wts, current_depth=0):
+        """ Work on a particular transversal going breadth first """
+        self.log('current_depth', current_depth)
+
+        # Nothing to work on
+        if wts is None or wts.shape[1] == 0:
+            self.log('Finished: Nothing to branch to.')
+            return HGT.CONTINUE
+
+        next_wts_list = []
+        for wt_i in range(wts.shape[1]):
+            wt = wts[:, wt_i]
+            # Check if transversal is complete
+            is_complete, completion = self.verify_completion(wt)
+            if self.strat.hit_max(len(self.fts)): # Stop if obtained enough transversals
+                self.log('Finished: Maximum iterations hit.')
+                return HGT.STOP
+            if is_complete: # If this particular transversal is complete, it would have been updated
+                continue
+
+            # Otherwise, branch to nodes that can contribute
+            for node in self.branch_to_nodes(wt, completion):
+                next_wt = HGT.continue_transveral(wt, node)
+                next_wts_list.append(next_wt)
+
+        # Nothing valid to continue on
+        if len(next_wts_list) == 0:
+            self.log('Finished: All branches complete.')
+            return HGT.CONTINUE
+
+        next_wts_mtrx = sparse.hstack(next_wts_list)
+
+        # Filter out minimal copies
+        next_wts = cernikov_filter(next_wts_mtrx, self.fts.raw()) # Will iterate over columns
+
+        return self.transverse(next_wts, current_depth + 1)
+
+    def transverse_depth(self, wt, current_depth=0):
+        """ Work on a particular transversal going depth first """
+        self.log('current_depth', current_depth)
+
         # Check if transversal is complete
-        is_complete, completion = verify_completion(H, wt, fts)
-        if strat.is_max_transversal(len(fts)):
-            vl.log('Finished: Maximum iterations hit.')
-            return
+        is_complete, completion = self.verify_completion(wt)
+        if self.strat.hit_max(len(self.fts)):
+            self.log('Finished: Maximum iterations hit.')
+            return HGT.STOP # Finish everything
         if is_complete:
-            continue
+            return HGT.CONTINUE # Branch is over, keep searching
 
         # Otherwise, branch to nodes that can contribute
-        for node in branch_to_nodes(H, wt, completion):
-            next_wt = continue_transveral(wt, node)
-            next_wts_list.append(next_wt)
+        for node in self.branch_to_nodes(wt, completion):
+            next_wt = HGT.continue_transveral(wt, node)
+            if self.fts.minimal_present(next_wt):
+                # A more minimal transversal is present, just continue on
+                continue
+            ret = self.transverse(next_wt, current_depth + 1)
+            # prevents branching
+            if ret == HGT.STOP:
+                self.log('Propagate finished.')
+                return HGT.STOP # Finish everything
 
-    # Nothing valid to continue on
-    if len(next_wts_list) == 0:
-        vl.log('Finished: All branches complete.')
-        return
+    def branch_to_nodes(self, wt, completion):
+        """
+        Decide which nodes to branch to next
+        """
+        missing_edges = HGT.get_missing_edges(completion) # Obtain the missing edge sparse list
 
-    next_wts_mtrx = sparse.hstack(next_wts_list)
+        if self.strat.node_brancher is None: # Default
+            edge = missing_edges[0] # Grab any next edge
 
-    # Filter out minimal copies
-    next_wts = cernikov_filter(next_wts_mtrx, fts.raw()) # Will iterate over columns
+            node_indices = self.H[:, edge].indices
+        elif self.strat.node_brancher == 'greedy':
+            pass
+        else:
+            raise ValueError("Invalid strat.node_brancher: {0}".format(self.strat.node_brancher))
 
-    work_on_transversals_breadth(H, next_wts, fts, strat, current_depth + 1)
-
-def work_on_transversals_depth(H, wt, fts, strat, current_depth=0):
-    """ Work on a particular transversal going depth first """
-    # Current depth
-    vl.log('current_depth')
-    vl.log(current_depth)
-
-    # Check if transversal is complete
-    is_complete, completion = verify_completion(H, wt, fts)
-    if strat.is_max_transversal(len(fts)):
-        vl.log('Finished: Maximum iterations hit.')
-        return True # Finish everything
-    if is_complete:
-        return False # Branch is over, keep searching
-
-    # Otherwise, branch to nodes that can contribute
-    for node in branch_to_nodes(H, wt, completion):
-        next_wt = continue_transveral(wt, node)
-        if fts.minimal_present(next_wt):
-            # A more minimal transversal is present, just continue on
-            continue
-        terminate = work_on_transversals_depth(H, next_wt, fts, strat, current_depth + 1)
-        if terminate:
-            vl.log('Propagate finished.')
-            return True # Finish everything
-
-def is_complete_transversal(completion):
-    """ Given a completion is it complete """
-    # Completion is a row vector
-    return completion.nnz == completion.shape[1] # No nonzero elements means completion
-
-def transversal_completion(H, t):
-    """ Tells me the edges that were hit already (and how many times) """
-    return t.T * H
-
-# def transversal_overlap(H, t):
-#     """ Get the overlap between the edges of a transversal (completion) and the entire hypergraph """
-#     return H * t.T
-
-def continue_transveral(wt, node):
-    """
-    wt : working transversal
-    node : node to be chosen
-    """
-    new_indices = np.append(wt.indices, [node])
-    new_indptr = np.copy(wt.indptr)
-    new_indptr[1] = len(new_indices)
-
-    new_data = np_ones(len(wt.data) + 1)
-
-    wt_new = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=wt.shape)
-
-    vl.log('new_t')
-    vl.log(wt_new)
-
-    return wt_new
-
-def get_missing_edges(H, wt, completion):
-    completion.data.fill(1) # unitize
-    missing_edges = get_unit_completion(H.shape[1]) - completion # find what edges are missing
-    return missing_edges
-
-def branch_to_edges(H, wt, completion):
-    missing_edges = get_missing_edges(H, wt, completion) # Obtain the missing edge sparse list
-    edges = missing_edges.indices
-    if len(edges) != 0:
-        yield edges[0] # Even if it's not sorted, take a missing edge
-
-def branch_to_nodes(H, wt, completion):
-    """
-    decide which nodes to branch to next
-    """
-    next_edges = branch_to_edges(H, wt, completion)
-    H = sparse.csc_matrix(H) # Ensures the matrix is csc format (should already be)
-    for edge in next_edges:
-        node_indices_to_contribute = H[:, edge].indices
-        for i in node_indices_to_contribute:
+        for i in node_indices:
             if not wt[i, 0] > 0: # not already part of working transversal
-                vl.log('Branching to node')
-                vl.log(i)
+                self.log('Branching to node:', i)
                 yield i
 
-vl = VerboseLog(False)
+#================================================
+#================ Main Method ===================
+#================================================
+def find_transversals(H, strat=None, log=False):
+    """ Header to call to begin everything """
+    hgt = HyperGraphTransverser(H, strat, log)
+    return hgt.fts.raw()
+#================================================
+#================================================
+#================================================
+
 def perform_tests():
     # ABC_222_222
     row_sum, A, col_sum, contracted_A = get_contraction_elements(ABC_222_222)
@@ -385,8 +418,9 @@ def perform_tests():
             ]))
     # plot_matrix(mediumH)
     print(hyper_graph(A, 0).toarray())
-    fts = find_transversals(hyper_graph(A, 0), strat=HTStrat(search='depth', max_t=np.inf))
-    print(fts.raw().toarray())
+    strat = TransversalStrat(search_type='depth', find_up_to=np.inf)
+    fts = find_transversals(xsmallH, strat=strat, log=False)
+    print(fts.toarray())
 
     # continue_transveral(get_null_transveral(6), 1)
     # PROFILE_MIXIN(find_transversals, hyper_graph(A, 11), 'depth')
