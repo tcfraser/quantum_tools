@@ -19,6 +19,15 @@ class QuantumContext():
         self.permutation = permutation
         self.num_measurements = len(measurements)
         self.num_states = len(states)
+        
+    def __str__(self):
+        print_list = []
+        print_list.append("QuantumContext: {0} measurements, {1} states.".format(self.num_measurements, self.num_states))
+        for m in self.measurements:
+            print_list += m._get_print_list()
+        for s in self.states:
+            print_list += s._get_print_list()
+        return '\n'.join(print_list)
 
 def QuantumProbDist(qc):
     joint_state = utils.tensor(*tuple(s.data for s in qc.states))
@@ -37,9 +46,10 @@ def QuantumProbDist(qc):
 
 def QuantumProbDistOptimized(qc):
     """
-    Only works for pure measurements
+    Only works for projective measurements
     """
-    assert(all(isinstance(m, ProjectiveMeasurement) for m in qc.measurements)), "measurements are not projective"
+    is_projective = [isinstance(m, ProjectiveMeasurement) for m in qc.measurements]
+    assert(all(is_projective)), "measurements are not projective"
     despectral = [np.array(m.projectors).T for m in qc.measurements] # A*, B*, C*
     cum_measure_operators = utils.tensor(*despectral) # A* x B* x C*
     if qc.permutation is not None:

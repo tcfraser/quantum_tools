@@ -16,10 +16,13 @@ class State():
         assert(utils.is_hermitian(self.data)), "State is not hermitian."
 
     def __str__(self):
+        return '\n'.join(self._get_print_list())
+    
+    def _get_print_list(self):
         print_list = []
         print_list.append(self.__repr__())
         print_list.append(str(self.data))
-        return '\n'.join(print_list)
+        return print_list        
 
 class StateStrats():
     pass
@@ -58,7 +61,7 @@ class StateStratsRandom():
     @staticmethod
     def pure_uniform(n):
         """
-            n = 2 is qubits
+        n = 2 is qubits
         """
         bloch_sample = utils.uniform_n_sphere_metric(n)
         phases = utils.uniform_phase_components(n)

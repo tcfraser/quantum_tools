@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from scipy.sparse import coo_matrix
 
 def plot_matrix(m):
@@ -6,7 +7,7 @@ def plot_matrix(m):
         m = coo_matrix(m)
         fig = plt.figure()
         ax = fig.add_subplot(111, axisbg='white')
-        ax.scatter(m.col, m.row, marker='s', c=m.data)
+        ax.scatter(m.col, m.row, marker='s', s=1, edgecolor=None, c=m.data)
         # ax.spy(m, markersize=4)
         padding = 0.5
         ax.set_xlim(0-padding, m.shape[1]+padding)

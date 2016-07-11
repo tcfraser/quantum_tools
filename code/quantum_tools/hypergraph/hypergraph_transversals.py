@@ -8,6 +8,11 @@ from functools import reduce
 from operator import mul
 import inspect
 
+def slog(*args):
+    curframe = inspect.currentframe()
+    calframe = inspect.getouterframes(curframe)[2]
+    print('[{name}:{lineno}]:'.format(name=calframe[3], lineno=calframe[2]), *args)
+
 def nzcfr(M, row):
     """ Non zero columns for a given row of a csr matrix """
     return M.indices[M.indptr[row]:M.indptr[row+1]]
@@ -55,15 +60,20 @@ EXP_DTYPE = 'int16' # Can't be bool. Scipy sparse arrays don't support boolean m
 
 class FoundTransversals():
 
-    def __init__(self):
+    def __init__(self, log=False):
         self._raw = None
         self._raw_sum = None
+        self.__log = log
 
     def __len__(self):
         if self._raw is None:
             return 0
         else:
             return self._raw.shape[1]
+        
+    def log(self, *args):
+        if self.__log:
+            slog(*args)
 
     def __getitem__(self, slice):
         if self._raw is None:
@@ -79,6 +89,7 @@ class FoundTransversals():
     def update(self, ft):
         ft = sparse.csc_matrix(ft)
         total_ft = len(ft.data) # All identity elements
+        
         if self._raw is None:
             # start it off
             self._raw = sparse.csc_matrix(ft)
@@ -92,6 +103,7 @@ class FoundTransversals():
 
             self._raw = sparse.hstack((self._raw[:, fts_to_keep], ft))
             self._raw_sum = np.append(self._raw_sum[fts_to_keep], total_ft)
+        self.log('Added ft', len(self))
 
     def minimal_present(self, ft):
         if self._raw is None:
@@ -193,6 +205,19 @@ class TransversalStrat():
         self.search_type = search_type
         self.find_up_to = find_up_to
         self.node_brancher = node_brancher
+        if node_brancher is not None:
+            self.max_node_branch = node_brancher.get('max', np.inf)
+            self.ignore_nodes = node_brancher.get('ignore', None)
+        else:
+            self.max_node_branch = np.inf
+            self.ignore_nodes = None
+        
+    # def precache(self, trans):
+    #     if self.ignore_nodes is not None:
+    #         ref = np.asarray(self.ignore_nodes)
+    #         self.ignore_nodes = np.zeros(trans.num_nodes, dtype=bool)
+    #         for i in np.nditer(ref):
+    #             self.ignore_nodes[i] = True      
 
 class HGT():
 
@@ -240,22 +265,20 @@ class HGT():
 
 class HyperGraphTransverser():
 
-    def __init__(self, H, strat, log=False):
+    def __init__(self, H, strat, fts, log=False):
         self.H = sparse.csc_matrix(H)
         self.strat = strat if strat is not None else TransversalStrat()
-        self.fts = FoundTransversals()
         self.__log = log
+        self.fts = fts if fts is not None else FoundTransversals()
         self.num_nodes = self.H.shape[0]
         self.num_edges = self.H.shape[1]
+        # self.strat.precache(self)
         self.transverse(get_null_transveral(self.num_nodes))
 
     def log(self, *args):
         """ Log info regarding the transversal algorithm. """
         if self.__log:
-            curframe = inspect.currentframe()
-            calframe = inspect.getouterframes(curframe, 2)
-            caller_name = calframe[1][3]
-            print('[{name}]:'.format(name=caller_name), *args)
+            slog(*args)
 
     def verify_completion(self, wt):
         """
@@ -348,38 +371,50 @@ class HyperGraphTransverser():
         """
         missing_edges = HGT.get_missing_edges(completion) # Obtain the missing edge sparse list
 
-        if self.strat.node_brancher is None: # Default
+        nb = self.strat.node_brancher
+        
+        # Determine if there is a maximum count
+        count_max = min(self.strat.max_node_branch, self.num_nodes)
+        ignore_nodes = self.strat.ignore_nodes
+        
+        if nb is None or not 'name' in nb: # Default
+            # Gets nodes that contribute to missing edge
             edge = missing_edges.indices[0] # Grab any next edge
-
             node_indices = self.H[:, edge].indices
-            for i in node_indices:
-                if not wt[i, 0] > 0: # not already part of working transversal
-                    self.log('Branching to node:', i)
-                    yield i
-
-        elif self.strat.node_brancher['name'] == 'greedy':
+        elif nb['name'] == 'greedy':
             # Gets the nodes that overlap the most with what's missing
-            greedy_max = self.strat.node_brancher['max']
             overlap = self.H.dot(missing_edges.T)
             node_indices = overlap.indices[np.argsort(overlap.data)[::-1]]
-            count = 0
-            for i in node_indices:
-                if count >= greedy_max:
-                    break
-                if not wt[i, 0] > 0: # not already part of working transversal
-                    self.log('Greedy branching to node:', i)
-                    count += 1
-                    yield i
+        elif nb['name'] == 'long':
+            # Gets the nodes that overlap the least with what's missing
+            overlap = self.H.dot(missing_edges.T)
+            node_indices = overlap.indices[np.argsort(overlap.data)]
+        elif nb['name'] == 'random':
+            # Gets nodes that contribute to random missing edge
+            edge = np.random.choice(missing_edges.indices) # Grab any next edge
+            node_indices = self.H[:, edge].indices
         else:
             raise ValueError("Invalid strat.node_brancher: {0}".format(self.strat.node_brancher))
-
+        
+        if nb is not None and bool(nb.get('shuffle', False)):
+            np.random.shuffle(node_indices)
+        
+        count = 0
+        for i in node_indices:
+            if count >= count_max:
+                break
+            if not wt[i, 0] > 0: # not already part of working transversal
+                if ignore_nodes is None or not ignore_nodes[i]:
+                    self.log('Branching to node:', i)
+                    count += 1
+                    yield i
 
 #================================================
 #================ Main Method ===================
 #================================================
-def find_transversals(H, strat=None, log=False):
+def find_transversals(H, strat=None, log_wt=False, log_ft=False):
     """ Header to call to begin everything """
-    hgt = HyperGraphTransverser(H, strat, log)
+    hgt = HyperGraphTransverser(H, strat, FoundTransversals(log_ft), log_wt)
     return hgt.fts.raw()
 #================================================
 #================================================

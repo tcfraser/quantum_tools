@@ -8,7 +8,7 @@ from ..contexts.state import State
 from ..contexts.quantum_context import QuantumContext, QuantumProbDist
 from ..utilities.constants import *
 
-def spekkens():
+def spekkens(rvc):
     perm123 = list(itertools.permutations([1,2,3]))
     rest = list(utils.flatten([utils.unique_everseen(itertools.permutations([0,i,i])) for i in range(4)]))
     allowed_outcomes = perm123 + rest
@@ -17,8 +17,7 @@ def spekkens():
     for i in allowed_outcomes:
         support[i] = p
     # print(support)
-    random_variables = RandomVariableCollection.new(['A', 'B', 'C'], [4,4,4])
-    return ProbDist(random_variables, support)
+    return ProbDist(rvc, support)
 
 def tsirelson(rvc):
 

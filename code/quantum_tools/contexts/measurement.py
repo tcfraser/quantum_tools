@@ -29,14 +29,17 @@ class Measurement():
             yield i
 
     def __str__(self):
+        return '\n'.join(self._get_print_list())
+    
+    def _get_print_list(self):
         print_list = []
         print_list.append(self.__repr__())
-        print_list.append("Number of Outcomes: {0}".format(self.num_outcomes))
+        print_list.append("Number of Outcomes: {0}".format(len(self._operators)))
         print_list.append("Size of Operators: {0}".format(self._size))
         print_list.append("Operators:")
         for operator in self._operators:
             print_list.append(str(operator))
-        return '\n'.join(print_list)
+        return print_list
 
 class ProjectiveMeasurement(Measurement):
 
@@ -54,9 +57,9 @@ class MeasurementStratsRandom():
     @staticmethod
     def pvms_uniform(size):
         u = rmt.U(size)
-        S = [utils.ket_to_dm(u[:,i]) for i in range(size)]
-        random.shuffle(S)
-        m = Measurement(S)
+        projectors = [u[:,i] for i in range(size)]
+        random.shuffle(projectors)
+        m = ProjectiveMeasurement(projectors)
         return m
 
     @staticmethod
@@ -111,6 +114,7 @@ class MeasurementStratsParam():
 
     @staticmethod
     def pvms_outcomes(num_outcomes, param):
+        assert(False), "Not parametrizable. Use seeded_pvms instead."
         GL_C = utils.param_GL_C(param)
         U = rmt.GL_knit_QR(GL_C)
         Ut = U.conj().T
