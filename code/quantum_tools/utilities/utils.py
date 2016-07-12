@@ -411,11 +411,20 @@ def en_set(lst):
 def iterable_not_string(a):
     return not isinstance(i, str) and isinstance(i, collections.Iterable)
 
-def get_triangle_permutation():
-    perm = np.zeros((64,64), dtype=complex)
-    for a in list(product(*[[0,1]]*6)):
-        ket = tensor(*(qbs[a[i]] for i in (0,1,2,3,4,5)))
-        bra = tensor(*(qbs[a[i]] for i in (1,2,3,4,5,0)))
+def get_qudits(n):
+    qudits = [np.zeros((n,1)) for _ in range(n)]
+    for i in range(n):
+        qudits[i][i,0] = 1
+    return qudits
+
+def get_triangle_permutation(n=2):
+    n_6 = n**6
+    perm = np.zeros((n_6,n_6), dtype=complex)
+    space = list(product(*([list(range(n))]*6)))
+    qudits = get_qudits(n)
+    for a in space:
+        ket = tensor(*(qudits[a[i]] for i in (0,1,2,3,4,5)))
+        bra = tensor(*(qudits[a[i]] for i in (1,2,3,4,5,0)))
         perm += np.outer(ket, bra)
     return perm
 

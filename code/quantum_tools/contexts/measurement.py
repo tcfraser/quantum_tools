@@ -54,12 +54,22 @@ class MeasurementStrats():
 
 class MeasurementStratsRandom():
 
+    dsas= 1
     @staticmethod
     def pvms_uniform(size):
         u = rmt.U(size)
         projectors = [u[:,i] for i in range(size)]
         random.shuffle(projectors)
         m = ProjectiveMeasurement(projectors)
+        return m
+    
+    @staticmethod
+    def pvms_outcomes(num_outcomes, size):
+        U = rmt.U(size)
+        Ut = U.conj().T
+        projectors = rmt.P_I(size, num_outcomes)
+        operators = [utils.multidot(Ut, o, U) for o in projectors]
+        m = Measurement(operators)
         return m
 
     @staticmethod
