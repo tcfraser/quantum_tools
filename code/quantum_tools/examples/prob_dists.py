@@ -5,8 +5,53 @@ from ..statistics.variable import RandomVariableCollection
 from ..utilities import utils
 from ..contexts.measurement import Measurement
 from ..contexts.state import State
-from ..contexts.quantum_context import QuantumContext, QuantumProbDist
+from ..contexts.quantum_context import QuantumContext, QuantumProbDist, QuantumProbDistOptimized
 from ..utilities.constants import *
+
+def perfect_correlation(rvc):
+    shape = rvc.outcome_space.get_input_base()
+    support = np.zeros(shape)
+    assert(utils.all_equal(shape))
+    for i in range(shape[0]):
+        support[tuple(i for _ in range(len(shape)))] = 1
+    support /= np.sum(support)
+    pd = ProbDist(rvc, support)
+    return pd
+
+def uniform_qdistro(rvc, dimensions):
+    if dimensions**2 == 4:
+        A = Measurement.Strats.Random.pvms_uniform(4)
+        B = Measurement.Strats.Random.pvms_uniform(4)
+        C = Measurement.Strats.Random.pvms_uniform(4)
+    else:
+        A = Measurement.Strats.Random.pvms_outcomes(4, dimensions**2)
+        B = Measurement.Strats.Random.pvms_outcomes(4, dimensions**2)
+        C = Measurement.Strats.Random.pvms_outcomes(4, dimensions**2)
+    rhoAB = State.Strats.Random.pure_uniform(dimensions**2)
+    rhoBC = State.Strats.Random.pure_uniform(dimensions**2)
+    rhoAC = State.Strats.Random.pure_uniform(dimensions**2)
+        
+    qc = QuantumContext(
+        random_variables=rvc,
+        measurements=(A,B,C),
+        states=(rhoAB, rhoBC, rhoAC),
+        permutation=utils.get_triangle_permutation(dimensions)
+    )
+    if dimensions**2 == 4:
+        pd = QuantumProbDistOptimized(qc)
+    else:
+        pd = QuantumProbDist(qc)
+    return pd
+
+def uniform_discrete(rvc):
+    rand = np.random.rand(*rvc.outcome_space.get_input_base())
+    normed = rand / np.sum(rand)
+    return ProbDist(rvc, normed)
+
+def c4_type(rvc):
+    rand = np.random.randint(2, size=rvc.outcome_space.get_input_base())
+    normed = rand / np.sum(rand)
+    return ProbDist(rvc, normed)
 
 def spekkens(rvc):
     perm123 = list(itertools.permutations([1,2,3]))

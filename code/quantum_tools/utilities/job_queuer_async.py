@@ -6,7 +6,7 @@ from pprint import pprint
 
 class JobContext():
 
-    def __init__(self, target_func, target_args, num_cores=-1, processes_per_core=1, log_worker=False):
+    def __init__(self, target_func, target_args, num_cores=-1, processes_per_core=1):
         self.target_args = target_args
         self.target_func = target_func
         self.processes_per_core = processes_per_core
@@ -19,14 +19,16 @@ class JobContext():
                                         self.num_cores_requested))
         print("JobContext requested {0} cores.".format(self.num_cores_requested))
         print("JobContext using {0} cores.".format(self.num_cores_needed))
-        self.log_worker = log_worker
         self.target_results = []
 
     def _store_result(self, result):
-        print("Sub-Job Finished.")
+        self.eval_count += 1
+        percent_complete = int(100 * self.eval_count / self.num_evals)
+        print("Sub-Job Finished: {0}%".format(percent_complete))
         self.target_results.append(result)
 
     def evaluate(self):
+        self.eval_count = 0
         out_queue = Queue()
         num_processes = self.num_cores_needed * self.processes_per_core
         pool = Pool(processes = num_processes)

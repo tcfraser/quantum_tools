@@ -35,7 +35,7 @@ def sparse_any_eq(A, B):
     else:
         return True
 
-def hyper_graph_contraction(A, ant, remove_ant):
+def hyper_graph_contraction(A, ant, remove=None):
     """ Prefers csr format. Find contraction for hypergraph. """
     A_csr = sparse.csr_matrix(A)
     # Take only columns that are extendable versions of the antescedant (ant)
@@ -43,18 +43,56 @@ def hyper_graph_contraction(A, ant, remove_ant):
     ext_A = A_csr[:, ext_ant]
     # Take only rows that would contribute
     row_entry_flux = ext_A.indptr[1:] - ext_A.indptr[:-1] # Finds where the row pointers change
-    if remove_ant:
-        row_entry_flux[ant] = 0 # Make antecedant zero so it doesn't get selected
+    if remove is not None:
+        for i in remove:
+            row_entry_flux[i] = 0 # Make antecedant zero so it doesn't get selected (as well as duplicates)
 
     H_rows = np.nonzero(row_entry_flux)[0] # The rows that should be used in the hypergraph
     H_cols = ext_ant # The cols that should be used in the hypergraph
     return H_rows, H_cols
 
-def hyper_graph(A, ant):
-    A_csr = sparse.csr_matrix(A)
-    H_rows, H_cols = hyper_graph_contraction(A, ant, True)
-    H = A_csr[:, H_cols][H_rows, :]
-    return H
+def hyper_graph(A, ant, remove=None):
+    if isinstance(A, dict):
+        A_csr = A['csr']
+        A_csc = A['csc']
+    else:
+        A_csr = sparse.csr_matrix(A)
+        A_csc = sparse.csc_matrix(A)
+    
+    if remove is None:
+        remove = [ant]   
+    H_rows, H_cols = hyper_graph_contraction(A_csr, ant, remove=remove)
+    
+    H = A_csc[:, H_cols][H_rows, :]
+    
+    return H_rows, H, H_cols
+
+# ======================
+# === Misc Utilities ===
+# ======================
+def which_nodes_essential(hg):
+    """
+    Determines which nodes are absolutely needed for any transversal.
+    Corresponds to an edge that only has one node hitting it.
+    """
+    hg = sparse.csc_matrix(hg, copy=True)
+    hg.data.fill(1)
+    where_edges = np.array(hg.sum(axis=0) == 1).flatten()
+    reduced = hg[:, where_edges]
+    return reduced.indices
+
+def which_edges_greedy(hg):
+    """
+    Which edges hit every node of the hypergraph.
+    """
+    return np.where(hg.sum(axis=1) == hg.shape[1])
+
+def transversals_exist(hg):
+    """
+    Determines if there are any transversals at all.
+    Corresponds to being able to hit every edge with at least some node.
+    """
+    return not np.any(hg.sum(axis=0) == 0)
 
 EXP_DTYPE = 'int16' # Can't be bool. Scipy sparse arrays don't support boolean matrices well
 
@@ -65,6 +103,14 @@ class FoundTransversals():
         self._raw_sum = None
         self.__log = log
 
+    @staticmethod
+    def from_existing(raw, log=False):
+        fts = FoundTransversals(log)
+        if raw is not None:
+            fts._raw = raw
+            fts._raw_sum = np.array(raw.sum(axis=0)).flatten()
+        return fts
+        
     def __len__(self):
         if self._raw is None:
             return 0
@@ -201,16 +247,25 @@ def np_ones(shape):
 
 class TransversalStrat():
 
-    def __init__(self, search_type=None, find_up_to=np.inf, node_brancher=None):
-        self.search_type = search_type
-        self.find_up_to = find_up_to
-        self.node_brancher = node_brancher
-        if node_brancher is not None:
-            self.max_node_branch = node_brancher.get('max', np.inf)
-            self.ignore_nodes = node_brancher.get('ignore', None)
+    def __init__(self, **kwargs):
+        config = kwargs
+        self.search_type = config.get('search_type')
+        self.find_up_to = config.get('find_up_to', np.inf)
+        self.node_brancher = config.get('node_brancher')
+        self.breadth_cap = config.get('breadth_cap', np.inf)
+        self.__filter_out = config.get('filter_out', None)
+        if self.node_brancher is not None:
+            self.max_node_branch = self.node_brancher.get('max', np.inf)
+            self.ignore_nodes = self.node_brancher.get('ignore', None)
         else:
             self.max_node_branch = np.inf
             self.ignore_nodes = None
+            
+    def filter_out(self, wt):
+        if self.__filter_out is None:
+            return False # Don't filter out
+        else:
+            return self.__filter_out(wt)
         
     # def precache(self, trans):
     #     if self.ignore_nodes is not None:
@@ -241,16 +296,32 @@ class HGT():
         return completion.nnz == completion.shape[1] # No nonzero elements means completion
 
     @staticmethod
-    def continue_transveral(wt, node):
+    def append_node(wt, node):
         """
         wt : working transversal
-        node : node to be chosen
+        node : node to be chosen (assumed not already present)
         """
         new_indices = np.append(wt.indices, [node])
         new_indptr = np.copy(wt.indptr)
         new_indptr[1] = len(new_indices)
 
         new_data = np_ones(len(wt.data) + 1)
+
+        wt_new = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=wt.shape)
+
+        return wt_new
+    
+    @staticmethod
+    def remove_ith_node(wt, i):
+        """
+        wt: transversal
+        node: node to be removed (assumed present)
+        """
+        new_indices = np.delete(wt.indices, i)
+        new_indptr = np.copy(wt.indptr)
+        new_indptr[1] = len(new_indices)
+
+        new_data = np_ones(len(wt.data) - 1)
 
         wt_new = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=wt.shape)
 
@@ -262,6 +333,46 @@ class HGT():
         missing_edges_sparse = get_unit_completion(completion.shape[1]) - completion # find what edges are
         missing_edges = missing_edges_sparse # Keep in sparse format
         return missing_edges
+    
+    @staticmethod
+    def is_minimal(H, t):
+        for i in range(t.nnz):
+            sub_t = HGT.remove_ith_node(t, i)
+            sub_completion = HGT.completion(H, sub_t)
+            sub_is_complete = HGT.is_complete(sub_completion)
+            if sub_is_complete:
+                return False
+        return True
+
+    @staticmethod
+    def _make_minimal_single(H, t):
+        i = 0
+        while i < t.nnz:
+            sub_t = HGT.remove_ith_node(t, i)
+            sub_completion = HGT.completion(H, sub_t)
+            sub_is_complete = HGT.is_complete(sub_completion)
+            if sub_is_complete:
+                t = sub_t
+            else:
+                i += 1
+        return t
+
+    @staticmethod
+    def make_minimal(H, ts):
+        ts = sparse.csc_matrix(ts)
+        mts = []
+        for i in range(ts.shape[1]):
+            t = ts[:, i]
+            minimal_t = HGT._make_minimal_single(H, t)
+            mts.append(minimal_t)
+        mts = sparse.hstack(mts, format='csc')
+        return mts
+
+    @staticmethod
+    def sub_sample_ts(ts, n):
+        choices = np.random.choice(np.arange(ts.shape[1]), n)
+        sample = ts[:, choices]
+        return sample
 
 class HyperGraphTransverser():
 
@@ -271,7 +382,9 @@ class HyperGraphTransverser():
         self.__log = log
         self.fts = fts if fts is not None else FoundTransversals()
         self.num_nodes = self.H.shape[0]
+        self.node_weights = np.array(self.H.sum(axis=1), dtype='int64').flatten()
         self.num_edges = self.H.shape[1]
+        self.edge_weights = np.array(self.H.sum(axis=0), dtype='int64').flatten()
         # self.strat.precache(self)
         self.transverse(get_null_transveral(self.num_nodes))
 
@@ -317,6 +430,9 @@ class HyperGraphTransverser():
         for wt_i in range(wts.shape[1]):
             wt = wts[:, wt_i]
             # Check if transversal is complete
+            if self.strat.filter_out(wt):
+                self.log('Transversal filtered out.')
+                continue
             is_complete, completion = self.verify_completion(wt)
             if len(self.fts) >= self.strat.find_up_to: # Stop if obtained enough transversals
                 self.log('Finished: Maximum transversals found.')
@@ -326,7 +442,7 @@ class HyperGraphTransverser():
 
             # Otherwise, branch to nodes that can contribute
             for node in self.branch_to_nodes(wt, completion):
-                next_wt = HGT.continue_transveral(wt, node)
+                next_wt = HGT.append_node(wt, node)
                 next_wts_list.append(next_wt)
 
         # Nothing valid to continue on
@@ -334,11 +450,16 @@ class HyperGraphTransverser():
             self.log('Finished: All branches complete.')
             return HGT.CONTINUE
 
-        next_wts_mtrx = sparse.hstack(next_wts_list)
+        next_wts = sparse.hstack(next_wts_list)
 
+        # Memory cap
+        # print('debug', self.strat.breadth_cap, next_wts.shape[1])
+        if self.strat.breadth_cap < next_wts.shape[1]:
+            next_wts = next_wts[:, 0:self.strat.breadth_cap] 
+            self.log("Trimming breadth transversals down to {0}".format(next_wts.shape[1]))
         # Filter out minimal copies
-        next_wts = cernikov_filter(next_wts_mtrx, self.fts.raw()) # Will iterate over columns
-
+        next_wts = cernikov_filter(next_wts, self.fts.raw()) # Will iterate over columns
+        
         return self.transverse(next_wts, current_depth + 1)
 
     def transverse_depth(self, wt, current_depth=0):
@@ -347,6 +468,9 @@ class HyperGraphTransverser():
 
         # Check if transversal is complete
         is_complete, completion = self.verify_completion(wt)
+        if self.strat.filter_out(wt):
+            self.log('Transversal filtered out.')
+            return HGT.CONTINUE # Branch is over, filtered out by custom filter
         if len(self.fts) >= self.strat.find_up_to:
             self.log('Finished: Maximum transversals found.')
             return HGT.STOP # Finish everything
@@ -355,7 +479,7 @@ class HyperGraphTransverser():
 
         # Otherwise, branch to nodes that can contribute
         for node in self.branch_to_nodes(wt, completion):
-            next_wt = HGT.continue_transveral(wt, node)
+            next_wt = HGT.append_node(wt, node)
             if self.fts.minimal_present(next_wt):
                 # A more minimal transversal is present, just continue on
                 continue
@@ -381,18 +505,37 @@ class HyperGraphTransverser():
             # Gets nodes that contribute to missing edge
             edge = missing_edges.indices[0] # Grab any next edge
             node_indices = self.H[:, edge].indices
-        elif nb['name'] == 'greedy':
-            # Gets the nodes that overlap the most with what's missing
+        elif nb['name'] == 'greedy' or nb['name'] == 'long':
+            # Gets the nodes that overlap the most(least) with what's missing
             overlap = self.H.dot(missing_edges.T)
-            node_indices = overlap.indices[np.argsort(overlap.data)[::-1]]
-        elif nb['name'] == 'long':
-            # Gets the nodes that overlap the least with what's missing
-            overlap = self.H.dot(missing_edges.T)
-            node_indices = overlap.indices[np.argsort(overlap.data)]
+            # k = min(count_max + wt.nnz, overlap.nnz)
+            k = min(count_max, overlap.nnz)
+            if k >= self.num_nodes or k == overlap.nnz:
+                if nb['name'] == 'greedy':
+                    alg_slice = np.argsort(overlap.data)[::-1]
+                else: # long
+                    alg_slice = np.argsort(overlap.data)
+            else: # Else be smart, don't perform O(nlogn) operations, perform O(k) operations
+                if nb['name'] == 'greedy':
+                    alg_slice = np.argpartition(overlap.data, -k)[-k:]
+                else: #long
+                    alg_slice = np.argpartition(overlap.data, k)[:k]
+            node_indices = overlap.indices[alg_slice]
         elif nb['name'] == 'random':
             # Gets nodes that contribute to random missing edge
             edge = np.random.choice(missing_edges.indices) # Grab any next edge
             node_indices = self.H[:, edge].indices
+        elif nb['name'] == 'diverse':
+            # Diversify the kinds of transversals that have been found
+            if wt.nnz == 0: # Just starting out
+                node_indices = np.arange(self.num_nodes) # Branch to everything
+            else: # Otherwise be greedy up to one
+                # edge = missing_edges.indices[0] # Grab any next edge
+                # node_indices = [self.H[:, edge].indices[0]]
+                # overlap = self.H.dot(missing_edges.T)
+                # node_indices = [overlap.indices[np.argmax(overlap.data)]]
+                scaled_overlap = overlap.data / (self.node_weights[overlap.indices]**2)
+                node_indices = overlap.indices[np.where(np.max(scaled_overlap) == scaled_overlap)]
         else:
             raise ValueError("Invalid strat.node_brancher: {0}".format(self.strat.node_brancher))
         
@@ -412,9 +555,13 @@ class HyperGraphTransverser():
 #================================================
 #================ Main Method ===================
 #================================================
-def find_transversals(H, strat=None, log_wt=False, log_ft=False):
+def find_transversals(H, strat=None, log_wt=False, log_ft=False, fts=None):
     """ Header to call to begin everything """
-    hgt = HyperGraphTransverser(H, strat, FoundTransversals(log_ft), log_wt)
+    if fts is None:
+        fts = FoundTransversals(log_ft)
+    else:
+        fts = FoundTransversals.from_existing(fts, log_ft)
+    hgt = HyperGraphTransverser(H, strat, fts, log_wt)
     return hgt.fts.raw()
 #================================================
 #================================================
