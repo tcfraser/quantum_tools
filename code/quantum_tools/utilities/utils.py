@@ -12,6 +12,10 @@ import math
 from ..config import *
 import os
 from collections import defaultdict
+import random
+
+def partial_log(p):
+    return random.random() < p
 
 def list_duplicates(seq):
     tally = defaultdict(list)
