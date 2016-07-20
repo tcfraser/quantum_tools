@@ -254,6 +254,7 @@ class TransversalStrat():
         self.node_brancher = config.get('node_brancher')
         self.breadth_cap = config.get('breadth_cap', np.inf)
         self.__filter_out = config.get('filter_out', None)
+        self.starting_transversal = config.get('starting_transversal', None)
         if self.node_brancher is not None:
             self.max_node_branch = self.node_brancher.get('max', np.inf)
             self.ignore_nodes = self.node_brancher.get('ignore', None)
@@ -266,6 +267,14 @@ class TransversalStrat():
             return False # Don't filter out
         else:
             return self.__filter_out(wt)
+        
+    def get_starting_transversal(self, num_nodes):
+        if self.starting_transversal is None:
+            return get_null_transveral(num_nodes)
+        else:
+            formatted_st = sparse.csc_matrix(self.starting_transversal, dtype=EXP_DTYPE, copy=True)
+            assert(formatted_st.shape == (num_nodes, 1)), "Starting transversal has invalid shape {}, needs to be {}".format(formatted_st.shape, (num_nodes, 1))
+            return formatted_st
         
     # def precache(self, trans):
     #     if self.ignore_nodes is not None:
@@ -386,7 +395,8 @@ class HyperGraphTransverser():
         self.num_edges = self.H.shape[1]
         self.edge_weights = np.array(self.H.sum(axis=0), dtype='int64').flatten()
         # self.strat.precache(self)
-        self.transverse(get_null_transveral(self.num_nodes))
+        
+        self.transverse(self.strat.get_starting_transversal(self.num_nodes))
 
     def log(self, *args):
         """ Log info regarding the transversal algorithm. """

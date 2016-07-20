@@ -42,33 +42,39 @@ def get_preinjectableset_latex(rvc, preinjectable_set, defl_map):
         preinjectable_latex.append(''.join(map(probabilize, definite_labels)))
     return preinjectable_latex
 
-def definite_outcome_latex(rv_names, outcomes):
-    joint_outcome_latex = ''.join("{0}_{1}".format(rv_name, outcome) for outcome, rv_name in zip(outcomes, rv_names))
+doltdefault = "{rv_name}_{outcome}"
+doltoutcome = "{outcome}"
+doltinverted = "{outcome}_{rv_name}"
+
+def definite_outcome_latex(rv_names, outcomes, formatter=doltinverted):
+    joint_outcome_latex = ''.join(formatter.format(rv_name=r, outcome=o) for o, r in zip(outcomes, rv_names))
     return joint_outcome_latex
 
 def probabilize(event):
     return "P({0})".format(event)
 
 def get_equation_latex(terms, lhs, relation, rhs):
-    hs_latex = [None, None] # LHS and RHS goes here
     
-    for i, side in enumerate([lhs, rhs]):
-        coeff_map = defaultdict(int)
-        
-        for q in side:
-            coeff_map[terms[q]] += 1
-        
-        latexed_terms = []
-        for term, coeff in coeff_map.items():
-            if coeff == 1:
-                latexed_terms.append(term)
-            else:
-                latexed_terms.append(str(coeff) + term)
-        latexed_terms = sorted(latexed_terms)
-        hs_latex[i] = ' + '.join(latexed_terms)
+    lhs_latex = get_expression_latex(terms, lhs, ' + ')
+    rhs_latex = get_expression_latex(terms, rhs, ' + ')
            
-    result = "{lhs} {rel} {rhs}".format(lhs=hs_latex[0], rel=relation, rhs=hs_latex[1])
+    result = "{lhs} {rel} {rhs}".format(lhs=lhs_latex, rel=relation, rhs=rhs_latex)
     return result
+
+def get_expression_latex(terms, indices, sep):
+    coeff_map = defaultdict(int)
+        
+    for i in indices:
+        coeff_map[terms[i]] += 1
+        
+    latexed_terms = []
+    for term, coeff in coeff_map.items():
+        if coeff == 1:
+            latexed_terms.append(term)
+        else:
+            latexed_terms.append(str(coeff) + term)
+    latexed_terms = sorted(latexed_terms)
+    return sep.join(latexed_terms)
 
 def transversal_inequality(ant, cons, hg_rows, b):
     """

@@ -2,6 +2,7 @@ from multiprocessing import Process, Queue, Pool
 import multiprocessing
 import math
 from pprint import pprint
+import sys
 # from timing_profiler import timing
 
 class JobContext():
@@ -25,17 +26,22 @@ class JobContext():
         self.eval_count += 1
         percent_complete = int(100 * self.eval_count / self.num_evals)
         print("Sub-Job Finished: {0}%".format(percent_complete))
+        sys.stdout.flush()
         self.target_results.append(result)
 
     def evaluate(self):
         self.eval_count = 0
-        out_queue = Queue()
         num_processes = self.num_cores_needed * self.processes_per_core
         pool = Pool(processes = num_processes)
-        for i in range(self.num_evals):
-            pool.apply_async(self.target_func, args=self.target_args[i], callback=self._store_result)
-        pool.close()
-        pool.join()
+        try:
+            for i in range(self.num_evals):
+                pool.apply_async(self.target_func, args=self.target_args[i], callback=self._store_result, error_callback=self._store_result)
+            pool.close()
+            pool.join()
+        except KeyboardInterrupt:
+            print("Caught KeyboardInterrupt, terminating workers.")
+            pool.terminate()
+            pool.join()
 
 def f(a,b,c):
     return a - b * c
