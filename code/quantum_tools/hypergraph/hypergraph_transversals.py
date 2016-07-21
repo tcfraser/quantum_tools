@@ -7,6 +7,9 @@ import numpy as np
 from functools import reduce
 from operator import mul
 import inspect
+from collections import namedtuple
+
+NodeNecessity = namedtuple('NodeNecessity', ['necessary', 'unnecessary'])
 
 def slog(*args):
     curframe = inspect.currentframe()
@@ -37,7 +40,7 @@ def sparse_any_eq(A, B):
 
 def hyper_graph_contraction(A, ant, remove=None):
     """ Prefers csr format. Find contraction for hypergraph. """
-    A_csr = sparse.csr_matrix(A)
+    A_csr, A_csc = _csrc(A)
     # Take only columns that are extendable versions of the antescedant (ant)
     ext_ant = nzcfr(A_csr, ant)
     ext_A = A_csr[:, ext_ant]
@@ -51,20 +54,29 @@ def hyper_graph_contraction(A, ant, remove=None):
     H_cols = ext_ant # The cols that should be used in the hypergraph
     return H_rows, H_cols
 
-def hyper_graph(A, ant, remove=None):
+def _csrc(A):
     if isinstance(A, dict):
         A_csr = A['csr']
         A_csc = A['csc']
     else:
         A_csr = sparse.csr_matrix(A)
         A_csc = sparse.csc_matrix(A)
-    
+    return A_csr, A_csc
+
+def hyper_graph(A, ant, remove=None):
+    A_csr, A_csc = _csrc(A)
     if remove is None:
         remove = [ant]   
     H_rows, H_cols = hyper_graph_contraction(A_csr, ant, remove=remove)
     
     H = A_csc[:, H_cols][H_rows, :]
     
+    return H_rows, H, H_cols
+
+def sort_to_minimize_branching(H_rows, H, H_cols):
+    sort_by_edges = np.argsort(np.asarray(H.sum(axis=0)).flatten())
+    H = H[:, sort_by_edges]
+    H_cols = H_cols[sort_by_edges]
     return H_rows, H, H_cols
 
 # ======================
@@ -84,6 +96,12 @@ def which_nodes_essential(hg):
 def which_edges_greedy(hg):
     """
     Which edges hit every node of the hypergraph.
+    """
+    return np.where(hg.sum(axis=0) == hg.shape[0])
+
+def which_nodes_greedy(hg):
+    """
+    Which nodes hit every edge (identity transversal)
     """
     return np.where(hg.sum(axis=1) == hg.shape[1])
 
@@ -245,6 +263,16 @@ def np_ones(shape):
         _numpy_ones_pool[shape] = np.ones(shape, dtype=EXP_DTYPE)
     return _numpy_ones_pool[shape]
 
+_indptr_pool = {}
+def get_indptr(size):
+    """
+    size: The size of the column pointers
+    """
+    global _indptr_pool
+    if size not in _indptr_pool:
+        _indptr_pool[size] = np.array([0, size], dtype=EXP_DTYPE)
+    return _indptr_pool[size]
+
 class TransversalStrat():
 
     def __init__(self, **kwargs):
@@ -305,20 +333,25 @@ class HGT():
         return completion.nnz == completion.shape[1] # No nonzero elements means completion
 
     @staticmethod
+    def transversal_from_indices(indices, shape):
+        """
+        indices: The indices of the nodes in the transversal
+        shape: The total number of nodes in a full transversal
+        """
+        indices = np.asarray(indices)
+        indptr = get_indptr(len(indices))
+        data = np_ones(len(indices))
+        
+        return sparse.csc_matrix((data, indices, indptr), shape=shape)
+    
+    @staticmethod
     def append_node(wt, node):
         """
         wt : working transversal
         node : node to be chosen (assumed not already present)
         """
         new_indices = np.append(wt.indices, [node])
-        new_indptr = np.copy(wt.indptr)
-        new_indptr[1] = len(new_indices)
-
-        new_data = np_ones(len(wt.data) + 1)
-
-        wt_new = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=wt.shape)
-
-        return wt_new
+        return HGT.transversal_from_indices(new_indices, wt.shape)
     
     @staticmethod
     def remove_ith_node(wt, i):
@@ -327,14 +360,7 @@ class HGT():
         node: node to be removed (assumed present)
         """
         new_indices = np.delete(wt.indices, i)
-        new_indptr = np.copy(wt.indptr)
-        new_indptr[1] = len(new_indices)
-
-        new_data = np_ones(len(wt.data) - 1)
-
-        wt_new = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=wt.shape)
-
-        return wt_new
+        return HGT.transversal_from_indices(new_indices, wt.shape)
 
     @staticmethod
     def get_missing_edges(completion):
@@ -352,9 +378,25 @@ class HGT():
             if sub_is_complete:
                 return False
         return True
-
+    
     @staticmethod
-    def _make_minimal_single(H, t):
+    def get_node_necessity(H, t):
+        necessary = []
+        unnecessary = []
+        for i in range(t.nnz):
+            sub_t = HGT.remove_ith_node(t, i)
+            sub_completion = HGT.completion(H, sub_t)
+            sub_is_complete = HGT.is_complete(sub_completion)
+            if sub_is_complete:
+                unnecessary.append(t.indices[i])
+            else:
+                necessary.append(t.indices[i])
+        necessary = np.asarray(necessary)
+        unnecessary = np.asarray(unnecessary)
+        return NodeNecessity(necessary=necessary, unnecessary=unnecessary)
+    
+    @staticmethod
+    def _minimal_lazy(H, t):
         i = 0
         while i < t.nnz:
             sub_t = HGT.remove_ith_node(t, i)
@@ -365,14 +407,63 @@ class HGT():
             else:
                 i += 1
         return t
-
+    
     @staticmethod
-    def make_minimal(H, ts):
+    def __minimal_upward_greedy_helper(H, wt, node_bank):
+        best_completion = None
+        best_nwt = None
+        best_node_i = None
+        i = 0
+        for node in node_bank:
+            nwt = HGT.append_node(wt, node)
+            completion = HGT.completion(H, nwt)
+            if HGT.is_complete(completion):
+                return nwt
+            if best_completion is None or completion.nnz > best_completion.nnz:
+                best_completion = completion
+                best_nwt = nwt
+                best_node_i = i
+            i += 1
+        assert(best_nwt is not None)
+        print(best_completion.nnz, H.shape[1])
+        return HGT.__minimal_upward_greedy_helper(H, best_nwt, np.delete(node_bank, best_node_i))
+    
+    @staticmethod
+    def _minimal_upward_greedy(H, t):
+        necessary, unnecessary = HGT.get_node_necessity(H, t)
+        necessary_t = HGT.transversal_from_indices(necessary, t.shape)
+        
+        return HGT.__minimal_upward_greedy_helper(H, necessary_t, unnecessary)
+        #wt = necessary_t
+        #necessary_completion = HGT.completion(H, necessary_t)
+        
+        #if HGT.is_complete(necessary_completion):
+        #    return necessary_t
+        
+        #necessary_completion.data.fill(1)
+        #unecessary_hg = H[unnecessary, :]
+        #unecessary_overlap = unecessary_hg.dot(necessary_completion.T)
+        #unecessary_num_edges = unecessary_hg.sum(axis=1)
+        # np.any(unecessary_num_edges == unecessary_overlap)
+        
+        #return unecessary_num_edges == unecessary_overlap
+        
+    VALID_MINIMAL_STRATS = [None, 'lazy', 'upward_greedy']
+    
+    @staticmethod
+    def make_minimal(H, ts, strat=None):
+        
+        if strat not in HGT.VALID_MINIMAL_STRATS:
+            raise ValueError("'strat' needs be one of {}, not {}".format(HGT.VALID_MINIMAL_STRATS, strat))
+        if strat is None:
+            strat = HGT.VALID_MINIMAL_STRATS[1]
+        minimalizer = getattr(HGT, '_minimal_{}'.format(strat))
+        
         ts = sparse.csc_matrix(ts)
         mts = []
         for i in range(ts.shape[1]):
             t = ts[:, i]
-            minimal_t = HGT._make_minimal_single(H, t)
+            minimal_t = minimalizer(H, t)
             mts.append(minimal_t)
         mts = sparse.hstack(mts, format='csc')
         return mts
@@ -411,8 +502,8 @@ class HyperGraphTransverser():
         Returns: is_complete, completion
         """
         completion = HGT.completion(self.H, wt)
-        self.log('completion')
-        self.log(completion)
+        self.log('completion%')
+        self.log(completion.nnz, '{}%'.format((completion.nnz*100)//self.num_edges))
         self.log('is_completion:', HGT.is_complete(completion))
         if HGT.is_complete(completion):
             self.fts.update(wt) # Update the list of transversals with the new found one
@@ -475,12 +566,13 @@ class HyperGraphTransverser():
     def transverse_depth(self, wt, current_depth=0):
         """ Work on a particular transversal going depth first """
         self.log('current_depth', current_depth)
-
-        # Check if transversal is complete
-        is_complete, completion = self.verify_completion(wt)
+        
+        # Filter out if strat dictates so
         if self.strat.filter_out(wt):
             self.log('Transversal filtered out.')
             return HGT.CONTINUE # Branch is over, filtered out by custom filter
+        # Check if transversal is complete
+        is_complete, completion = self.verify_completion(wt)
         if len(self.fts) >= self.strat.find_up_to:
             self.log('Finished: Maximum transversals found.')
             return HGT.STOP # Finish everything

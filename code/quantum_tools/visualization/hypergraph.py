@@ -3,7 +3,8 @@ import matplotlib.cm as cm
 from scipy.sparse import coo_matrix
 
 def plot_hypergraph(hg):
-    if hg.nnz <= 1e6:
+    upper_bound = 2e6
+    if hg.nnz <= upper_bound:
         hg= coo_matrix(hg)
         fig = plt.figure()
         ax = fig.add_subplot(111, axisbg='white')
@@ -14,13 +15,16 @@ def plot_hypergraph(hg):
         ax.invert_yaxis()
         plt.show()
     else:
-        print("Hypergraph has too many entries > 1e6.")
+        print("Hypergraph has too many entries > {}.".format(upper_bound))
         
 def plot_transversals(fts):
     plot_hypergraph(fts)
         
+def transversal_overlap(fts):
+    return (fts.T * fts).todense()
+
 def visualize_transversal_overlap(fts):
-    plt.matshow((fts.T * fts).todense(), interpolation='none')
+    plt.matshow(transversal_overlap(fts), interpolation='none')
     
 def dense_plot_matrix(hg):
     plt.matshow(hg.todense(), interpolation='none')

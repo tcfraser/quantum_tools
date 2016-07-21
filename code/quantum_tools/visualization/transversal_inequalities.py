@@ -55,17 +55,20 @@ def probabilize(event):
 
 def get_equation_latex(terms, lhs, relation, rhs):
     
-    lhs_latex = get_expression_latex(terms, lhs, ' + ')
-    rhs_latex = get_expression_latex(terms, rhs, ' + ')
+    lhs_latex = get_expression_latex(get_coeff_map(terms, lhs), ' + ')
+    rhs_latex = get_expression_latex(get_coeff_map(terms, rhs), ' + ')
            
     result = "{lhs} {rel} {rhs}".format(lhs=lhs_latex, rel=relation, rhs=rhs_latex)
     return result
 
-def get_expression_latex(terms, indices, sep):
+def get_coeff_map(terms, indices):
     coeff_map = defaultdict(int)
         
     for i in indices:
         coeff_map[terms[i]] += 1
+    return coeff_map
+
+def get_expression_latex(coeff_map, sep=None):
         
     latexed_terms = []
     for term, coeff in coeff_map.items():
@@ -74,6 +77,8 @@ def get_expression_latex(terms, indices, sep):
         else:
             latexed_terms.append(str(coeff) + term)
     latexed_terms = sorted(latexed_terms)
+    if sep is None:
+        return latexed_terms
     return sep.join(latexed_terms)
 
 def transversal_inequality(ant, cons, hg_rows, b):
