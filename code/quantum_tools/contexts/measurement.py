@@ -54,7 +54,6 @@ class MeasurementStrats():
 
 class MeasurementStratsRandom():
 
-    dsas= 1
     @staticmethod
     def pvms_uniform(size):
         u = rmt.U(size)

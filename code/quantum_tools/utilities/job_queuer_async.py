@@ -3,6 +3,7 @@ import multiprocessing
 import math
 from pprint import pprint
 import sys
+import os
 # from timing_profiler import timing
 
 class JobContext():
@@ -21,11 +22,15 @@ class JobContext():
         print("JobContext requested {0} cores.".format(self.num_cores_requested))
         print("JobContext using {0} cores.".format(self.num_cores_needed))
         self.target_results = []
+        
+    # def _target_func_wrapper(self, *args):
+        # sys.stdout = open(str(os.getpid()) + ".out", "w")
+        # return self.target_func(*args)
 
     def _store_result(self, result):
         self.eval_count += 1
         percent_complete = int(100 * self.eval_count / self.num_evals)
-        print("Sub-Job Finished: {0}%".format(percent_complete))
+        sys.stdout.write("Sub-Job Finished: {0}% Complete\n".format(percent_complete))
         sys.stdout.flush()
         self.target_results.append(result)
 
@@ -35,7 +40,12 @@ class JobContext():
         pool = Pool(processes = num_processes)
         try:
             for i in range(self.num_evals):
-                pool.apply_async(self.target_func, args=self.target_args[i], callback=self._store_result, error_callback=self._store_result)
+                pool.apply_async(
+                    self.target_func,
+                    args=self.target_args[i],
+                    callback=self._store_result,
+                    error_callback=self._store_result
+                )
             pool.close()
             pool.join()
         except KeyboardInterrupt:

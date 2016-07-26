@@ -43,14 +43,18 @@ def hyper_graph_contraction(A, ant, remove=None):
     A_csr, A_csc = _csrc(A)
     # Take only columns that are extendable versions of the antescedant (ant)
     ext_ant = nzcfr(A_csr, ant)
-    ext_A = A_csr[:, ext_ant]
+    ext_A = A_csc[:, ext_ant]
     # Take only rows that would contribute
-    row_entry_flux = ext_A.indptr[1:] - ext_A.indptr[:-1] # Finds where the row pointers change
+    H_rows_mask = np.zeros(A_csr.shape[0], dtype=bool)
+    for i in ext_A.indices: # Whole bunch of duplicates
+        H_rows_mask[i] = True # Keep this node
+    
+    # row_entry_flux = ext_A.indptr[1:] - ext_A.indptr[:-1] # Finds where the row pointers change
     if remove is not None:
         for i in remove:
-            row_entry_flux[i] = 0 # Make antecedant zero so it doesn't get selected (as well as duplicates)
+            H_rows_mask[i] = False # Make antecedant zero so it doesn't get selected (as well as duplicates)
 
-    H_rows = np.nonzero(row_entry_flux)[0] # The rows that should be used in the hypergraph
+    H_rows = np.nonzero(H_rows_mask)[0] # The rows that should be used in the hypergraph
     H_cols = ext_ant # The cols that should be used in the hypergraph
     return H_rows, H_cols
 
@@ -67,16 +71,27 @@ def hyper_graph(A, ant, remove=None):
     A_csr, A_csc = _csrc(A)
     if remove is None:
         remove = [ant]   
-    H_rows, H_cols = hyper_graph_contraction(A_csr, ant, remove=remove)
+    H_rows, H_cols = hyper_graph_contraction(A, ant, remove=remove)
     
     H = A_csc[:, H_cols][H_rows, :]
     
     return H_rows, H, H_cols
 
-def sort_to_minimize_branching(H_rows, H, H_cols):
-    sort_by_edges = np.argsort(np.asarray(H.sum(axis=0)).flatten())
-    H = H[:, sort_by_edges]
-    H_cols = H_cols[sort_by_edges]
+def sort_hg(H_rows, H, H_cols, nodes_desc=None, edge_desc=None):
+    if nodes_desc is not None:
+        sort_nodes = np.argsort(nodes_desc[H_rows])
+    else:
+        sort_nodes = np.argsort(np.asarray(H.sum(axis=1)).flatten())[::-1]
+        
+    if edge_desc is not None:
+        sort_edges = np.argsort(edge_desc[H_cols])
+    else:
+        sort_edges = np.argsort(np.asarray(H.sum(axis=0)).flatten())
+       
+    H = H[:, sort_edges]
+    H = H[sort_nodes, :]
+    H_cols = H_cols[sort_edges]
+    H_rows = H_rows[sort_nodes]
     return H_rows, H, H_cols
 
 # ======================
@@ -116,19 +131,15 @@ EXP_DTYPE = 'int16' # Can't be bool. Scipy sparse arrays don't support boolean m
 
 class FoundTransversals():
 
-    def __init__(self, log=False):
-        self._raw = None
-        self._raw_sum = None
+    def __init__(self, raw=None, log=False):
         self.__log = log
-
-    @staticmethod
-    def from_existing(raw, log=False):
-        fts = FoundTransversals(log)
         if raw is not None:
             fts._raw = raw
             fts._raw_sum = np.array(raw.sum(axis=0)).flatten()
-        return fts
-        
+        else:
+            self._raw = None
+            self._raw_sum = None
+
     def __len__(self):
         if self._raw is None:
             return 0
@@ -227,7 +238,7 @@ def cernikov_filter(wts, fts=None):
 #============================
 #==== Pooled Resources ======
 #============================
-def get_null_transveral(size):
+def get_null_transversal(size):
     """
     size : number of nodes
     """
@@ -282,23 +293,33 @@ class TransversalStrat():
         self.node_brancher = config.get('node_brancher')
         self.breadth_cap = config.get('breadth_cap', np.inf)
         self.__filter_out = config.get('filter_out', None)
+        self.dbof = config.get('discontinue_branch_on_filter', False)
         self.starting_transversal = config.get('starting_transversal', None)
         if self.node_brancher is not None:
             self.max_node_branch = self.node_brancher.get('max', np.inf)
-            self.ignore_nodes = self.node_brancher.get('ignore', None)
         else:
             self.max_node_branch = np.inf
-            self.ignore_nodes = None
-            
+        self._broadcasting_node_filter = None
+        self._broadcasting_node_append = None
+        
+    def _broadcast_nodes(self, nodes):
+        if self._broadcasting_node_filter is not None:
+            broadcasted_nodes = self._broadcasting_node_filter[nodes]
+        else:
+            broadcasted_nodes = nodes
+        if self._broadcasting_node_append is not None:
+            broadcasted_nodes = np.append(broadcasted_nodes, self._broadcasting_node_append)
+        return broadcasted_nodes
+    
     def filter_out(self, wt):
         if self.__filter_out is None:
             return False # Don't filter out
         else:
-            return self.__filter_out(wt)
+            return self.__filter_out(self._broadcast_nodes(wt.indices))
         
     def get_starting_transversal(self, num_nodes):
         if self.starting_transversal is None:
-            return get_null_transveral(num_nodes)
+            return get_null_transversal(num_nodes)
         else:
             formatted_st = sparse.csc_matrix(self.starting_transversal, dtype=EXP_DTYPE, copy=True)
             assert(formatted_st.shape == (num_nodes, 1)), "Starting transversal has invalid shape {}, needs to be {}".format(formatted_st.shape, (num_nodes, 1))
@@ -313,8 +334,9 @@ class TransversalStrat():
 
 class HGT():
 
-    STOP = 'STOP'
+    STOP_ALL = 'STOP_ALL'
     CONTINUE = 'CONTINUE'
+    STOP_BRANCH = 'STOP_BRANCH'
 
     @staticmethod
     def completion(H, t):
@@ -477,17 +499,22 @@ class HGT():
 class HyperGraphTransverser():
 
     def __init__(self, H, strat, fts, log=False):
-        self.H = sparse.csc_matrix(H)
-        self.strat = strat if strat is not None else TransversalStrat()
+        # Set up logging
         self.__log = log
-        self.fts = fts if fts is not None else FoundTransversals()
+        
+        # Figure out strat
+        self.strat = strat if strat is not None else TransversalStrat()
+        
+        # Caching meta data
+        self.H = sparse.csc_matrix(H)
         self.num_nodes = self.H.shape[0]
         self.node_weights = np.array(self.H.sum(axis=1), dtype='int64').flatten()
         self.num_edges = self.H.shape[1]
         self.edge_weights = np.array(self.H.sum(axis=0), dtype='int64').flatten()
+        self.fts = fts if fts is not None else FoundTransversals()
         # self.strat.precache(self)
         
-        self.transverse(self.strat.get_starting_transversal(self.num_nodes))
+        self.transverse(get_null_transversal(self.num_nodes))
 
     def log(self, *args):
         """ Log info regarding the transversal algorithm. """
@@ -521,7 +548,7 @@ class HyperGraphTransverser():
     def transverse_breadth(self, wts, current_depth=0):
         """ Work on a particular transversal going breadth first """
         self.log('current_depth', current_depth)
-
+        raise Exception("Need to implement filter stop branching")
         # Nothing to work on
         if wts is None or wts.shape[1] == 0:
             self.log('Finished: Nothing to branch to.')
@@ -537,7 +564,7 @@ class HyperGraphTransverser():
             is_complete, completion = self.verify_completion(wt)
             if len(self.fts) >= self.strat.find_up_to: # Stop if obtained enough transversals
                 self.log('Finished: Maximum transversals found.')
-                return HGT.STOP
+                return HGT.STOP_ALL
             if is_complete: # If this particular transversal is complete, it would have been updated
                 continue
 
@@ -570,12 +597,14 @@ class HyperGraphTransverser():
         # Filter out if strat dictates so
         if self.strat.filter_out(wt):
             self.log('Transversal filtered out.')
+            if self.strat.dbof:
+                return HGT.STOP_BRANCH
             return HGT.CONTINUE # Branch is over, filtered out by custom filter
         # Check if transversal is complete
         is_complete, completion = self.verify_completion(wt)
         if len(self.fts) >= self.strat.find_up_to:
             self.log('Finished: Maximum transversals found.')
-            return HGT.STOP # Finish everything
+            return HGT.STOP_ALL # Finish everything
         if is_complete:
             return HGT.CONTINUE # Branch is over, keep searching
 
@@ -587,9 +616,12 @@ class HyperGraphTransverser():
                 continue
             ret = self.transverse(next_wt, current_depth + 1)
             # prevents branching
-            if ret == HGT.STOP:
+            if ret == HGT.STOP_ALL:
                 self.log('Propagate finished.')
-                return HGT.STOP # Finish everything
+                return HGT.STOP_ALL # Finish everything
+            if ret == HGT.STOP_BRANCH:
+                self.log('Branching terminated.')
+                break
 
     def branch_to_nodes(self, wt, completion):
         """
@@ -601,7 +633,6 @@ class HyperGraphTransverser():
         
         # Determine if there is a maximum count
         count_max = min(self.strat.max_node_branch, self.num_nodes)
-        ignore_nodes = self.strat.ignore_nodes
         
         if nb is None or not 'name' in nb: # Default
             # Gets nodes that contribute to missing edge
@@ -649,22 +680,103 @@ class HyperGraphTransverser():
             if count >= count_max:
                 break
             if not wt[i, 0] > 0: # not already part of working transversal
-                if ignore_nodes is None or not ignore_nodes[i]:
-                    self.log('Branching to node:', i)
-                    count += 1
-                    yield i
+                self.log('Branching to node:', i)
+                count += 1
+                yield i
 
+def perform_starting_transversal_reduction(H, starting_transversal, log={}):
+    log_print=log.get('print', print)
+      
+    H = sparse.csc_matrix(H)
+    num_nodes = H.shape[0]
+    assert(starting_transversal.shape[0] == num_nodes)
+    
+    if HGT.is_complete(HGT.completion(H, starting_transversal)):
+        raise Exception("Transversal already complete.")
+    used_nodes = np.sort(starting_transversal.indices)
+    used_H = H[used_nodes, :]
+    unhit_edges = ((used_H.indptr[1:] - used_H.indptr[:-1]) == 0) # Columns with no data
+    unused_nodes = np.sort((get_full_transversal(num_nodes) - starting_transversal).indices)
+    unused_H = H[:, unhit_edges][unused_nodes, :]
+    unused_empty_nodes = (np.array(unused_H.sum(axis=1)) == 0).flatten()
+    unused_nonempty_nodes = np.logical_not(unused_empty_nodes)
+    
+    log_print('{} used nodes'.format(len(used_nodes)))
+    log_print('{} unused nodes'.format(len(unused_nodes)))
+    
+    log_print('{} unused empty nodes'.format(np.count_nonzero(unused_empty_nodes)))
+    log_print('{} unused non-empty nodes'.format(np.count_nonzero(unused_nonempty_nodes)))
+              
+    unused_nonempty_H = unused_H[unused_nonempty_nodes, :]
+    log_print('Hypergraph reduced from {} to {}'.format(H.shape, unused_nonempty_H.shape))
+    
+    return unused_nonempty_H, used_nodes, unused_nodes, unused_empty_nodes, unused_nonempty_nodes
+                
 #================================================
 #================ Main Method ===================
 #================================================
-def find_transversals(H, strat=None, log_wt=False, log_ft=False, fts=None):
+def find_transversals(H, strat=None, fts=None, log={}):
     """ Header to call to begin everything """
-    if fts is None:
-        fts = FoundTransversals(log_ft)
+    if strat.starting_transversal is not None and fts is not None:
+        raise Exception("No support for continuing a partially searching transversal")
+        
+    log_wt=log.get('wt', False)
+    log_ft=log.get('ft', False)
+    log_print=log.get('print', print)
+      
+    H = sparse.csc_matrix(H)
+    fts = FoundTransversals(fts, log_ft)
+    
+    num_nodes = H.shape[0]
+    starting_transversal = strat.get_starting_transversal(num_nodes)
+    if HGT.is_complete(HGT.completion(H, starting_transversal)):
+        log_print('Starting transversal is already a complete transversal')
+        return starting_transversal
+    
+    unused_nonempty_H, used_nodes, unused_nodes, unused_empty_nodes, unused_nonempty_nodes = perform_starting_transversal_reduction(H, starting_transversal, log)
+    
+    if np.count_nonzero(unused_nonempty_nodes) == 0:
+        log_print('No transversals because all unused nodes hit no edges')
+        return None
+    strat._broadcasting_node_filter = unused_nodes[unused_nonempty_nodes]
+    strat._broadcasting_node_append = used_nodes
+    if transversals_exist(unused_nonempty_H):
+        hgt = HyperGraphTransverser(unused_nonempty_H, strat, fts, log_wt)
+        hgt_fts_raw = hgt.fts.raw()
+        if hgt_fts_raw is None:
+            return None
+        raw = sparse.csr_matrix(hgt.fts.raw())
+        
+        # Type enum
+        USED = 0
+        UNUSED_EMPTY = 1
+        UNUSED_NONEMPTY = 2
+        
+        node_types = np.zeros(num_nodes, dtype='int')
+        node_types[used_nodes] = USED
+        node_types[unused_nodes[unused_empty_nodes]] = UNUSED_EMPTY
+        node_types[unused_nodes[unused_nonempty_nodes]] = UNUSED_NONEMPTY
+        
+        vstacks = []
+        actual_transversal_index = 0
+        for i in node_types:
+            if i == USED:
+                vstacks.append(np.ones((1, len(hgt.fts)), dtype=EXP_DTYPE))
+            elif i == UNUSED_EMPTY:
+                vstacks.append(np.zeros((1, len(hgt.fts)), dtype=EXP_DTYPE))
+            elif i == UNUSED_NONEMPTY:
+                vstacks.append(raw[actual_transversal_index, :])
+                actual_transversal_index += 1
+            else:
+                raise Exception("Invalid node type. Something bad happened.")
+        
+        vstacks = tuple(map(sparse.csr_matrix, vstacks))
+        fts_raw = sparse.vstack(vstacks)
+        
+        fts_raw = sparse.csc_matrix(fts_raw)
+        return fts_raw
     else:
-        fts = FoundTransversals.from_existing(fts, log_ft)
-    hgt = HyperGraphTransverser(H, strat, fts, log_wt)
-    return hgt.fts.raw()
+        return None
 #================================================
 #================================================
 #================================================

@@ -127,7 +127,7 @@ def fritz(rvc):
     # print(multidot(rhoAB.data))
     # jm = utils.tensor(utils.tensor(rho1, omega0), utils.tensor(rho1, omega0), utils.tensor(rho0, rho0))
     # t = utils.multidot(perm.T, js, perm, jm)
-    qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm.T)
+    qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm)
     pd = QuantumProbDist(qc)
     pd.update_correlation_settings({'method': 'same', 'mod': 2})
     return pd
