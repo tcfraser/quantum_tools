@@ -30,7 +30,7 @@ def uniform_qdistro(rvc, dimensions):
     rhoAB = State.Strats.Random.pure_uniform(dimensions**2)
     rhoBC = State.Strats.Random.pure_uniform(dimensions**2)
     rhoAC = State.Strats.Random.pure_uniform(dimensions**2)
-        
+
     qc = QuantumContext(
         random_variables=rvc,
         measurements=(A,B,C),
@@ -78,25 +78,33 @@ def fritz(rvc):
     ei = utils.ei
     pi = np.pi
     perm = utils.get_triangle_permutation()
+
+    # === RHS A ===
     # Eigenvectors of sigma_x
     e_x_0 = (qb0 + qb1)/(sqrt2)
     e_x_1 = (-qb0 + qb1)/(sqrt2)
     # Eigenvectors of sigma_y
     e_y_0 = (i*qb0 + qb1)/(sqrt2)
     e_y_1 = (-i*qb0 + qb1)/(sqrt2)
+    # =============
+
+    # === LHS B ===
     # Eigenvectors of -(sigma_y + sigma_x)/sqrt2
     e_yx_0 = (ei(-3/4*pi)*qb0 + qb1)/(sqrt2)
     e_yx_1 = (ei(1/4*pi)*qb0 + qb1)/(sqrt2)
     # Eigenvectors of (sigma_y - sigma_x)/sqrt2
     e_xy_0 = (ei(-1/4*pi)*qb0 + qb1)/(sqrt2)
     e_xy_1 = (ei(-5/4*pi)*qb0 + qb1)/(sqrt2)
+    # =============
 
     rho0 = utils.ket_to_dm(qb0)
     rho1 = utils.ket_to_dm(qb1)
+
     # phi0 = utils.ket_to_dm(e3)
     # phi1 = utils.ket_to_dm(e4)
     # omega0 = utils.ket_to_dm(e5)
     # omega1 = utils.ket_to_dm(e6)
+
     A_measurements = [
         utils.tensor(rho1, utils.ket_to_dm(e_y_0)),
         utils.tensor(rho1, utils.ket_to_dm(e_y_1)),
@@ -123,10 +131,6 @@ def fritz(rvc):
     rhoBC = State.Strats.Deterministic.mebs(0)
     rhoAC = State.Strats.Deterministic.mebs(0)
 
-    # js = utils.tensor(rhoAB.data, rhoBC.data, rhoAC.data)
-    # print(multidot(rhoAB.data))
-    # jm = utils.tensor(utils.tensor(rho1, omega0), utils.tensor(rho1, omega0), utils.tensor(rho0, rho0))
-    # t = utils.multidot(perm.T, js, perm, jm)
     qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm.T)
     pd = QuantumProbDist(qc)
     pd.update_correlation_settings({'method': 'same', 'mod': 2})
@@ -180,11 +184,13 @@ def perform_tests():
     # print(spd.H('B', 'B'))
     # print(spd.I(['B', 'B'], ['B']))
     # return
-    pd = demo_distro()
-    print(pd)
-    print(pd.marginal(['A', 'B']))
-    print(pd.marginal(['C']))
-    print(pd.marginal(['C']) * pd.marginal(['A', 'B']))
+    pass
+    # fritz_dist
+    # pd = demo_distro()
+    # print(pd)
+    # print(pd.marginal(['A', 'B']))
+    # print(pd.marginal(['C']))
+    # print(pd.marginal(['C']) * pd.marginal(['A', 'B']))
     # print(pd.condition({'A': 'a'}))
     # print(pd.prob({'A': 'a', 'B': 'b1'}))
     # print(pd.prob({'A': 'a', 'C': 'c2'}))
