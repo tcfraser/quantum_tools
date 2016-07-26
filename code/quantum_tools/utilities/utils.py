@@ -401,6 +401,28 @@ def en_list(lst):
         return list(lst)
     else:
         return [lst]
+    
+def switch_mask(mask):
+    mask = mask.astype(bool)
+    
+    lvl   = [0,0]
+    count = [0,0]
+    case = mask[0]
+    data = []
+    for m in mask:
+        count[m] += 1
+        if case != m:
+            data.append((lvl[case], count[case]))
+            lvl[case] = count[case]
+            case = m
+    data.append((lvl[case], count[case]))
+    return data
+    
+def switch_iter(seed, size):
+    seed = not bool(seed)
+    for i in range(size):
+        seed = not seed
+        yield seed
 
 def en_set(lst):
     if isinstance(lst, (set)):
@@ -427,8 +449,8 @@ def get_triangle_permutation(n=2):
     space = list(product(*([list(range(n))]*6)))
     qudits = get_qudits(n)
     for a in space:
-        ket = tensor(*(qudits[a[i]] for i in (0,1,2,3,4,5)))
-        bra = tensor(*(qudits[a[i]] for i in (1,2,3,4,5,0)))
+        ket = tensor(*(qudits[a[i]] for i in (1,2,3,4,5,0)))
+        bra = tensor(*(qudits[a[i]] for i in (0,1,2,3,4,5)))
         perm += np.outer(ket, bra)
     return perm
 
@@ -443,13 +465,13 @@ def projectors(n):
         S[i][i,i] = 1
     return S
 
-def cholesky(t):
+def cholesky_T(t):
     # James, Kwiat, Munro, and White Physical Review A 64 052312
     # T = np.array([
-    #     [      t[0]       ,       0         ,      0        ,   0  ],
-    #     [  t[4] + i*t[5]  ,      t[1]       ,      0        ,   0  ],
-    #     [ t[10] + i*t[11] ,  t[6] + i*t[7]  ,     t[2]      ,   0  ],
-    #     [ t[14] + i*t[15] , t[12] + i*t[13] , t[8] + i*t[9] , t[3] ],
+    #     [      t[0]      ,        0        ,       0         ,   0   ],
+    #     [  t[1] + i*t[2] ,      t[3]       ,       0         ,   0   ],
+    #     [  t[4] + i*t[5] ,  t[6] + i*t[7]  ,      t[8]       ,   0   ],
+    #     [ t[9] + i*t[10] , t[11] + i*t[12] , t[13] + i*t[14] , t[15] ],
     # ])
     # assert(len(t) == size**2), "t is not the correct length. [len(t) = {0}, size = {1}]".format(len(t), size)
     size = int(len(t)**(1/2))
@@ -466,6 +488,10 @@ def cholesky(t):
                 t_c += 2
             elif (col > row): # upper diagonal
                 pass
+    return T
+
+def cholesky(t):
+    T = cholesky_T(t)
     Td = T.conj().T
     g = np.dot(Td, T)
     # assert(is_hermitian(g)), "g not hermitian!"

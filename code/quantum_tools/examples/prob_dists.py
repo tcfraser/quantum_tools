@@ -131,7 +131,7 @@ def fritz(rvc):
     rhoBC = State.Strats.Deterministic.mebs(0)
     rhoAC = State.Strats.Deterministic.mebs(0)
 
-    qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm.T)
+    qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm)
     pd = QuantumProbDist(qc)
     pd.update_correlation_settings({'method': 'same', 'mod': 2})
     return pd

@@ -24,12 +24,13 @@ class ProbDist():
                 raise Exception("Some of the support is negative.")
             else:
                 self._support[np.where(self._support <= mach_tol)] = 0.0
-        if not self.__is_null:
-            # print(rvc)
-            # print(support)
-            # print(np.sum(self._support))
-            sum_support = np.sum(self._support)
-            assert(utils.is_close(sum_support,1.0)), "Probability distribution does not sum to 1.0. Sums to {0}".format(sum_support)
+        sum_support = np.sum(self._support)
+        if utils.is_close(sum_support,1.0):
+            self.__impossible = False
+        elif utils.is_close(sum_support,0.0):
+            self.__impossible = True
+        else:
+            raise ValueError("Probability distribution does not sum to 1.0 or 0.0. Sums to {0}".format(sum_support))
         self._rvc = rvc
         self._num_variables = len(self._rvc)
         # if axis_map is not None:
@@ -149,10 +150,11 @@ class ProbDist():
     def condition(self, cond_outcome_dict):
         sub_support, outcome_association = self._sub_support(cond_outcome_dict)
         prob = np.sum(sub_support)
-        norm_sub_support = sub_support / prob
+        if prob != 0.0:
+            sub_support = sub_support / prob
         rvs = [rv_assoc[0] for rv_assoc in outcome_association]
         d_rvc = self._rvc - RandomVariableCollection(rvs)
-        conditioned_pd = self.__new_child(d_rvc, norm_sub_support)
+        conditioned_pd = self.__new_child(d_rvc, sub_support)
         return conditioned_pd
 
     def marginal(self, rvc_names):
@@ -219,7 +221,7 @@ class ProbDist():
     def canonical_ravel(self):
         for outcome, p in self._unpack_prob_space():
             yield p
-
+            
     def __str__(self):
         fs = "{outcome} -> {probability}"
         print_list = ["=== ProbDist ==="]
@@ -228,7 +230,7 @@ class ProbDist():
         print_list.append("{0} Achievable outcomes.".format(np.count_nonzero(self._support)))
         print_list.append(fs)
         for outcome, p in self._unpack_prob_space():
-            if p > 0.0:
+            if p > 1e-5:
                 print_list.append(fs.format(outcome=outcome, probability=p))
         print_list.append("================")
         return '\n'.join(print_list)

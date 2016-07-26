@@ -39,6 +39,7 @@ def get_preinjectableset_latex(rvc, preinjectable_set, defl_map):
     sub_rvc = rvc.sub(rv_names)
     for outcome in sub_rvc.outcome_space:
         definite_labels = [definite_outcome_latex(i, sort_get(outcome)) for i, sort_get in rv_zip]
+        definite_labels = sorted(definite_labels)
         preinjectable_latex.append(''.join(map(probabilize, definite_labels)))
     return preinjectable_latex
 
@@ -46,7 +47,7 @@ doltdefault = "{rv_name}_{outcome}"
 doltoutcome = "{outcome}"
 doltinverted = "{outcome}_{rv_name}"
 
-def definite_outcome_latex(rv_names, outcomes, formatter=doltinverted):
+def definite_outcome_latex(rv_names, outcomes, formatter=doltdefault):
     joint_outcome_latex = ''.join(formatter.format(rv_name=r, outcome=o) for o, r in zip(outcomes, rv_names))
     return joint_outcome_latex
 

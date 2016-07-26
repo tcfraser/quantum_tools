@@ -49,7 +49,7 @@ def QuantumProbDistOptimized(qc):
     Only works for projective measurements
     """
     is_projective = [isinstance(m, ProjectiveMeasurement) for m in qc.measurements]
-    assert(all(is_projective)), "measurements are not projective"
+    assert(all(is_projective)), "measurements are not projective: {}".format(str(is_projective))
     despectral = [np.array(m.projectors).T for m in qc.measurements] # A*, B*, C*
     cum_measure_operators = utils.tensor(*despectral) # A* x B* x C*
     if qc.permutation is not None:
