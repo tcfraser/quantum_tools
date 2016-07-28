@@ -39,21 +39,12 @@ class StateStratsParam():
 class StateStratsDeterministic():
 
     @staticmethod
-    def mebs(n=0):
+    def maximally_entangled_bell(n=0):
         """
         Maximally Entangled Bell State
         """
         n = n % 4
-        norm = 1/np.sqrt(2)
-        if n == 0:
-            psi = norm * (qb00 + qb11)
-        elif n == 1:
-            psi = norm * (qb00 - qb11)
-        elif n == 2:
-            psi = norm * (qb01 + qb10)
-        elif n == 3:
-            psi = norm * (qb01 - qb10)
-        rho = State(utils.ket_to_dm(psi))
+        rho = State(utils.ket_to_dm(mebs[:,n]))
         return rho
 
 class StateStratsRandom():
