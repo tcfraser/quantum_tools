@@ -744,6 +744,7 @@ def find_transversals(H, strat=None, fts=None, log={}):
         hgt = HyperGraphTransverser(unused_nonempty_H, strat, fts, log_wt)
         hgt_fts_raw = hgt.fts.raw()
         if hgt_fts_raw is None:
+            log_print('No transversals on sub-graph.')
             return None
         raw = sparse.csr_matrix(hgt.fts.raw())
         
@@ -776,6 +777,7 @@ def find_transversals(H, strat=None, fts=None, log={}):
         fts_raw = sparse.csc_matrix(fts_raw)
         return fts_raw
     else:
+        log_print('No transversals exist.')
         return None
 #================================================
 #================================================

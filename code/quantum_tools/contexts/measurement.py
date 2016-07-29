@@ -48,6 +48,16 @@ class ProjectiveMeasurement(Measurement):
         operators = [utils.ket_to_dm(p) for p in projectors]
         super().__init__(operators)
         
+    @staticmethod
+    def from_operator(O):
+        eig_vals, eig_vecs = np.linalg.eig(O)
+        eig_vecs = [eig_vecs[:, i] for i in range(O.shape[0])]
+        return ProjectiveMeasurement(eig_vecs)
+    
+    @staticmethod
+    def from_cols(O):
+        return ProjectiveMeasurement([O[:, i] for i in range(O.shape[1])])
+        
 class MeasurementStrats():
     # Namespace Declarations
     pass

@@ -58,6 +58,7 @@ def QuantumProbDistOptimized(qc):
     super_support = utils.multidot(cum_measure_operators.conj().T, joint_state, cum_measure_operators)
     super_support_diag = np.diagonal(super_support)
     super_support_lookup = super_support_diag.reshape(qc.random_variables.outcome_space.get_input_base())
-
-    pd = ProbDist(qc.random_variables, np.real(super_support_lookup))
+    support = np.copy(np.real(super_support_lookup))
+    
+    pd = ProbDist(qc.random_variables, support)
     return pd

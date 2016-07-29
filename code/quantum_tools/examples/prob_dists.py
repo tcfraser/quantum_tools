@@ -127,9 +127,9 @@ def fritz(rvc):
     A = Measurement(A_measurements)
     B = Measurement(B_measurements)
     C = Measurement(C_measurements)
-    rhoAB = State.Strats.Deterministic.mebs(3)
-    rhoBC = State.Strats.Deterministic.mebs(0)
-    rhoAC = State.Strats.Deterministic.mebs(0)
+    rhoAB = State.Strats.Deterministic.maximally_entangled_bell(3)
+    rhoBC = State.Strats.Deterministic.maximally_entangled_bell(0)
+    rhoAC = State.Strats.Deterministic.maximally_entangled_bell(0)
 
     qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm)
     pd = QuantumProbDist(qc)

@@ -23,6 +23,7 @@ class ProbDist():
                 print(self._support)
                 raise Exception("Some of the support is negative.")
             else:
+                # print(self._support)
                 self._support[np.where(self._support <= mach_tol)] = 0.0
         sum_support = np.sum(self._support)
         if utils.is_close(sum_support,1.0):

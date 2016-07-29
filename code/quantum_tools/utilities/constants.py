@@ -17,3 +17,10 @@ sigy = np.array([[0,-i],[i,0]])
 sigz = np.array([[1,0],[0,-1]])
 tqbs = np.array([qb00, qb01, qb10, qb11])
 sqrt2 = np.sqrt(2)
+
+mebs = np.hstack((
+    (qb00 + qb11)/sqrt2,
+    (qb00 - qb11)/sqrt2,
+    (qb01 + qb10)/sqrt2,
+    (qb01 - qb10)/sqrt2,
+))

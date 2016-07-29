@@ -1,4 +1,6 @@
 import numpy as np
+from cmath import pi, exp
+from itertools import product
 
 def real():
     return np.random.normal()
@@ -12,10 +14,29 @@ def GL_R(n):
 def GL_C(n):
     return np.random.normal(size=((n,n))) \
     + 1j * np.random.normal(size=((n,n)))
+    
+def clock(n):
+    w = exp(2j*pi/n)
+    clock_matrix = np.zeros((n, n), dtype='complex')
+    for k in range(n):
+        clock_matrix[k, k] = w**k
+    return clock_matrix
+    
+def shift(n):
+    shift_matrix = np.zeros((n,n), dtype='complex')
+    for k in range(n):
+        shift_matrix[(k + 1) % n, k] = 1
+    return shift_matrix
+
+def pauli(n):
+    c, s = clock(n), shift(n)
+    return [np.dot(np.linalg.matrix_power(c, i),np.linalg.matrix_power(s, j))  for i, j in product(range(n),range(n))]
 
 def GL_knit_QR(GL_n):
     Q, R = np.linalg.qr(GL_n)
     r = np.diagonal(R)
+    if np.any(r == 0):
+        raise Exception("Singular matrix.")
     L = np.diag(r/np.abs(r))
     return np.dot(Q, L)
 
