@@ -14,14 +14,14 @@ def GL_R(n):
 def GL_C(n):
     return np.random.normal(size=((n,n))) \
     + 1j * np.random.normal(size=((n,n)))
-    
+
 def clock(n):
     w = exp(2j*pi/n)
     clock_matrix = np.zeros((n, n), dtype='complex')
     for k in range(n):
         clock_matrix[k, k] = w**k
     return clock_matrix
-    
+
 def shift(n):
     shift_matrix = np.zeros((n,n), dtype='complex')
     for k in range(n):
@@ -48,15 +48,6 @@ def P_I(dim, count):
     for i in range(dim):
         S[np.random.randint(0, count)][i,i] = 1
     return S
-
-# def P_I(n):
-#     N = range(n)
-#     S = [np.zeros((n,n)) for _ in N]
-#     for i in N:
-#         for j in N:
-#             if (real() > 0):
-#                 S[j][i,i] = 1
-#     return S
 
 def perform_tests():
     # print(random_real())
