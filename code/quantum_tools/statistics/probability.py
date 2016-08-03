@@ -7,6 +7,7 @@ from ..utilities.profiler import profile
 from .variable import RandomVariableCollection
 from . import variable_sort
 from functools import reduce
+import math
 from ..utilities.constants import *
 
 class ProbDist():
@@ -43,6 +44,14 @@ class ProbDist():
 
     def _multi_axis_map(self, names):
         return tuple(self._axis_map[name] for name in names)
+
+    @staticmethod
+    def distance(pd_a, pd_b):
+        assert(pd_a._rvc == pd_b._rvc), "Random Variables don't match."
+        dist = 0.0
+        for a, b in zip(pd_a.canonical_ravel(), pd_b.canonical_ravel()):
+            dist += (b - a)**2
+        return math.sqrt(dist)
 
     @staticmethod
     def from_callable_support(rvc, callable_support):
@@ -222,7 +231,7 @@ class ProbDist():
     def canonical_ravel(self):
         for outcome, p in self._unpack_prob_space():
             yield p
-            
+
     def __str__(self):
         fs = "{outcome} -> {probability}"
         print_list = ["=== ProbDist ==="]

@@ -35,7 +35,8 @@ class MultiBaseLookupBTOptimized():
         else:
             shifted_base = self.__bases.find(digits)
         if shifted_base is None:
-            raise Exception("Digits {0} have no registered base.".format(digits))
+            return None
+            # raise Exception("Digits {0} have no registered base.".format(digits))
         else:
             shift, base = shifted_base
         val = shift_sum(shift, digits, base)

@@ -6,13 +6,16 @@ import sys
 # === Configure ===
 numpy.set_printoptions(precision=5, linewidth=120, suppress=True)
 __directory = os.path.dirname(os.path.abspath(__file__))
-__notebook_files = os.path.dirname(__directory)
+__root_dir = os.path.dirname(__directory)
 __path_to_output = os.path.join(os.sep, 'examples', 'outputs')
 
-NOTEBOOK_FILES_DIR = __notebook_files
+NOTEBOOK_FILES_DIR = __root_dir
+ROOT_DIR = __root_dir
 SOURCE_DIR = __directory
 OUTPUT_DIR = __directory + __path_to_output + os.sep # Why python is this so hard?
 BULK_DIR = os.path.join(os.path.dirname(__directory), 'bulk')
+
+ASSERT_MODE = 0
 
 def STOP():
     sys.exit(0)

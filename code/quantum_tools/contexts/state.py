@@ -11,18 +11,19 @@ class State():
 
     def __init__(self, data):
         self.data = np.matrix(data)
-        assert(utils.is_trace_one(self.data)), "State does not have unitary trace."
-        assert(utils.is_psd(self.data)), "State is not positive semi-definite."
-        assert(utils.is_hermitian(self.data)), "State is not hermitian."
+        if ASSERT_MODE >= 1:
+            assert(utils.is_trace_one(self.data)), "State does not have unitary trace."
+            assert(utils.is_psd(self.data)), "State is not positive semi-definite."
+            assert(utils.is_hermitian(self.data)), "State is not hermitian."
 
     def __str__(self):
         return '\n'.join(self._get_print_list())
-    
+
     def _get_print_list(self):
         print_list = []
         print_list.append(self.__repr__())
         print_list.append(str(self.data))
-        return print_list        
+        return print_list
 
 class StateStrats():
     pass

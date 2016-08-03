@@ -80,8 +80,9 @@ def multi_dot(Mv):
 
 class UnitaryParam():
 
-    def __init__(self, d):
+    def __init__(self, d, k=None):
         self.d = d
+        self.k = k if k is not None else d
         self.basis = get_basis(d)
         self.I = np.eye(d)
         self.Pl = get_Pl(d)
@@ -93,11 +94,48 @@ class UnitaryParam():
     def Λ(self, m, n, λ):
         return np.dot(pexpim(self.Pl[n], λ[n,m], self.I), sexpim(self.p_σ, m, n, λ[m,n], self.I))
 
-    def U(self, λ):
-        GP = self.GP(λ)
-        RRP = multi_dot(multi_dot(self.Λ(m, n, λ) for n in range(m + 1, self.d)) for m in range(self.d-1))
-        return np.dot(RRP, GP)
+    def RRP(self, λ):
+        return multi_dot(multi_dot(self.Λ(m, n, λ) for n in range(m + 1, self.d)) for m in range(self.k-1))
 
+    def U(self, λ):
+        return np.dot(self.RRP(λ), self.GP(λ))
+
+class MeasurementParam(UnitaryParam):
+
+    def __init__(self, d):
+        super().__init__(d)
+
+    def gen(self, param):
+        λ = param.reshape((self.d, self.d))
+        U = self.U(λ)
+        return [U[:, i] for i in range(self.d)]
+
+class StateParam(UnitaryParam):
+
+    def __init__(self, d, k=None):
+        super().__init__(d, k)
+
+    def gen(self, param):
+        p = convex_param(param[:self.k-1])
+        # print(self.k, self.d)
+        λ = np.zeros((self.d, self.d), dtype='float64')
+        c = self.k-1 # counter
+        for i in range(self.d):
+            for j in range(min(i, self.k)):
+                if i == j:
+                    continue
+                else:
+                    λ[i,j] = param[c]
+                    c += 1
+                    λ[j,i] = param[c]
+                    c += 1
+        U = self.U(λ)
+        rho = np.zeros((self.d, self.d), dtype='complex128')
+        for i in range(self.k):
+            proj = U[:, i]
+            rho += p[i] * np.outer(proj.conj().T, proj)
+
+        return rho
 
 def tests():
     λs = [np.random.normal(0,1,(d, d)) for d in range(1, 5)]

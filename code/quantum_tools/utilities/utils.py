@@ -268,6 +268,9 @@ def multidot(*args):
     """ Implementation of multiple dot product between matrices """
     return reduce(np.dot, args)
 
+def temp_dir(name):
+    return os.path.join(ROOT_DIR, 'temp', name)
+
 def is_hermitian(A):
     """ Checks if matrix A is hermitian """
     return np.allclose(A, A.conj().T)

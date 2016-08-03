@@ -5,7 +5,8 @@ from __future__ import print_function, division
 import numpy as np
 from scipy import linalg
 from ..utilities import utils
-from ..utilities import rmt
+from ..rmt import rmt
+from ..config import *
 import random
 
 class Measurement():
@@ -16,10 +17,11 @@ class Measurement():
         self._size = self._operators[0].shape[0]
         # assertions
         # print(sum(self._operators), np.eye(self._size))
-        assert(np.allclose(sum(self._operators), np.eye(self._size))), "Measurement Operators don't sum to the identity."
-        for o in self._operators:
-            assert(utils.is_psd(o)), "Operator is not positive semi-definite."
-            assert(utils.is_hermitian(o)), "Operator is not hermitian."
+        if ASSERT_MODE >= 1:
+            assert(np.allclose(sum(self._operators), np.eye(self._size))), "Measurement Operators don't sum to the identity."
+            for o in self._operators:
+                assert(utils.is_psd(o)), "Operator is not positive semi-definite."
+                assert(utils.is_hermitian(o)), "Operator is not hermitian."
 
     def __getitem__(self, key):
         return self._operators[key]
@@ -30,7 +32,7 @@ class Measurement():
 
     def __str__(self):
         return '\n'.join(self._get_print_list())
-    
+
     def _get_print_list(self):
         print_list = []
         print_list.append(self.__repr__())
@@ -47,17 +49,17 @@ class ProjectiveMeasurement(Measurement):
         self.projectors = projectors
         operators = [utils.ket_to_dm(p) for p in projectors]
         super().__init__(operators)
-        
+
     @staticmethod
     def from_operator(O):
         eig_vals, eig_vecs = np.linalg.eig(O)
         eig_vecs = [eig_vecs[:, i] for i in range(O.shape[0])]
         return ProjectiveMeasurement(eig_vecs)
-    
+
     @staticmethod
     def from_cols(O):
         return ProjectiveMeasurement([O[:, i] for i in range(O.shape[1])])
-        
+
 class MeasurementStrats():
     # Namespace Declarations
     pass
@@ -71,7 +73,7 @@ class MeasurementStratsRandom():
         random.shuffle(projectors)
         m = ProjectiveMeasurement(projectors)
         return m
-    
+
     @staticmethod
     def pvms_outcomes(num_outcomes, size):
         U = rmt.U(size)

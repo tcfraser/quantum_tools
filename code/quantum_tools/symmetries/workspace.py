@@ -60,9 +60,10 @@ def get_orbits(actions, elems, indexof, num_elems=None):
                 # print(action)
                 image = action(elem)
                 image_index = indexof(image)
-                if not seen[image_index]:
-                    orbit.append(image_index)
-                    seen[image_index] = True
+                if image_index is not None:
+                    if not seen[image_index]:
+                        orbit.append(image_index)
+                        seen[image_index] = True
             orbits.append(orbit)
     return orbits
 
@@ -138,11 +139,12 @@ def num_sc_joint_outcome(rvc, symbolic_contexts):
         num += len(sub_rvc.outcome_space)
     return num
 
-def build_mblbt(rvc, symbolic_contexts):
+def build_mblbt(rvc, symbolic_contexts, just_preinjectable=False):
     mblbt = number_system.MultiBaseLookupBTOptimized()
     # Non-marginal joint outcomes
-    nmjob = tuple(rv.num_outcomes for rv in rvc)
-    mblbt.register_base(nmjob) # fpbase
+    if not just_preinjectable:
+        nmjob = tuple(rv.num_outcomes for rv in rvc)
+        mblbt.register_base(nmjob) # fpbase
 
     # Marginal joint outcomes
     for sc_i in symbolic_contexts:
