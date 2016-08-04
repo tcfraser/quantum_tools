@@ -291,7 +291,7 @@ def uniform_phase_components(n):
 
 def is_close(a,b):
     """ Checks if two numbers are close with respect to a machine tolerance defined above """
-    return abs(a - b) < mach_tol
+    return abs(a - b) < 1e-6
 
 def is_small(a):
     return is_close(a, 0)

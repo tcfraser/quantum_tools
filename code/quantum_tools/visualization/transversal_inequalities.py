@@ -43,7 +43,7 @@ def get_preinjectableset_latex(rvc, preinjectable_set, defl_map):
         preinjectable_latex.append(''.join(map(probabilize, definite_labels)))
     return preinjectable_latex
 
-doltdefault = "{rv_name}_{outcome}"
+doltdefault = "{rv_name}^{outcome}"
 doltoutcome = "{outcome}"
 doltinverted = "{outcome}_{rv_name}"
 
@@ -62,11 +62,12 @@ def get_equation_latex(terms, lhs, relation, rhs):
     result = "{lhs} {rel} {rhs}".format(lhs=lhs_latex, rel=relation, rhs=rhs_latex)
     return result
 
-def get_coeff_map(terms, indices):
+def get_coeff_map(terms, coeff_array):
     coeff_map = defaultdict(int)
         
-    for i in indices:
-        coeff_map[terms[i]] += 1
+    for indx, val in enumerate(coeff_array):
+        if val != 0:
+            coeff_map[terms[indx]] += val
     return coeff_map
 
 def get_expression_latex(coeff_map, sep=None):
@@ -76,20 +77,30 @@ def get_expression_latex(coeff_map, sep=None):
         if coeff == 1:
             latexed_terms.append(term)
         else:
-            latexed_terms.append(str(coeff) + term)
+            if coeff.is_integer():
+                latexed_terms.append(str(int(coeff)) + term)
+            else:
+                latexed_terms.append(str(coeff) + term)
     latexed_terms = sorted(latexed_terms)
     if sep is None:
         return latexed_terms
     return sep.join(latexed_terms)
 
-def transversal_inequality(ant, cons, hg_rows, b):
-    """
-    ant: The index of the antecedent
-    cons: The transversal indices
-    hg_rows: How the rows were contracted to get the hypergraph
-    b: The latexed terms (see get_preinjectablesets_latex)
-    """
-    return get_equation_latex(b, [ant], '\leq', hg_rows[cons])
+# def transversal_inequality(ant, cons, hg_rows, b):
+#     """
+#     ant: The index of the antecedent
+#     cons: The transversal indices
+#     hg_rows: How the rows were contracted to get the hypergraph
+#     b: The latexed terms (see get_preinjectablesets_latex)
+#     """
+#     return get_equation_latex(b, [ant], '\leq', hg_rows[cons])
+
+def latex_inequality(coeff_array, b):
+    lhs = np.copy(coeff_array) * -1
+    rhs = np.copy(coeff_array)
+    lhs[lhs < 0] = 0
+    rhs[rhs < 0] = 0
+    return get_equation_latex(b, lhs, '\leq', rhs)
 
 def get_duplication_map(b):
     dup_map = defaultdict(list)

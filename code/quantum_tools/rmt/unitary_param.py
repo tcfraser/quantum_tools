@@ -99,6 +99,10 @@ class UnitaryParam():
 
     def U(self, λ):
         return np.dot(self.RRP(λ), self.GP(λ))
+    
+    def gen(self, flat_λ):
+        λ = flat_λ.reshape((self.d, self.d))
+        return self.U(λ)
 
 class MeasurementParam(UnitaryParam):
 
