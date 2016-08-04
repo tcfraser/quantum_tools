@@ -1,0 +1,6 @@
+
+As for everything else, I think I should say something that has been on my mind since yesterday morning
+
+It seems like you're very interested in this current project (I can empathize; I find this work extremely interesting myself). However, I am currently feeling like you're pulling ahead with regards to the work being conducted. It's not that I don't understand the material, I think I understand it fairly well (not as well as you of course but close). Instead I have found that on a number of occasions after being 60% of the way through some task, you meet with me and are done nearly all of it yourself. In this sense I am always falling behind. As of right now, I am not sure whether or not I should be re-implementing these tools in python or whether or not I should be 
+
+What I mean is that implementing these tools in python is slower than in Mathematica. For example, there are many group theory tools that mathematica has that python doesn't. Also, working will some of the other solvers like skeleton, sympol and others seems a lot easier that with Porta. It took me a day and half to get porta working on larger systems. Furthermore, I am trying to implement these tools in a more abstract sense to work on any symbolic context and with arbitrary number of outcomes etc. so that it interfaces well with my other python code.  

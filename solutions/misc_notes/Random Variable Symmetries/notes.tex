@@ -1,0 +1,27 @@
+\documentclass{article}
+
+\usepackage{paper}
+
+\begin{document}
+    \title{Random Variable Symmetries}
+    \author{TC Fraser}{Perimeter Institute for Theoretical Physics, Waterloo, Ontario, Canada}
+    \date{June 17th, 2016}
+    \abstract{Just trying to flesh out notations and how to implement these ideas computationally.}
+
+    \newcommand{\irv}{\ti{\s{R}}}
+    Take a set of random variables $\irv$ for an inflation DAG and a set of random variables for the original DAG $\s{R}$ and define the following:\\
+
+    The \textit{copy set} $\irv_i$ are all of the random variables in $\irv$ with the particular copy index $i$.
+    \[ \irv_i = \bc{R_s \in \irv \mid s = i} \quad \irv_i \subseteq \irv \quad \irv = \bigcup_{i \in \s{I}\br{\irv}} \irv_i \]
+    The \textit{face set} $\irv_X$ are all of the random variables in $\irv$ with particular face $X$.
+    \[ \irv_X = \bc{R_s \in \irv \mid R = X} \quad \irv_X \subseteq \irv \quad \irv = \bigcup_{X \in \s{R}} \irv_X \]
+
+    \subsection*{Permutation of Parties}
+    For a particular copy set $\irv_i$, say $\irv = \bc{A_1, A_2, B_1, B_2, C_1, C_2, C_3, C_4}$ where each has a number of outcomes
+    $n\br{X_s}$. As an ex
+    ample we have,
+    \[ \irv_1 = \bc{A_1, B_1, C_1} \]
+    The \textit{permutation group} of $S_n$ where $n = \abs{\irv_i}$ has $n-1$ generators $\sigma_1, \ldots, \sigma_{n-1}$ that has the properties,
+    \[ \si_i^2 = 1 \quad \si_i \si_j = \si_j \si_i \text{ if } j \neq i \pm 1 \quad \br{\si_i \si_{i+1}}^3 = 1\]
+
+\end{document}
