@@ -82,19 +82,19 @@ def fritz(rvc):
     # === RHS A ===
     # Eigenvectors of sigma_x
     e_x_0 = (qb0 + qb1)/(sqrt2)
-    e_x_1 = (-qb0 + qb1)/(sqrt2)
+    e_x_1 = (qb0 - qb1)/(sqrt2)
     # Eigenvectors of sigma_y
-    e_y_0 = (i*qb0 + qb1)/(sqrt2)
-    e_y_1 = (-i*qb0 + qb1)/(sqrt2)
+    e_y_0 = (qb0 + -i*qb1)/(sqrt2)
+    e_y_1 = (qb0 + +i*qb1)/(sqrt2)
     # =============
 
     # === LHS B ===
     # Eigenvectors of -(sigma_y + sigma_x)/sqrt2
-    e_yx_0 = (ei(-3/4*pi)*qb0 + qb1)/(sqrt2)
-    e_yx_1 = (ei(1/4*pi)*qb0 + qb1)/(sqrt2)
+    e_yx_0 = (qb0 + ei(3/4*pi)*qb1)/(sqrt2)
+    e_yx_1 = (qb0 + ei(-1/4*pi)*qb1)/(sqrt2)
     # Eigenvectors of (sigma_y - sigma_x)/sqrt2
-    e_xy_0 = (ei(-1/4*pi)*qb0 + qb1)/(sqrt2)
-    e_xy_1 = (ei(-5/4*pi)*qb0 + qb1)/(sqrt2)
+    e_xy_0 = (qb0 + ei(1/4*pi)*qb1)/(sqrt2)
+    e_xy_1 = (qb0 + ei(5/4*pi)*qb1)/(sqrt2)
     # =============
 
     rho0 = utils.ket_to_dm(qb0)
@@ -106,10 +106,10 @@ def fritz(rvc):
     # omega1 = utils.ket_to_dm(e6)
 
     A_measurements = [
+        utils.tensor(rho0, utils.ket_to_dm(e_x_0)),
+        utils.tensor(rho0, utils.ket_to_dm(e_x_1)),
         utils.tensor(rho1, utils.ket_to_dm(e_y_0)),
         utils.tensor(rho1, utils.ket_to_dm(e_y_1)),
-        utils.tensor(rho0, utils.ket_to_dm(e_x_1)),
-        utils.tensor(rho0, utils.ket_to_dm(e_x_0)),
     ]
     B_measurements = [
         utils.tensor(utils.ket_to_dm(e_xy_0), rho0),
@@ -118,16 +118,25 @@ def fritz(rvc):
         utils.tensor(utils.ket_to_dm(e_yx_1), rho1),
     ]
     C_measurements = [
-        utils.tensor(rho0, rho1),
         utils.tensor(rho0, rho0),
-        utils.tensor(rho1, rho1),
+        utils.tensor(rho0, rho1),
         utils.tensor(rho1, rho0),
+        utils.tensor(rho1, rho1),
     ]
 
     A = Measurement(A_measurements)
     B = Measurement(B_measurements)
     C = Measurement(C_measurements)
-    rhoAB = State.Strats.Deterministic.maximally_entangled_bell(3)
+    #print(A[0])
+    #print(B[0])
+    #print(C[0])
+    # print(utils.tensor(e_x_0, e_xy_0, qb0, qb0, qb0, qb0))
+    # print(utils.tensor(mebs[:,3], mebs[:,0], mebs[:,0]))
+    #x = utils.tensor(mebs[:,2], mebs[:,0], mebs[:,0])[np.newaxis,:].dot(utils.tensor(e_x_0, e_xy_0, qb0, qb0, qb0, qb0))[0][0]
+    #print(x)
+    #print(x*x.conj())
+    
+    rhoAB = State.Strats.Deterministic.maximally_entangled_bell(2)
     rhoBC = State.Strats.Deterministic.maximally_entangled_bell(0)
     rhoAC = State.Strats.Deterministic.maximally_entangled_bell(0)
 
