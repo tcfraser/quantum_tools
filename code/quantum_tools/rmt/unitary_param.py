@@ -99,7 +99,7 @@ class UnitaryParam():
 
     def U(self, λ):
         return np.dot(self.RRP(λ), self.GP(λ))
-    
+
     def gen(self, flat_λ):
         λ = flat_λ.reshape((self.d, self.d))
         return self.U(λ)
@@ -110,7 +110,16 @@ class MeasurementParam(UnitaryParam):
         super().__init__(d)
 
     def gen(self, param):
-        λ = param.reshape((self.d, self.d))
+        c = 0
+        λ = np.zeros((self.d, self.d), dtype='float64')
+        for i in range(self.d):
+            for j in range(self.d):
+                if i == j:
+                    continue
+                else:
+                    λ[i,j] = param[c]
+                    c += 1
+        # λ = param.reshape((self.d, self.d))
         U = self.U(λ)
         return [U[:, i] for i in range(self.d)]
 
