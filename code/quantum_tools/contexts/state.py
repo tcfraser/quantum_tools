@@ -4,6 +4,7 @@ Generators of quantum states
 from __future__ import print_function, division
 import numpy as np
 from ..utilities.constants import *
+from ..rmt.utils import *
 from ..utilities import utils
 from ..config import *
 
@@ -32,7 +33,7 @@ class StateStratsParam():
 
     @staticmethod
     def dm(t):
-        g = utils.cholesky(t)
+        g = cholesky(t)
         g /= (np.trace(g) + mach_eps)
         rho = State(g)
         return rho

@@ -251,6 +251,9 @@ def save_sparse(name, M):
 def load_sparse(name):
     return io.mmread(bulk_file(name))
 
+def schimdt(param):
+    return np.cos(param[0]) * qb00 + np.sin(param[0]) *qb11
+
 def ei(x):
     """ Exponential notation for complex numbers """
     return np.exp(i*x)
@@ -269,7 +272,7 @@ def multidot(*args):
     return reduce(np.dot, args)
 
 def temp_dir(name):
-    return os.path.join(ROOT_DIR, 'temp', name)
+    return os.path.abspath(os.path.join(ROOT_DIR, 'temp', name))
 
 def is_hermitian(A):
     """ Checks if matrix A is hermitian """

@@ -19,7 +19,7 @@ class QuantumContext():
         self.permutation = permutation
         self.num_measurements = len(measurements)
         self.num_states = len(states)
-        
+
     def __str__(self):
         print_list = []
         print_list.append("QuantumContext: {0} measurements, {1} states.".format(self.num_measurements, self.num_states))
@@ -59,6 +59,6 @@ def QuantumProbDistOptimized(qc):
     super_support_diag = np.diagonal(super_support)
     super_support_lookup = super_support_diag.reshape(qc.random_variables.outcome_space.get_input_base())
     support = np.copy(np.real(super_support_lookup))
-    
+
     pd = ProbDist(qc.random_variables, support)
     return pd

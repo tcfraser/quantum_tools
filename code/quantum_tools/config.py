@@ -5,7 +5,7 @@ import sys
 
 # === Configure ===
 numpy.set_printoptions(precision=5, linewidth=120, suppress=True)
-__directory = os.path.dirname(os.path.abspath(__file__))
+__directory = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 __root_dir = os.path.dirname(__directory)
 __path_to_output = os.path.join(os.sep, 'examples', 'outputs')
 

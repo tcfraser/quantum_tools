@@ -13,10 +13,10 @@ class Latex():
     def __init__(self, *args):
         self.input = args
         self.raw = self._parse_input()
-        
+
     def _parse_input(self):
         return '\n'.join(map("${0}$".format, self.input))
-        
+
     def _repr_latex_(self):
         return self._parse_input()
 
@@ -40,38 +40,38 @@ def get_preinjectableset_latex(rvc, preinjectable_set, defl_map):
     for outcome in sub_rvc.outcome_space:
         definite_labels = [definite_outcome_latex(i, sort_get(outcome)) for i, sort_get in rv_zip]
         definite_labels = sorted(definite_labels)
-        preinjectable_latex.append(''.join(map(probabilize, definite_labels)))
+        preinjectable_latex.append(''.join(definite_labels))
     return preinjectable_latex
 
-doltdefault = "{rv_name}^{outcome}"
-doltoutcome = "{outcome}"
-doltinverted = "{outcome}_{rv_name}"
+# doltdefault = "{rv_name}^{outcome}"
+# doltoutcome = "{outcome}"
+# doltinverted = "{outcome}_{rv_name}"
 
-def definite_outcome_latex(rv_names, outcomes, formatter=doltdefault):
-    joint_outcome_latex = ''.join(formatter.format(rv_name=r, outcome=o) for o, r in zip(outcomes, rv_names))
-    return joint_outcome_latex
+def definite_outcome_latex(rv_names, outcomes):
+    # print(rv_names, outcomes)
+    return 'P_{{{0}}}({1})'.format(''.join(rv_names), ''.join(map(str, outcomes)))
 
-def probabilize(event):
-    return "P({0})".format(event)
+# def probabilize(event):
+#     return "P({0})".format(event)
 
 def get_equation_latex(terms, lhs, relation, rhs):
-    
+
     lhs_latex = get_expression_latex(get_coeff_map(terms, lhs), ' + ')
     rhs_latex = get_expression_latex(get_coeff_map(terms, rhs), ' + ')
-           
+
     result = "{lhs} {rel} {rhs}".format(lhs=lhs_latex, rel=relation, rhs=rhs_latex)
     return result
 
 def get_coeff_map(terms, coeff_array):
     coeff_map = defaultdict(int)
-        
+
     for indx, val in enumerate(coeff_array):
         if val != 0:
             coeff_map[terms[indx]] += val
     return coeff_map
 
 def get_expression_latex(coeff_map, sep=None):
-        
+
     latexed_terms = []
     for term, coeff in coeff_map.items():
         if coeff == 1:
