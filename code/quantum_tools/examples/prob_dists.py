@@ -74,7 +74,7 @@ def tsirelson(rvc):
 
     return ProbDist.from_callable_support(rvc, p)
 
-def fritz(rvc):
+def fritz_alt(rvc):
     ei = utils.ei
     pi = np.pi
     perm = utils.get_triangle_permutation()
@@ -135,7 +135,7 @@ def fritz(rvc):
     #x = utils.tensor(mebs[:,2], mebs[:,0], mebs[:,0])[np.newaxis,:].dot(utils.tensor(e_x_0, e_xy_0, qb0, qb0, qb0, qb0))[0][0]
     #print(x)
     #print(x*x.conj())
-    
+
     rhoAB = State.Strats.Deterministic.maximally_entangled_bell(2)
     rhoBC = State.Strats.Deterministic.maximally_entangled_bell(0)
     rhoAC = State.Strats.Deterministic.maximally_entangled_bell(0)
@@ -172,6 +172,68 @@ def demo_distro():
             _demo_distro
         )
     return demo_distro
+
+def fritz(rvc):
+    ei = utils.ei
+    pi = np.pi
+    perm = utils.get_triangle_permutation()
+
+    # === RHS A ===
+    # Eigenvectors of sigma_x
+    e_x_0 = (qb0 + ei(0/4*pi)*qb1)/(sqrt2)
+    e_x_1 = (qb0 + ei(4/4*pi)*qb1)/(sqrt2)
+    # Eigenvectors of sigma_y
+    e_y_0 = (qb0 + ei(6/4*pi)*qb1)/(sqrt2)
+    e_y_1 = (qb0 + ei(2/4*pi)*qb1)/(sqrt2)
+    # =============
+
+    # === LHS B ===
+    # Eigenvectors of -(sigma_y + sigma_x)/sqrt2
+    e_yx_0 = (qb0 + ei(3/4*pi)*qb1)/(sqrt2)
+    e_yx_1 = (qb0 + ei(7/4*pi)*qb1)/(sqrt2)
+    # Eigenvectors of (sigma_y - sigma_x)/sqrt2
+    e_xy_0 = (qb0 + ei(1/4*pi)*qb1)/(sqrt2)
+    e_xy_1 = (qb0 + ei(5/4*pi)*qb1)/(sqrt2)
+    # =============
+
+    def reph(n, s):
+        return (qb0 + ei(float(n)/4*pi)*qb1)/(sqrt2)
+
+#     A_m_p = [
+#         [qb0, qb0, qb1, qb1], [e_y_1,e_y_0, e_x_0, e_x_1]
+#     ]
+#     B_m_p = [
+#         [e_xy_0, e_xy_1, e_yx_0, e_yx_1], [qb0, qb0, qb1, qb1]
+#     ]
+    A_m_p = [
+        [qb0, qb0, qb1, qb1], [reph(1, 1), reph(5, 1), reph(3, 1), reph(7, 1)]
+    ]
+    B_m_p = [
+        [reph(6, 0), reph(2, 0), reph(0, 0), reph(4, 0)], [qb0, qb0, qb1, qb1]
+    ]
+    C_m_p = [
+        [qb0, qb1, qb0, qb1], [qb0, qb0, qb1, qb1]
+    ]
+
+    m_p = [A_m_p, B_m_p, C_m_p]
+    measurements = []
+    for m_p_i in m_p:
+        measurement_set = []
+        for l, r in zip(m_p_i[0], m_p_i[1]):
+            measurement_set.append(utils.tensor(utils.ket_to_dm(l), utils.ket_to_dm(r)))
+        measurements.append(measurement_set)
+
+    A = Measurement(measurements[0])
+    B = Measurement(measurements[1])
+    C = Measurement(measurements[2])
+
+    rhoAC = rhoBC = State(utils.ket_to_dm(qb00)/2 + utils.ket_to_dm(qb11)/2)
+    rhoAB = State.Strats.Deterministic.maximally_entangled_bell(0)
+
+    qc = QuantumContext(random_variables=rvc, measurements=(A,B,C), states=(rhoAB, rhoBC, rhoAC), permutation=perm)
+#     print(qc)
+    pd = QuantumProbDist(qc)
+    return pd
 
 def null():
     rvc = RandomVariableCollection({})

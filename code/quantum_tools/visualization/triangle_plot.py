@@ -46,10 +46,10 @@ def triangle_plot_2(pd, title=None, save=None, max_val=None, brazil_mods=False, 
     plt.colorbar(im, cax=cax, **kw)
 
     if title is not None:
-        fig.set_size_inches(8, 3.5, forward=True)
+        fig.set_size_inches(8, 4, forward=True)
         plt.suptitle(title, fontsize=20)
     else:
-        fig.set_size_inches(8, 3, forward=True)
+        fig.set_size_inches(8, 3.5, forward=True)
     if save is not None:
         plt.savefig(save, format='pdf')
     plt.show()
